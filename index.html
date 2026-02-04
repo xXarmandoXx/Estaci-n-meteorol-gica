@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Estación Meteorológica | Armando G.</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Clima Mando">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/480/clouds.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <style>
+        /* --- 1. VARIABLES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        :root {
+            --bg-body: #0f172a; 
+            --bg-sidebar: #020617;
+            --glass-card: rgba(30, 41, 59, 0.7); 
+            --glass-border: rgba(255, 255, 255, 0.08);
+            
+            --neon-blue: #38bdf8;
+            --neon-pink: #f472b6;
+            --neon-green: #34d399;
+            --neon-red: #ef4444; 
+            --neon-purple: #c084fc;
+            
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            
+            --transition: all 0.3s ease;
+        }
+
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: var(--bg-body); 
+            background-image: radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 20%),
+                              radial-gradient(circle at 90% 80%, rgba(244, 114, 182, 0.05) 0%, transparent 20%);
+            color: var(--text-main); 
+            height: 100vh; 
+            display: flex; 
+            overflow: hidden; 
+        }
+
+        /* --- 2. SIDEBAR --- */
+        .sidebar { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; padding: 25px; flex-shrink: 0; z-index: 100; }
+        
+        .brand-section { margin-bottom: 40px; display: flex; flex-direction: column; gap: 8px; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; }
+        .brand-icon { font-size: 1.8rem; color: var(--neon-blue); filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.3)); }
+        .brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+        .brand-title-main { font-size: 1rem; font-weight: 700; color: white; letter-spacing: 0.5px; }
+        .brand-subtitle { font-size: 0.8rem; color: var(--neon-blue); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .author-credit-pc { font-size: 0.7rem; color: var(--text-muted); opacity: 0.6; margin-left: 5px; font-weight: 400; }
+        .mobile-footer-credit { display: none; }
+
+        .menu-items { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; margin-top: 10px; }
+        .menu-btn { padding: 14px 18px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 15px; color: var(--text-muted); transition: var(--transition); font-weight: 500; font-size: 0.95rem; }
+        .menu-btn:hover { background: rgba(255, 255, 255, 0.05); color: white; }
+        .menu-btn.active { background: linear-gradient(90deg, rgba(56, 189, 248, 0.15), transparent); color: var(--neon-blue); border-left: 3px solid var(--neon-blue); }
+        .menu-btn.active i { color: var(--neon-blue); }
+        .sidebar-footer { margin-top: auto; font-size: 0.7rem; color: var(--text-muted); text-align: center; opacity: 0.4; }
+
+        /* --- 3. CONTENIDO PRINCIPAL --- */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .header-top { padding: 25px 40px; display: flex; justify-content: space-between; align-items: center; }
+        .header-info h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 5px; }
+        .header-info p { color: var(--text-muted); font-size: 0.9rem; }
+
+        .status-badge { 
+            padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; transition: var(--transition);
+        }
+        .status-online { background: rgba(52, 211, 153, 0.1); color: var(--neon-green); border: 1px solid rgba(52, 211, 153, 0.3); }
+        .status-offline { background: rgba(239, 68, 68, 0.1); color: var(--neon-red); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .dot-online { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); animation: pulse-green 2s infinite; }
+        .dot-offline { background: var(--neon-red); box-shadow: 0 0 10px var(--neon-red); }
+        @keyframes pulse-green { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .content-area { flex-grow: 1; overflow-y: auto; padding: 10px 40px 40px 40px; -webkit-overflow-scrolling: touch; }
+        .view-section { display: none; animation: fadeIn 0.4s ease; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .offline-banner {
+            background: rgba(239, 68, 68, 0.15); border: 1px solid var(--neon-red); color: #fca5a5;
+            padding: 15px; border-radius: 12px; margin-bottom: 20px; display: none;
+            align-items: center; gap: 10px; font-size: 0.9rem;
+        }
+
+        /* --- 4. COMPONENTES --- */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .glass-card { background: var(--glass-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 25px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); transition: var(--transition); }
+        .glass-card.warning { border: 1px solid var(--neon-red); box-shadow: 0 0 25px rgba(239, 68, 68, 0.3); animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.3); } 50% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.1); } 100% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.3); } }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .icon-box { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        
+        .icon-temp { background: rgba(244, 114, 182, 0.15); color: var(--neon-pink); }
+        .icon-hum { background: rgba(56, 189, 248, 0.15); color: var(--neon-blue); }
+        .icon-rain { background: rgba(192, 132, 252, 0.15); color: var(--neon-purple); }
+        .icon-stat { background: rgba(52, 211, 153, 0.15); color: var(--neon-green); }
+        .icon-off { background: rgba(100, 116, 139, 0.3); color: var(--text-muted); }
+
+        .big-value { font-size: 3.5rem; font-weight: 700; color: white; line-height: 1; }
+        .unit { font-size: 1.2rem; color: var(--text-muted); font-weight: 400; margin-left: 5px; }
+        .sub-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; }
+        .record-date { display: block; font-size: 0.75rem; color: var(--neon-blue); margin-top: 5px; font-weight: 500; opacity: 0.8; }
+
+        .chart-wrapper { height: 350px; position: relative; width: 100%; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { text-align: left; padding: 15px; color: var(--text-muted); border-bottom: 1px solid var(--glass-border); font-weight: 600; }
+        td { padding: 15px; border-bottom: 1px solid var(--glass-border); color: var(--text-main); }
+        tr:hover { background: rgba(255,255,255,0.02); }
+
+        .toggle-group { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 4px; display: inline-flex; margin-bottom: 25px; }
+        .toggle-btn { padding: 8px 20px; border: none; background: transparent; color: var(--text-muted); font-weight: 600; cursor: pointer; border-radius: 8px; transition: 0.3s; }
+        .toggle-btn.active { background: var(--glass-border); color: white; }
+
+        .config-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 15px; border-radius: 12px; font-size: 1rem; margin-bottom: 20px; }
+        .btn-neon { width: 100%; background: linear-gradient(90deg, var(--neon-blue), #2563eb); border: none; padding: 15px; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
+        
+        /* Botones de descarga */
+        .btn-download-group { display: flex; gap: 10px; }
+        .btn-download { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .btn-dl-clima { background: var(--neon-green); color: #064e3b; }
+        .btn-dl-clima:hover { background: #6ee7b7; }
+        .btn-dl-rain { background: var(--neon-purple); color: #4c1d95; }
+        .btn-dl-rain:hover { background: #d8b4fe; }
+
+        /* --- 5. IPHONE / MÓVIL --- */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar {
+                width: 100%; height: 75px; position: fixed; top: 0; left: 0; 
+                flex-direction: row; padding: 0 15px; justify-content: space-between; align-items: center;
+                background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(10px);
+                border-right: none; border-bottom: 1px solid var(--glass-border);
+            }
+            .brand-section { margin-bottom: 0; gap: 0; }
+            .brand-logo-container { gap: 8px; }
+            .brand-icon { font-size: 1.4rem; }
+            .brand-title-main { font-size: 0.9rem; }
+            .brand-subtitle { font-size: 0.7rem; }
+            .author-credit-pc { display: none; }
+            
+            .mobile-footer-credit {
+                display: block; text-align: center; margin-top: 30px; padding: 20px;
+                color: var(--text-muted); font-size: 0.8rem; opacity: 0.7;
+                border-top: 1px solid var(--glass-border);
+            }
+
+            .menu-items { flex-direction: row; flex-grow: 0; gap: 2px; margin-top: 0; }
+            .menu-btn { padding: 8px; border-radius: 8px; flex-direction: column; gap: 0; font-size: 0.7rem; background: transparent !important; border: none !important; }
+            .menu-btn i { font-size: 1.2rem; margin-bottom: 2px; }
+            .menu-btn span { display: none; }
+            .menu-btn.active i { color: var(--neon-blue); text-shadow: 0 0 10px rgba(56,189,248,0.6); }
+            .sidebar-footer { display: none; }
+
+            .main-content { margin-top: 75px; height: calc(100vh - 75px); }
+            .header-top { padding: 20px; flex-direction: column; align-items: flex-start; gap: 10px; }
+            .content-area { padding: 15px; }
+            .chart-wrapper { height: 280px; }
+            .metrics-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="brand-section">
+            <div class="brand-logo-container">
+                <i class="fa-solid fa-cloud-sun brand-icon"></i>
+                <div class="brand-text">
+                    <span class="brand-title-main">Estación</span>
+                    <span class="brand-subtitle">Meteorológica</span>
+                </div>
+            </div>
+            <div class="author-credit-pc">Dev: Armando Gutierrez</div>
+        </div>
+
+        <div class="menu-items">
+            <div class="menu-btn active" onclick="switchView('dashboard', this)">
+                <i class="fa-solid fa-chart-pie"></i> <span>Monitor</span>
+            </div>
+            <div class="menu-btn" onclick="switchView('historial', this)">
+                <i class="fa-solid fa-database"></i> <span>Datos</span>
+            </div>
+            <div class="menu-btn" onclick="switchView('analisis', this)">
+                <i class="fa-solid fa-chart-simple"></i> <span>Stats</span>
+            </div>
+            <div class="menu-btn" onclick="switchView('config', this)">
+                <i class="fa-solid fa-sliders"></i> <span>Ajustes</span>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">v8.1 Filtro Smart</div>
+    </nav>
+
+    <main class="main-content">
+        <div class="header-top">
+            <div class="header-info">
+                <h1 id="page-title">Dashboard</h1>
+                <p id="page-subtitle">Monitoreo en Tiempo Real</p>
+            </div>
+            <div id="status-badge" class="status-badge status-online">
+                <div id="status-dot" class="dot dot-online"></div>
+                <span id="status-text">ONLINE</span>
+            </div>
+        </div>
+
+        <div class="content-area">
+
+            <div id="offline-banner" class="offline-banner">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span><strong>ATENCIÓN:</strong> El sensor no ha enviado datos recientemente. Verifique la conexión o energía.</span>
+            </div>
+
+            <section id="dashboard" class="view-section active">
+                <div class="metrics-grid">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <span class="card-label">Temperatura</span>
+                            <div class="icon-box icon-temp"><i class="fa-solid fa-temperature-half"></i></div>
+                        </div>
+                        <div class="big-value">
+                            <span id="temp-val">--</span><span class="unit">°C</span>
+                        </div>
+                        <div class="sub-text">Dato de: <span id="time-val" style="font-weight:600; color:white;">--:--</span></div>
+                    </div>
+
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <span class="card-label">Humedad</span>
+                            <div class="icon-box icon-hum"><i class="fa-solid fa-droplet"></i></div>
+                        </div>
+                        <div class="big-value" style="color: var(--neon-blue);">
+                            <span id="hum-val">--</span><span class="unit">%</span>
+                        </div>
+                        <div class="sub-text">Humedad Relativa</div>
+                    </div>
+
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <span class="card-label">Lluvia Total</span>
+                            <div class="icon-box icon-rain"><i class="fa-solid fa-cloud-rain"></i></div>
+                        </div>
+                        <div class="big-value" style="color: var(--neon-purple);">
+                            <span id="rain-val">--</span><span class="unit">mm</span>
+                        </div>
+                        <div class="sub-text">Acumulado Sesión</div>
+                    </div>
+
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <span class="card-label">Estado Señal</span>
+                            <div id="signal-icon" class="icon-box icon-stat"><i class="fa-solid fa-wifi"></i></div>
+                        </div>
+                        <div class="big-value" style="font-size: 1.8rem; margin-top: 10px; color: var(--neon-green);" id="connection-status">
+                            CONECTADO
+                        </div>
+                        <div class="sub-text" id="last-seen-text">Sincronizado ahora</div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div class="card-header">
+                        <span class="card-label">Tendencia Térmica</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="tempChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="historial" class="view-section">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <span class="card-label">Últimos Registros</span>
+                        <div class="btn-download-group">
+                            <button class="btn-download btn-dl-clima" onclick="downloadClimaCSV()">
+                                <i class="fa-solid fa-file-csv"></i> Clima
+                            </button>
+                            <button class="btn-download btn-dl-rain" onclick="downloadLluviaCSV()">
+                                <i class="fa-solid fa-cloud-showers-heavy"></i> Lluvia
+                            </button>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead><tr><th>Fecha</th><th>Hora</th><th>Temp</th><th>Hum</th><th>Lluvia</th></tr></thead>
+                            <tbody id="history-body">
+                                <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="analisis" class="view-section">
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="btn-temp" onclick="switchAnalysisMode('temp')">Temperatura</button>
+                    <button class="toggle-btn" id="btn-hum" onclick="switchAnalysisMode('hum')">Humedad</button>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="glass-card">
+                        <div class="card-header"><span class="card-label">Máxima Registrada</span></div>
+                        <div class="big-value" style="font-size: 2.5rem;"><span id="max-stat">--</span><span class="unit" id="unit-1"></span></div>
+                        <span class="record-date" id="max-date">--/-- --:--</span>
+                    </div>
+                    <div class="glass-card">
+                        <div class="card-header"><span class="card-label">Mínima Registrada</span></div>
+                        <div class="big-value" style="font-size: 2.5rem;"><span id="min-stat">--</span><span class="unit" id="unit-2"></span></div>
+                        <span class="record-date" id="min-date">--/-- --:--</span>
+                    </div>
+                    <div class="glass-card">
+                        <div class="card-header"><span class="card-label">Promedio General</span></div>
+                        <div class="big-value" style="font-size: 2.5rem;"><span id="avg-stat">--</span><span class="unit" id="unit-3"></span></div>
+                        <span class="sub-text">Últimas 20 lecturas</span>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div class="card-header"><span class="card-label">Distribución Estadística</span></div>
+                    <div class="chart-wrapper">
+                        <canvas id="statsChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="config" class="view-section">
+                <div class="glass-card" style="max-width: 500px;">
+                    <div class="card-header"><span class="card-label">Configuración de Alertas</span></div>
+                    
+                    <label style="display:block; margin-bottom:10px; color:var(--text-muted);">Alerta Temperatura (°C)</label>
+                    <input type="number" id="temp-threshold" class="config-input" value="35">
+                    
+                    <label style="display:block; margin-bottom:10px; color:var(--text-muted);">Alerta Humedad (%)</label>
+                    <input type="number" id="hum-threshold" class="config-input" value="70">
+
+                    <button class="btn-neon" onclick="saveConfig()">Guardar Cambios</button>
+                </div>
+            </section>
+
+            <div class="mobile-footer-credit">
+                Desarrollado por: <strong>Armando Gutierrez</strong>
+            </div>
+
+        </div>
+    </main>
+
+<script>
+    const firebaseConfig = { databaseURL: "https://estacion-texcoco-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const appState = {
+        currentView: 'dashboard',
+        tempThreshold: 35,
+        humThreshold: 70,
+        fullHistory: [], 
+        analysisMode: 'temp',
+        lastTimestamp: 0,
+        charts: {}
+    };
+
+    function switchView(viewId, btn) {
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(viewId).classList.add('active');
+        const titles = { dashboard: 'Dashboard', historial: 'Base de Datos', analisis: 'Estadísticas', config: 'Configuración' };
+        document.getElementById('page-title').innerText = titles[viewId];
+        if(viewId === 'analisis' && appState.charts.stats) setTimeout(() => appState.charts.stats.resize(), 100);
+    }
+
+    function initCharts() {
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
+
+        const ctxTemp = document.getElementById('tempChart').getContext('2d');
+        const grad = ctxTemp.createLinearGradient(0,0,0,300);
+        grad.addColorStop(0, 'rgba(244, 114, 182, 0.4)');
+        grad.addColorStop(1, 'rgba(244, 114, 182, 0)');
+
+        appState.charts.temp = new Chart(ctxTemp, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Temp', data: [], borderColor: '#f472b6', backgroundColor: grad, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 0, pointHoverRadius: 6 }] },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { x: { display: false } },
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                }
+            }
+        });
+
+        const ctxStats = document.getElementById('statsChart');
+        appState.charts.stats = new Chart(ctxStats, {
+            type: 'bar',
+            data: { labels: ['Min', 'Prom', 'Max'], datasets: [{ data: [0,0,0], backgroundColor: ['#38bdf8', '#818cf8', '#c084fc'], borderRadius: 10 }] },
+            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { display: false } } } }
+        });
+    }
+
+    function checkSystemHealth() {
+        if (appState.lastTimestamp === 0) return;
+        const diffMinutes = (Date.now() - appState.lastTimestamp) / 1000 / 60;
+        
+        const badge = document.getElementById('status-badge');
+        const dot = document.getElementById('status-dot');
+        const text = document.getElementById('status-text');
+        const banner = document.getElementById('offline-banner');
+        const connStatus = document.getElementById('connection-status');
+        const icon = document.getElementById('signal-icon');
+
+        if (diffMinutes > 5) { 
+            badge.className = "status-badge status-offline"; dot.className = "dot dot-offline"; text.innerText = "OFFLINE";
+            banner.style.display = "flex"; connStatus.innerText = "DESCONECTADO"; connStatus.style.color = "var(--neon-red)"; icon.className = "icon-box icon-off";
+        } else { 
+            badge.className = "status-badge status-online"; dot.className = "dot dot-online"; text.innerText = "ONLINE";
+            banner.style.display = "none"; connStatus.innerText = "CONECTADO"; connStatus.style.color = "var(--neon-green)"; icon.className = "icon-box icon-stat";
+        }
+    }
+    setInterval(checkSystemHealth, 60000);
+
+    function switchAnalysisMode(mode) {
+        appState.analysisMode = mode;
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(mode === 'temp' ? 'btn-temp' : 'btn-hum').classList.add('active');
+        updateAnalysisUI();
+    }
+
+    function updateAnalysisUI() {
+        const mode = appState.analysisMode;
+        const unit = mode === 'temp' ? '°C' : '%';
+        const data = appState.fullHistory;
+
+        document.getElementById('unit-1').innerText = unit;
+        document.getElementById('unit-2').innerText = unit;
+        document.getElementById('unit-3').innerText = unit;
+
+        if(data.length === 0) return;
+
+        const cleanData = data.map(d => ({
+            val: parseFloat(mode === 'temp' ? d.temperatura : d.humedad),
+            date: new Date(d.fecha)
+        })).filter(d => !isNaN(d.val));
+
+        if(cleanData.length === 0) return;
+
+        const maxObj = cleanData.reduce((prev, curr) => (curr.val > prev.val) ? curr : prev);
+        const minObj = cleanData.reduce((prev, curr) => (curr.val < prev.val) ? curr : prev);
+        const avg = (cleanData.reduce((acc, curr) => acc + curr.val, 0) / cleanData.length).toFixed(1);
+
+        const formatDate = (date) => date.toLocaleString("es-MX", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+
+        document.getElementById('max-stat').innerText = maxObj.val.toFixed(1);
+        document.getElementById('max-date').innerText = "Reg: " + formatDate(maxObj.date);
+
+        document.getElementById('min-stat').innerText = minObj.val.toFixed(1);
+        document.getElementById('min-date').innerText = "Reg: " + formatDate(minObj.date);
+
+        document.getElementById('avg-stat').innerText = avg;
+
+        if(appState.charts.stats) { 
+            appState.charts.stats.data.datasets[0].data = [minObj.val, avg, maxObj.val]; 
+            appState.charts.stats.update(); 
+        }
+    }
+
+    db.ref('/historial').limitToLast(20).on('value', snap => {
+        const tbody = document.getElementById('history-body');
+        tbody.innerHTML = "";
+        let labels = [], dataChart = [], rows = [];
+        appState.fullHistory = []; 
+
+        let lastEntryTime = 0, lastTemp = 0, lastHum = 0, lastRain = 0;
+
+        snap.forEach(child => {
+            const val = child.val();
+            if(val.fecha) {
+                const dateObj = new Date(val.fecha);
+                const dateStr = dateObj.toLocaleDateString("es-MX", {day: '2-digit', month: '2-digit'});
+                const timeStr = dateObj.toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
+                
+                lastEntryTime = dateObj.getTime();
+                lastTemp = val.temperatura;
+                lastHum = val.humedad;
+                
+                // Leemos lluvia acumulada
+                lastRain = (val.mm_total !== undefined) ? val.mm_total : 0; 
+
+                labels.push(timeStr);
+                dataChart.push(val.temperatura);
+                appState.fullHistory.push(val);
+
+                rows.unshift(`<tr>
+                    <td style="color:#94a3b8; font-size:0.85rem;">${dateStr}</td>
+                    <td style="color:#f1f5f9;">${timeStr}</td>
+                    <td style="color:#f472b6; font-weight:bold;">${val.temperatura ? val.temperatura : '--'}°</td>
+                    <td style="color:#38bdf8">${val.humedad ? val.humedad : '--'}%</td>
+                    <td style="color:#c084fc; font-weight:bold;">${lastRain.toFixed(1)} mm</td>
+                </tr>`);
+            }
+        });
+
+        if (lastEntryTime > 0) {
+            if(lastTemp) document.getElementById('temp-val').innerText = parseFloat(lastTemp).toFixed(1);
+            if(lastHum) document.getElementById('hum-val').innerText = parseFloat(lastHum).toFixed(0);
+            document.getElementById('rain-val').innerText = parseFloat(lastRain).toFixed(1);
+            
+            const fullDateStr = new Date(lastEntryTime).toLocaleString("es-MX", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+            document.getElementById('time-val').innerText = fullDateStr;
+            document.getElementById('last-seen-text').innerText = "Último dato: " + fullDateStr;
+
+            appState.lastTimestamp = lastEntryTime;
+            checkSystemHealth(); 
+
+            const cardTemp = document.getElementById('temp-val').closest('.glass-card');
+            if(parseFloat(lastTemp) > appState.tempThreshold) cardTemp.classList.add('warning'); else cardTemp.classList.remove('warning');
+            
+            const cardHum = document.getElementById('hum-val').closest('.glass-card');
+            if(parseFloat(lastHum) > appState.humThreshold) cardHum.classList.add('warning'); else cardHum.classList.remove('warning');
+        }
+
+        tbody.innerHTML = rows.join("");
+        if(appState.charts.temp) { appState.charts.temp.data.labels = labels; appState.charts.temp.data.datasets[0].data = dataChart; appState.charts.temp.update(); }
+        updateAnalysisUI();
+    });
+
+    function saveConfig() {
+        appState.tempThreshold = parseFloat(document.getElementById('temp-threshold').value);
+        appState.humThreshold = parseFloat(document.getElementById('hum-threshold').value);
+        const btn = document.querySelector('.btn-neon');
+        btn.innerText = "¡Configuración Guardada!";
+        setTimeout(() => btn.innerText = "Guardar Cambios", 2000);
+    }
+
+    function downloadClimaCSV() {
+        db.ref('/historial').once('value').then(snap => {
+            let csv = "Fecha,Hora,Temperatura (C),Humedad (%)\n";
+            snap.forEach(child => {
+                const d = child.val();
+                if(d.fecha) {
+                    const dateObj = new Date(d.fecha);
+                    const date = dateObj.toLocaleDateString("es-MX");
+                    const time = dateObj.toLocaleTimeString("es-MX");
+                    const t = d.temperatura !== undefined ? d.temperatura : "";
+                    const h = d.humedad !== undefined ? d.humedad : "";
+                    csv += `${date},${time},${t},${h}\n`;
+                }
+            });
+            downloadFile(csv, "Reporte_Clima.csv");
+        });
+    }
+
+    // --- FUNCIÓN DE LLUVIA OPTIMIZADA ---
+    function downloadLluviaCSV() {
+        db.ref('/historial').once('value').then(snap => {
+            let csv = "Fecha,Hora,Lluvia_Minuto (mm),Lluvia_Acumulada (mm)\n";
+            
+            // FILTRO DE DATOS REPETIDOS
+            let ultimoValorGuardado = -1; 
+
+            snap.forEach(child => {
+                const d = child.val();
+                if(d.fecha) {
+                    const mmTot = d.mm_total !== undefined ? d.mm_total : 0;
+                    const mmMin = d.mm_min !== undefined ? d.mm_min : 0;
+
+                    // Si el valor acumulado cambió respecto al último guardado
+                    // O si hubo lluvia en ese minuto específico... ¡Guardamos!
+                    if (mmTot !== ultimoValorGuardado || mmMin > 0) {
+                        
+                        const dateObj = new Date(d.fecha);
+                        const date = dateObj.toLocaleDateString("es-MX");
+                        const time = dateObj.toLocaleTimeString("es-MX");
+                        
+                        csv += `${date},${time},${mmMin},${mmTot}\n`;
+                        
+                        ultimoValorGuardado = mmTot;
+                    }
+                }
+            });
+            downloadFile(csv, "Reporte_Lluvia_Limpio.csv");
+        });
+    }
+
+    function downloadFile(content, fileName) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([content], {type:'text/csv'}));
+        link.download = fileName;
+        link.click();
+    }
+
+    document.addEventListener('DOMContentLoaded', initCharts);
+</script>
+
+</body>
+</html>
