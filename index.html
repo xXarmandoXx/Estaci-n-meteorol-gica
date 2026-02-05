@@ -402,19 +402,12 @@
                 scales: { 
                     x: { display: false },
                     y: {
-                        // FIX: Escala lineal con pasos enteros y margen visual
                         type: 'linear',
                         grace: '50%', 
-                        ticks: {
-                            stepSize: 1,   
-                            precision: 0   
-                        }
+                        ticks: { stepSize: 1, precision: 0 }
                     }
                 },
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                }
+                interaction: { mode: 'index', intersect: false }
             }
         });
 
@@ -498,7 +491,7 @@
         let labels = [], dataChart = [], rows = [];
         appState.fullHistory = []; 
 
-        let lastEntryTime = 0, lastTemp = 0, lastHum = 0, lastRain = 0;
+        let lastEntryTime = 0, lastTemp = 0, lastHum = 0, rainForCard = 0;
 
         snap.forEach(child => {
             const val = child.val();
@@ -511,8 +504,17 @@
                 lastTemp = val.temperatura;
                 lastHum = val.humedad;
                 
-                // Leemos lluvia acumulada, si no existe asumimos 0
-                lastRain = (val.mm_total !== undefined) ? val.mm_total : 0; 
+                // --- AQUI ESTA LA MAGIA DE LA SEPARACION ---
+                
+                // 1. LLUVIA TOTAL (Para la Tarjeta Grande)
+                // Buscamos "mm_total". Si no existe, usamos 0.
+                if (val.mm_total !== undefined) {
+                    rainForCard = val.mm_total;
+                }
+
+                // 2. LLUVIA INTERVALO (Para la Tabla y CSV)
+                // Buscamos "mm_min". Si no existe, usamos 0.
+                let rainForTable = (val.mm_min !== undefined) ? val.mm_min : 0;
 
                 labels.push(timeStr);
                 dataChart.push(val.temperatura);
@@ -523,7 +525,7 @@
                     <td style="color:#f1f5f9;">${timeStr}</td>
                     <td style="color:#f472b6; font-weight:bold;">${val.temperatura ? val.temperatura : '--'}°</td>
                     <td style="color:#38bdf8">${val.humedad ? val.humedad : '--'}%</td>
-                    <td style="color:#c084fc; font-weight:bold;">${lastRain.toFixed(1)} mm</td>
+                    <td style="color:#c084fc; font-weight:bold;">${rainForTable.toFixed(1)} mm</td>
                 </tr>`);
             }
         });
@@ -531,7 +533,9 @@
         if (lastEntryTime > 0) {
             if(lastTemp) document.getElementById('temp-val').innerText = parseFloat(lastTemp).toFixed(1);
             if(lastHum) document.getElementById('hum-val').innerText = parseFloat(lastHum).toFixed(0);
-            document.getElementById('rain-val').innerText = parseFloat(lastRain).toFixed(1);
+            
+            // AQUI USAMOS EL DATO ACUMULADO PARA LA TARJETA
+            document.getElementById('rain-val').innerText = parseFloat(rainForCard).toFixed(1);
             
             const fullDateStr = new Date(lastEntryTime).toLocaleString("es-MX", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
             document.getElementById('time-val').innerText = fullDateStr;
@@ -560,15 +564,14 @@
         setTimeout(() => btn.innerText = "Guardar Cambios", 2000);
     }
 
-    // --- FUNCION DE DESCARGA MAESTRA UNIFICADA ---
+    // --- FUNCION DE DESCARGA MAESTRA ---
     function downloadMasterCSV() {
         const btn = document.querySelector('.btn-dl-master');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
 
         db.ref('/historial').once('value').then(snap => {
-            // Encabezados unificados
-            let csv = "Fecha,Hora,Temperatura (C),Humedad (%),Lluvia_Acumulada (mm)\n";
+            let csv = "Fecha,Hora,Temperatura (C),Humedad (%),Lluvia_Intervalo (mm)\n";
             
             snap.forEach(child => {
                 const d = child.val();
@@ -580,9 +583,8 @@
                     const t = d.temperatura !== undefined ? d.temperatura : "";
                     const h = d.humedad !== undefined ? d.humedad : "";
                     
-                    // AQUI ESTA LA LOGICA DEL 0:
-                    // Si 'mm_total' existe usa su valor, si no existe (undefined) pon 0.
-                    const r = d.mm_total !== undefined ? d.mm_total : 0;
+                    // PARA EL EXCEL: Usamos 'mm_min' (Intervalo)
+                    const r = d.mm_min !== undefined ? d.mm_min : 0;
 
                     csv += `${date},${time},${t},${h},${r}\n`;
                 }
