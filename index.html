@@ -131,13 +131,13 @@
         .config-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 15px; border-radius: 12px; font-size: 1rem; margin-bottom: 20px; }
         .btn-neon { width: 100%; background: linear-gradient(90deg, var(--neon-blue), #2563eb); border: none; padding: 15px; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
         
-        /* Botones de descarga */
+        /* Botón ÚNICO de descarga */
         .btn-download-group { display: flex; gap: 10px; }
         .btn-download { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
-        .btn-dl-clima { background: var(--neon-green); color: #064e3b; }
-        .btn-dl-clima:hover { background: #6ee7b7; }
-        .btn-dl-rain { background: var(--neon-purple); color: #4c1d95; }
-        .btn-dl-rain:hover { background: #d8b4fe; }
+        
+        /* Estilo unificado para el botón master */
+        .btn-dl-master { background: var(--neon-blue); color: #0f172a; width: 100%; justify-content: center;}
+        .btn-dl-master:hover { background: #bae6fd; }
 
         /* --- 5. IPHONE / MÓVIL --- */
         @media (max-width: 768px) {
@@ -205,7 +205,7 @@
             </div>
         </div>
 
-        <div class="sidebar-footer">v8.2 Filtro Smooth</div>
+        <div class="sidebar-footer">v8.3 Master Report</div>
     </nav>
 
     <main class="main-content">
@@ -288,12 +288,9 @@
                 <div class="glass-card">
                     <div class="card-header">
                         <span class="card-label">Últimos Registros</span>
-                        <div class="btn-download-group">
-                            <button class="btn-download btn-dl-clima" onclick="downloadClimaCSV()">
-                                <i class="fa-solid fa-file-csv"></i> Clima
-                            </button>
-                            <button class="btn-download btn-dl-rain" onclick="downloadLluviaCSV()">
-                                <i class="fa-solid fa-cloud-showers-heavy"></i> Lluvia
+                        <div class="btn-download-group" style="min-width: 200px;">
+                            <button class="btn-download btn-dl-master" onclick="downloadMasterCSV()">
+                                <i class="fa-solid fa-file-excel"></i> Descargar Reporte Completo
                             </button>
                         </div>
                     </div>
@@ -405,14 +402,12 @@
                 scales: { 
                     x: { display: false },
                     y: {
-                        // --- CORRECCIÓN APLICADA AQUÍ ---
-                        // Forzamos pasos enteros y añadimos 'grace' (margen)
-                        // para que variaciones de 0.1 o 0.2 no se vean como picos gigantes.
+                        // FIX: Escala lineal con pasos enteros y margen visual
                         type: 'linear',
-                        grace: '50%', // Añade 50% extra de altura visual
+                        grace: '50%', 
                         ticks: {
-                            stepSize: 1,   // Solo muestra líneas en enteros (23, 24, 25)
-                            precision: 0   // Elimina decimales en el eje
+                            stepSize: 1,   
+                            precision: 0   
                         }
                     }
                 },
@@ -516,7 +511,7 @@
                 lastTemp = val.temperatura;
                 lastHum = val.humedad;
                 
-                // Leemos lluvia acumulada
+                // Leemos lluvia acumulada, si no existe asumimos 0
                 lastRain = (val.mm_total !== undefined) ? val.mm_total : 0; 
 
                 labels.push(timeStr);
@@ -565,53 +560,36 @@
         setTimeout(() => btn.innerText = "Guardar Cambios", 2000);
     }
 
-    function downloadClimaCSV() {
+    // --- FUNCION DE DESCARGA MAESTRA UNIFICADA ---
+    function downloadMasterCSV() {
+        const btn = document.querySelector('.btn-dl-master');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
+
         db.ref('/historial').once('value').then(snap => {
-            let csv = "Fecha,Hora,Temperatura (C),Humedad (%)\n";
+            // Encabezados unificados
+            let csv = "Fecha,Hora,Temperatura (C),Humedad (%),Lluvia_Acumulada (mm)\n";
+            
             snap.forEach(child => {
                 const d = child.val();
                 if(d.fecha) {
                     const dateObj = new Date(d.fecha);
                     const date = dateObj.toLocaleDateString("es-MX");
                     const time = dateObj.toLocaleTimeString("es-MX");
+                    
                     const t = d.temperatura !== undefined ? d.temperatura : "";
                     const h = d.humedad !== undefined ? d.humedad : "";
-                    csv += `${date},${time},${t},${h}\n`;
+                    
+                    // AQUI ESTA LA LOGICA DEL 0:
+                    // Si 'mm_total' existe usa su valor, si no existe (undefined) pon 0.
+                    const r = d.mm_total !== undefined ? d.mm_total : 0;
+
+                    csv += `${date},${time},${t},${h},${r}\n`;
                 }
             });
-            downloadFile(csv, "Reporte_Clima.csv");
-        });
-    }
-
-    // --- FUNCIÓN DE LLUVIA OPTIMIZADA ---
-    function downloadLluviaCSV() {
-        db.ref('/historial').once('value').then(snap => {
-            let csv = "Fecha,Hora,Lluvia_Minuto (mm),Lluvia_Acumulada (mm)\n";
             
-            // FILTRO DE DATOS REPETIDOS
-            let ultimoValorGuardado = -1; 
-
-            snap.forEach(child => {
-                const d = child.val();
-                if(d.fecha) {
-                    const mmTot = d.mm_total !== undefined ? d.mm_total : 0;
-                    const mmMin = d.mm_min !== undefined ? d.mm_min : 0;
-
-                    // Si el valor acumulado cambió respecto al último guardado
-                    // O si hubo lluvia en ese minuto específico... ¡Guardamos!
-                    if (mmTot !== ultimoValorGuardado || mmMin > 0) {
-                        
-                        const dateObj = new Date(d.fecha);
-                        const date = dateObj.toLocaleDateString("es-MX");
-                        const time = dateObj.toLocaleTimeString("es-MX");
-                        
-                        csv += `${date},${time},${mmMin},${mmTot}\n`;
-                        
-                        ultimoValorGuardado = mmTot;
-                    }
-                }
-            });
-            downloadFile(csv, "Reporte_Lluvia_Limpio.csv");
+            downloadFile(csv, "Reporte_Estacion_Completo.csv");
+            btn.innerHTML = originalText;
         });
     }
 
