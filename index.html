@@ -9,7 +9,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Clima Mando">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/480/clouds.png">
-
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -132,11 +131,13 @@
         .config-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 15px; border-radius: 12px; font-size: 1rem; margin-bottom: 20px; }
         .btn-neon { width: 100%; background: linear-gradient(90deg, var(--neon-blue), #2563eb); border: none; padding: 15px; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
         
-        /* Botones de descarga - UNIFICADO */
+        /* Botones de descarga */
         .btn-download-group { display: flex; gap: 10px; }
-        .btn-download { border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: 0.2s; width: 100%; justify-content: center; }
-        .btn-dl-master { background: linear-gradient(90deg, #10b981, #059669); color: #fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
-        .btn-dl-master:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
+        .btn-download { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .btn-dl-clima { background: var(--neon-green); color: #064e3b; }
+        .btn-dl-clima:hover { background: #6ee7b7; }
+        .btn-dl-rain { background: var(--neon-purple); color: #4c1d95; }
+        .btn-dl-rain:hover { background: #d8b4fe; }
 
         /* --- 5. IPHONE / MÓVIL --- */
         @media (max-width: 768px) {
@@ -204,7 +205,7 @@
             </div>
         </div>
 
-        <div class="sidebar-footer">v9.0 Master CSV</div>
+        <div class="sidebar-footer">v8.2 Filtro Smooth</div>
     </nav>
 
     <main class="main-content">
@@ -286,10 +287,13 @@
             <section id="historial" class="view-section">
                 <div class="glass-card">
                     <div class="card-header">
-                        <span class="card-label">Base de Datos</span>
+                        <span class="card-label">Últimos Registros</span>
                         <div class="btn-download-group">
-                            <button class="btn-download btn-dl-master" onclick="downloadMasterCSV()">
-                                <i class="fa-solid fa-file-csv"></i> Descargar Reporte Completo
+                            <button class="btn-download btn-dl-clima" onclick="downloadClimaCSV()">
+                                <i class="fa-solid fa-file-csv"></i> Clima
+                            </button>
+                            <button class="btn-download btn-dl-rain" onclick="downloadLluviaCSV()">
+                                <i class="fa-solid fa-cloud-showers-heavy"></i> Lluvia
                             </button>
                         </div>
                     </div>
@@ -398,7 +402,20 @@
                 responsive: true, 
                 maintainAspectRatio: false, 
                 plugins: { legend: { display: false } }, 
-                scales: { x: { display: false } },
+                scales: { 
+                    x: { display: false },
+                    y: {
+                        // --- CORRECCIÓN APLICADA AQUÍ ---
+                        // Forzamos pasos enteros y añadimos 'grace' (margen)
+                        // para que variaciones de 0.1 o 0.2 no se vean como picos gigantes.
+                        type: 'linear',
+                        grace: '50%', // Añade 50% extra de altura visual
+                        ticks: {
+                            stepSize: 1,   // Solo muestra líneas en enteros (23, 24, 25)
+                            precision: 0   // Elimina decimales en el eje
+                        }
+                    }
+                },
                 interaction: {
                     mode: 'index',
                     intersect: false,
@@ -499,7 +516,7 @@
                 lastTemp = val.temperatura;
                 lastHum = val.humedad;
                 
-                // Leemos lluvia acumulada para el monitor
+                // Leemos lluvia acumulada
                 lastRain = (val.mm_total !== undefined) ? val.mm_total : 0; 
 
                 labels.push(timeStr);
@@ -548,39 +565,53 @@
         setTimeout(() => btn.innerText = "Guardar Cambios", 2000);
     }
 
-    // --- FUNCIÓN MAESTRA DE DESCARGA (UNIFICADA) ---
-    function downloadMasterCSV() {
-        const btn = document.querySelector('.btn-dl-master');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
-
+    function downloadClimaCSV() {
         db.ref('/historial').once('value').then(snap => {
-            // Encabezados del CSV (Todo en uno)
-            let csv = "Fecha,Hora,Temperatura (°C),Humedad (%),Lluvia (mm)\n";
-            
+            let csv = "Fecha,Hora,Temperatura (C),Humedad (%)\n";
             snap.forEach(child => {
                 const d = child.val();
                 if(d.fecha) {
                     const dateObj = new Date(d.fecha);
                     const date = dateObj.toLocaleDateString("es-MX");
                     const time = dateObj.toLocaleTimeString("es-MX");
-                    
                     const t = d.temperatura !== undefined ? d.temperatura : "";
                     const h = d.humedad !== undefined ? d.humedad : "";
-                    
-                    // LÓGICA DE LLUVIA:
-                    // Si existe mm_min, lo usamos. Si no existe o es null, ponemos 0.
-                    let r = (d.mm_min !== undefined && d.mm_min !== null) ? d.mm_min : 0;
-
-                    // Agregamos la fila al CSV
-                    csv += `${date},${time},${t},${h},${r}\n`;
+                    csv += `${date},${time},${t},${h}\n`;
                 }
             });
+            downloadFile(csv, "Reporte_Clima.csv");
+        });
+    }
+
+    // --- FUNCIÓN DE LLUVIA OPTIMIZADA ---
+    function downloadLluviaCSV() {
+        db.ref('/historial').once('value').then(snap => {
+            let csv = "Fecha,Hora,Lluvia_Minuto (mm),Lluvia_Acumulada (mm)\n";
             
-            downloadFile(csv, "Reporte_Completo_Estacion.csv");
-            
-            // Restauramos el botón
-            btn.innerHTML = originalText;
+            // FILTRO DE DATOS REPETIDOS
+            let ultimoValorGuardado = -1; 
+
+            snap.forEach(child => {
+                const d = child.val();
+                if(d.fecha) {
+                    const mmTot = d.mm_total !== undefined ? d.mm_total : 0;
+                    const mmMin = d.mm_min !== undefined ? d.mm_min : 0;
+
+                    // Si el valor acumulado cambió respecto al último guardado
+                    // O si hubo lluvia en ese minuto específico... ¡Guardamos!
+                    if (mmTot !== ultimoValorGuardado || mmMin > 0) {
+                        
+                        const dateObj = new Date(d.fecha);
+                        const date = dateObj.toLocaleDateString("es-MX");
+                        const time = dateObj.toLocaleTimeString("es-MX");
+                        
+                        csv += `${date},${time},${mmMin},${mmTot}\n`;
+                        
+                        ultimoValorGuardado = mmTot;
+                    }
+                }
+            });
+            downloadFile(csv, "Reporte_Lluvia_Limpio.csv");
         });
     }
 
