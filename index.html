@@ -133,14 +133,13 @@
         .btn-neon { width: 100%; background: linear-gradient(90deg, var(--neon-blue), #2563eb); border: none; padding: 15px; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
         
         /* Botones de descarga */
-        .btn-download-group { display: flex; gap: 10px; }
-        .btn-download { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
-        .btn-dl-clima { background: var(--neon-green); color: #064e3b; }
-        .btn-dl-clima:hover { background: #6ee7b7; }
-        .btn-dl-rain { background: var(--neon-purple); color: #4c1d95; }
-        .btn-dl-rain:hover { background: #d8b4fe; }
+        .btn-download { 
+            border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; 
+            font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; 
+            transition: 0.2s; background: var(--neon-green); color: #064e3b; 
+        }
+        .btn-download:hover { background: #6ee7b7; box-shadow: 0 0 10px rgba(52, 211, 153, 0.4); }
 
-        /* Estilo para la temperatura secundaria */
         .secondary-temp { font-size: 1rem; color: var(--neon-orange); font-weight: 600; display: flex; align-items: center; gap: 5px; }
         .label-sensor { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-right: 5px; }
 
@@ -210,7 +209,7 @@
             </div>
         </div>
 
-        <div class="sidebar-footer">v8.2 Dual Sensor</div>
+        <div class="sidebar-footer">v8.3 Full CSV</div>
     </nav>
 
     <main class="main-content">
@@ -301,14 +300,9 @@
                 <div class="glass-card">
                     <div class="card-header">
                         <span class="card-label">Últimos Registros</span>
-                        <div class="btn-download-group">
-                            <button class="btn-download btn-dl-clima" onclick="downloadClimaCSV()">
-                                <i class="fa-solid fa-file-csv"></i> Clima
-                            </button>
-                            <button class="btn-download btn-dl-rain" onclick="downloadLluviaCSV()">
-                                <i class="fa-solid fa-cloud-showers-heavy"></i> Lluvia
-                            </button>
-                        </div>
+                        <button class="btn-download" onclick="downloadFullCSV()">
+                            <i class="fa-solid fa-file-excel"></i> Reporte Completo
+                        </button>
                     </div>
                     <div style="overflow-x: auto;">
                         <table>
@@ -544,9 +538,9 @@
                 
                 lastEntryTime = dateObj.getTime();
                 
-                // LÓGICA DE COMPATIBILIDAD (Datos viejos vs Nuevos)
+                // LÓGICA DE COMPATIBILIDAD
                 let tempDHT = val.t_dht !== undefined ? val.t_dht : val.temperatura;
-                let tempNTC = val.t_termistor !== undefined ? val.t_termistor : 0; // Si no hay dato, 0
+                let tempNTC = val.t_termistor !== undefined ? val.t_termistor : 0;
 
                 lastDHT = tempDHT;
                 lastNTC = tempNTC;
@@ -605,9 +599,12 @@
         setTimeout(() => btn.innerText = "Guardar Cambios", 2000);
     }
 
-    function downloadClimaCSV() {
+    // --- NUEVA FUNCION UNIFICADA ---
+    function downloadFullCSV() {
         db.ref('/historial').once('value').then(snap => {
-            let csv = "Fecha,Hora,Temp_DHT11,Temp_Termistor,Humedad (%)\n";
+            // Encabezados en una sola fila
+            let csv = "Fecha,Hora,Temp_DHT11_Digital(C),Temp_Termistor_Analogo(C),Humedad(%),Lluvia_Total(mm)\n";
+            
             snap.forEach(child => {
                 const d = child.val();
                 if(d.fecha) {
@@ -615,34 +612,16 @@
                     const date = dateObj.toLocaleDateString("es-MX");
                     const time = dateObj.toLocaleTimeString("es-MX");
                     
-                    let t1 = d.t_dht !== undefined ? d.t_dht : (d.temperatura || "");
-                    let t2 = d.t_termistor !== undefined ? d.t_termistor : "";
+                    // Aseguramos que si falta algún dato, no rompa la fila
+                    let t_dht = d.t_dht !== undefined ? d.t_dht : (d.temperatura || "");
+                    let t_ntc = d.t_termistor !== undefined ? d.t_termistor : "";
                     let h = d.humedad !== undefined ? d.humedad : "";
+                    let r = d.mm_total !== undefined ? d.mm_total : 0;
                     
-                    csv += `${date},${time},${t1},${t2},${h}\n`;
+                    csv += `${date},${time},${t_dht},${t_ntc},${h},${r}\n`;
                 }
             });
-            downloadFile(csv, "Reporte_Comparativo_Sensores.csv");
-        });
-    }
-
-    function downloadLluviaCSV() {
-        db.ref('/historial').once('value').then(snap => {
-            let csv = "Fecha,Hora,Lluvia_Minuto (mm),Lluvia_Acumulada (mm)\n";
-            let ultimoValorGuardado = -1; 
-            snap.forEach(child => {
-                const d = child.val();
-                if(d.fecha) {
-                    const mmTot = d.mm_total !== undefined ? d.mm_total : 0;
-                    const mmMin = d.mm_min !== undefined ? d.mm_min : 0;
-                    if (mmTot !== ultimoValorGuardado || mmMin > 0) {
-                        const dateObj = new Date(d.fecha);
-                        csv += `${dateObj.toLocaleDateString("es-MX")},${dateObj.toLocaleTimeString("es-MX")},${mmMin},${mmTot}\n`;
-                        ultimoValorGuardado = mmTot;
-                    }
-                }
-            });
-            downloadFile(csv, "Reporte_Lluvia.csv");
+            downloadFile(csv, "Reporte_Completo_Estacion.csv");
         });
     }
 
