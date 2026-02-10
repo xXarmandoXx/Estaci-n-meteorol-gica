@@ -117,14 +117,12 @@
         .sub-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; display:flex; justify-content: space-between; }
         .record-date { display: block; font-size: 0.75rem; color: var(--neon-blue); margin-top: 5px; font-weight: 500; opacity: 0.8; }
 
-        /* --- NUEVO: ESTILOS PARA LA TARJETA DUAL DE TEMPERATURA --- */
+        /* Tarjeta Dual */
         .dual-temp-container { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
         .temp-box { width: 48%; display: flex; flex-direction: column; align-items: center; }
         .temp-divider { width: 1px; height: 50px; background: rgba(255,255,255,0.1); }
-        
         .val-dual { font-size: 2.2rem; font-weight: 700; line-height: 1; }
         .lbl-dual { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;}
-        
         .color-dht { color: var(--neon-pink); }
         .color-ntc { color: var(--neon-orange); }
 
@@ -135,19 +133,19 @@
         td { padding: 15px; border-bottom: 1px solid var(--glass-border); color: var(--text-main); }
         tr:hover { background: rgba(255,255,255,0.02); }
 
-        .toggle-group { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 4px; display: inline-flex; margin-bottom: 25px; }
-        .toggle-btn { padding: 8px 20px; border: none; background: transparent; color: var(--text-muted); font-weight: 600; cursor: pointer; border-radius: 8px; transition: 0.3s; }
+        .toggle-group { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 4px; display: inline-flex; margin-bottom: 25px; flex-wrap: wrap; gap: 5px; }
+        .toggle-btn { padding: 8px 15px; border: none; background: transparent; color: var(--text-muted); font-weight: 600; cursor: pointer; border-radius: 8px; transition: 0.3s; font-size: 0.85rem; }
         .toggle-btn.active { background: var(--glass-border); color: white; }
+        
+        /* Botones específicos activos */
+        #btn-dht.active { color: var(--neon-pink); background: rgba(244, 114, 182, 0.1); border: 1px solid rgba(244, 114, 182, 0.3); }
+        #btn-ntc.active { color: var(--neon-orange); background: rgba(251, 146, 60, 0.1); border: 1px solid rgba(251, 146, 60, 0.3); }
+        #btn-hum.active { color: var(--neon-blue); background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); }
 
         .config-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 15px; border-radius: 12px; font-size: 1rem; margin-bottom: 20px; }
         .btn-neon { width: 100%; background: linear-gradient(90deg, var(--neon-blue), #2563eb); border: none; padding: 15px; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
         
-        /* Botones de descarga */
-        .btn-download { 
-            border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; 
-            font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; 
-            transition: 0.2s; background: var(--neon-green); color: #064e3b; 
-        }
+        .btn-download { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: 0.2s; background: var(--neon-green); color: #064e3b; }
         .btn-download:hover { background: #6ee7b7; box-shadow: 0 0 10px rgba(52, 211, 153, 0.4); }
 
         /* --- 5. IPHONE / MÓVIL --- */
@@ -216,7 +214,7 @@
             </div>
         </div>
 
-        <div class="sidebar-footer">v8.5 Clean UI</div>
+        <div class="sidebar-footer">v8.6 Stats Pro</div>
     </nav>
 
     <main class="main-content">
@@ -252,9 +250,7 @@
                                 <span id="temp-val" class="val-dual color-dht">--</span>
                                 <span class="lbl-dual">DHT11</span>
                             </div>
-                            
                             <div class="temp-divider"></div>
-                            
                             <div class="temp-box">
                                 <span id="temp-ntc-val" class="val-dual color-ntc">--</span>
                                 <span class="lbl-dual">Termistor</span>
@@ -327,7 +323,8 @@
 
             <section id="analisis" class="view-section">
                 <div class="toggle-group">
-                    <button class="toggle-btn active" id="btn-temp" onclick="switchAnalysisMode('temp')">Temperatura</button>
+                    <button class="toggle-btn active" id="btn-dht" onclick="switchAnalysisMode('dht')">Temp DHT11</button>
+                    <button class="toggle-btn" id="btn-ntc" onclick="switchAnalysisMode('ntc')">Temp Termistor</button>
                     <button class="toggle-btn" id="btn-hum" onclick="switchAnalysisMode('hum')">Humedad</button>
                 </div>
 
@@ -388,7 +385,7 @@
         tempThreshold: 35,
         humThreshold: 70,
         fullHistory: [], 
-        analysisMode: 'temp',
+        analysisMode: 'dht', // Por defecto vemos DHT11
         lastTimestamp: 0,
         charts: {}
     };
@@ -408,11 +405,9 @@
         Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
 
         const ctxTemp = document.getElementById('tempChart').getContext('2d');
-        
         const gradPink = ctxTemp.createLinearGradient(0,0,0,300);
         gradPink.addColorStop(0, 'rgba(244, 114, 182, 0.4)');
         gradPink.addColorStop(1, 'rgba(244, 114, 182, 0)');
-
         const gradOrange = ctxTemp.createLinearGradient(0,0,0,300);
         gradOrange.addColorStop(0, 'rgba(251, 146, 60, 0.4)');
         gradOrange.addColorStop(1, 'rgba(251, 146, 60, 0)');
@@ -462,28 +457,51 @@
     }
     setInterval(checkSystemHealth, 60000);
 
+    // --- NUEVA LÓGICA DE SELECCIÓN DE SENSOR PARA ESTADÍSTICAS ---
     function switchAnalysisMode(mode) {
         appState.analysisMode = mode;
+        // Quitar active a todos
         document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(mode === 'temp' ? 'btn-temp' : 'btn-hum').classList.add('active');
+        // Poner active al seleccionado
+        document.getElementById('btn-' + mode).classList.add('active');
         updateAnalysisUI();
     }
 
     function updateAnalysisUI() {
         const mode = appState.analysisMode;
-        const unit = mode === 'temp' ? '°C' : '%';
         const data = appState.fullHistory;
+        
+        let unit = '°C';
+        if (mode === 'hum') unit = '%';
+
         document.getElementById('unit-1').innerText = unit;
         document.getElementById('unit-2').innerText = unit;
         document.getElementById('unit-3').innerText = unit;
+        
         if(data.length === 0) return;
 
-        const cleanData = data.map(d => ({
-            val: parseFloat(mode === 'temp' ? (d.t_dht || d.temperatura) : d.humedad),
-            date: new Date(d.fecha)
-        })).filter(d => !isNaN(d.val));
+        // FILTRADO DE DATOS SEGUN SENSOR
+        const cleanData = data.map(d => {
+            let val;
+            if (mode === 'dht') {
+                // Compatible con datos viejos y nuevos
+                val = d.t_dht !== undefined ? d.t_dht : d.temperatura;
+            } else if (mode === 'ntc') {
+                val = d.t_termistor; // Solo datos nuevos con termistor
+            } else {
+                val = d.humedad;
+            }
+            
+            return { val: parseFloat(val), date: new Date(d.fecha) };
+        }).filter(d => !isNaN(d.val)); // Eliminamos los nulos (ej. datos viejos sin termistor)
 
-        if(cleanData.length === 0) return;
+        if(cleanData.length === 0) {
+            document.getElementById('max-stat').innerText = "--";
+            document.getElementById('min-stat').innerText = "--";
+            document.getElementById('avg-stat').innerText = "--";
+            return;
+        }
+
         const maxObj = cleanData.reduce((prev, curr) => (curr.val > prev.val) ? curr : prev);
         const minObj = cleanData.reduce((prev, curr) => (curr.val < prev.val) ? curr : prev);
         const avg = (cleanData.reduce((acc, curr) => acc + curr.val, 0) / cleanData.length).toFixed(1);
@@ -494,6 +512,7 @@
         document.getElementById('min-stat').innerText = minObj.val.toFixed(1);
         document.getElementById('min-date').innerText = "Reg: " + formatDate(minObj.date);
         document.getElementById('avg-stat').innerText = avg;
+        
         if(appState.charts.stats) { 
             appState.charts.stats.data.datasets[0].data = [minObj.val, avg, maxObj.val]; 
             appState.charts.stats.update(); 
@@ -529,7 +548,6 @@
                 dataNTC.push(tempNTC);
                 appState.fullHistory.push(val);
 
-                // TABLA: AQUI MOSTRAMOS 1 DECIMAL (Regresamos a la configuración original)
                 rows.unshift(`<tr>
                     <td style="color:#f1f5f9;">${timeStr}</td>
                     <td style="color:#f472b6; font-weight:bold;">${tempDHT ? parseFloat(tempDHT).toFixed(1) : '--'}°</td>
@@ -540,13 +558,9 @@
             }
         });
 
-        // ACTUALIZACION DE TARJETAS EN VIVO
         if (lastEntryTime > 0) {
             if(lastDHT) document.getElementById('temp-val').innerText = parseFloat(lastDHT).toFixed(1);
-            
-            // --- CAMBIO CLAVE: AQUI TAMBIEN 1 DECIMAL ---
             if(lastNTC) document.getElementById('temp-ntc-val').innerText = parseFloat(lastNTC).toFixed(1); 
-
             if(lastHum) document.getElementById('hum-val').innerText = parseFloat(lastHum).toFixed(0);
             document.getElementById('rain-val').innerText = parseFloat(lastRain).toFixed(1);
             
@@ -584,12 +598,10 @@
                     const dateObj = new Date(d.fecha);
                     const date = dateObj.toLocaleDateString("es-MX");
                     const time = dateObj.toLocaleTimeString("es-MX");
-                    
                     let t_dht = d.t_dht !== undefined ? d.t_dht : (d.temperatura || "");
                     let t_ntc = d.t_termistor !== undefined ? d.t_termistor : "";
                     let h = d.humedad !== undefined ? d.humedad : "";
                     let r = d.mm_total !== undefined ? d.mm_total : 0;
-                    
                     csv += `${date},${time},${t_dht},${t_ntc},${h},${r}\n`;
                 }
             });
