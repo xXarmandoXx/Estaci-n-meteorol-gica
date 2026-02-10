@@ -27,7 +27,8 @@
             --glass-border: rgba(255, 255, 255, 0.08);
             
             --neon-blue: #38bdf8;
-            --neon-pink: #f472b6;
+            --neon-pink: #f472b6;   /* DHT11 */
+            --neon-orange: #fb923c; /* TERMISTOR */
             --neon-green: #34d399;
             --neon-red: #ef4444; 
             --neon-purple: #c084fc;
@@ -114,7 +115,7 @@
 
         .big-value { font-size: 3.5rem; font-weight: 700; color: white; line-height: 1; }
         .unit { font-size: 1.2rem; color: var(--text-muted); font-weight: 400; margin-left: 5px; }
-        .sub-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; }
+        .sub-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; display:flex; justify-content: space-between; }
         .record-date { display: block; font-size: 0.75rem; color: var(--neon-blue); margin-top: 5px; font-weight: 500; opacity: 0.8; }
 
         .chart-wrapper { height: 350px; position: relative; width: 100%; }
@@ -131,13 +132,17 @@
         .config-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 15px; border-radius: 12px; font-size: 1rem; margin-bottom: 20px; }
         .btn-neon { width: 100%; background: linear-gradient(90deg, var(--neon-blue), #2563eb); border: none; padding: 15px; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
         
-        /* Botón ÚNICO de descarga */
+        /* Botones de descarga */
         .btn-download-group { display: flex; gap: 10px; }
         .btn-download { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
-        
-        /* Estilo unificado para el botón master */
-        .btn-dl-master { background: var(--neon-blue); color: #0f172a; width: 100%; justify-content: center;}
-        .btn-dl-master:hover { background: #bae6fd; }
+        .btn-dl-clima { background: var(--neon-green); color: #064e3b; }
+        .btn-dl-clima:hover { background: #6ee7b7; }
+        .btn-dl-rain { background: var(--neon-purple); color: #4c1d95; }
+        .btn-dl-rain:hover { background: #d8b4fe; }
+
+        /* Estilo para la temperatura secundaria */
+        .secondary-temp { font-size: 1rem; color: var(--neon-orange); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        .label-sensor { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-right: 5px; }
 
         /* --- 5. IPHONE / MÓVIL --- */
         @media (max-width: 768px) {
@@ -205,7 +210,7 @@
             </div>
         </div>
 
-        <div class="sidebar-footer">v8.3 Master Report</div>
+        <div class="sidebar-footer">v8.2 Dual Sensor</div>
     </nav>
 
     <main class="main-content">
@@ -229,6 +234,7 @@
 
             <section id="dashboard" class="view-section active">
                 <div class="metrics-grid">
+                    
                     <div class="glass-card">
                         <div class="card-header">
                             <span class="card-label">Temperatura</span>
@@ -237,7 +243,14 @@
                         <div class="big-value">
                             <span id="temp-val">--</span><span class="unit">°C</span>
                         </div>
-                        <div class="sub-text">Dato de: <span id="time-val" style="font-weight:600; color:white;">--:--</span></div>
+                        <div class="sub-text">
+                            <span class="label-sensor" style="color:var(--neon-pink)">DHT11</span>
+                            
+                            <div class="secondary-temp">
+                                <span id="temp-ntc-val">--</span><span style="font-size:0.8rem">°C</span>
+                                <span class="label-sensor" style="color:var(--neon-orange); margin-left:5px;">NTC</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="glass-card">
@@ -276,7 +289,7 @@
 
                 <div class="glass-card">
                     <div class="card-header">
-                        <span class="card-label">Tendencia Térmica</span>
+                        <span class="card-label" style="color:white;">Comparativa: DHT11 (Rosa) vs Termistor (Naranja)</span>
                     </div>
                     <div class="chart-wrapper">
                         <canvas id="tempChart"></canvas>
@@ -288,15 +301,18 @@
                 <div class="glass-card">
                     <div class="card-header">
                         <span class="card-label">Últimos Registros</span>
-                        <div class="btn-download-group" style="min-width: 200px;">
-                            <button class="btn-download btn-dl-master" onclick="downloadMasterCSV()">
-                                <i class="fa-solid fa-file-excel"></i> Descargar Reporte Completo
+                        <div class="btn-download-group">
+                            <button class="btn-download btn-dl-clima" onclick="downloadClimaCSV()">
+                                <i class="fa-solid fa-file-csv"></i> Clima
+                            </button>
+                            <button class="btn-download btn-dl-rain" onclick="downloadLluviaCSV()">
+                                <i class="fa-solid fa-cloud-showers-heavy"></i> Lluvia
                             </button>
                         </div>
                     </div>
                     <div style="overflow-x: auto;">
                         <table>
-                            <thead><tr><th>Fecha</th><th>Hora</th><th>Temp</th><th>Hum</th><th>Lluvia</th></tr></thead>
+                            <thead><tr><th>Hora</th><th>DHT11</th><th>Termistor</th><th>Hum</th><th>Lluvia</th></tr></thead>
                             <tbody id="history-body">
                                 <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando...</td></tr>
                             </tbody>
@@ -388,33 +404,49 @@
         Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
 
         const ctxTemp = document.getElementById('tempChart').getContext('2d');
-        const grad = ctxTemp.createLinearGradient(0,0,0,300);
-        grad.addColorStop(0, 'rgba(244, 114, 182, 0.4)');
-        grad.addColorStop(1, 'rgba(244, 114, 182, 0)');
+        
+        // Degradados
+        const gradPink = ctxTemp.createLinearGradient(0,0,0,300);
+        gradPink.addColorStop(0, 'rgba(244, 114, 182, 0.4)');
+        gradPink.addColorStop(1, 'rgba(244, 114, 182, 0)');
+
+        const gradOrange = ctxTemp.createLinearGradient(0,0,0,300);
+        gradOrange.addColorStop(0, 'rgba(251, 146, 60, 0.4)');
+        gradOrange.addColorStop(1, 'rgba(251, 146, 60, 0)');
 
         appState.charts.temp = new Chart(ctxTemp, {
             type: 'line',
-            data: { labels: [], datasets: [{ label: 'Temp', data: [], borderColor: '#f472b6', backgroundColor: grad, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 0, pointHoverRadius: 6 }] },
+            data: { 
+                labels: [], 
+                datasets: [
+                    { 
+                        label: 'DHT11', 
+                        data: [], 
+                        borderColor: '#f472b6', 
+                        backgroundColor: gradPink, 
+                        borderWidth: 3, 
+                        tension: 0.4, 
+                        fill: true,
+                        pointRadius: 0
+                    },
+                    { 
+                        label: 'Termistor', 
+                        data: [], 
+                        borderColor: '#fb923c', 
+                        backgroundColor: gradOrange, 
+                        borderWidth: 3, 
+                        tension: 0.4, 
+                        fill: true,
+                        pointRadius: 0 
+                    }
+                ] 
+            },
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false, 
-                plugins: { legend: { display: false } }, 
-                scales: { 
-                    x: { display: false },
-                    y: {
-                        // FIX: Escala lineal con pasos enteros y margen visual
-                        type: 'linear',
-                        grace: '50%', 
-                        ticks: {
-                            stepSize: 1,   
-                            precision: 0   
-                        }
-                    }
-                },
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                }
+                plugins: { legend: { display: true, labels: { color: 'white' } } }, 
+                scales: { x: { display: false } },
+                interaction: { mode: 'index', intersect: false }
             }
         });
 
@@ -429,7 +461,6 @@
     function checkSystemHealth() {
         if (appState.lastTimestamp === 0) return;
         const diffMinutes = (Date.now() - appState.lastTimestamp) / 1000 / 60;
-        
         const badge = document.getElementById('status-badge');
         const dot = document.getElementById('status-dot');
         const text = document.getElementById('status-text');
@@ -437,7 +468,7 @@
         const connStatus = document.getElementById('connection-status');
         const icon = document.getElementById('signal-icon');
 
-        if (diffMinutes > 5) { 
+        if (diffMinutes > 15) { 
             badge.className = "status-badge status-offline"; dot.className = "dot dot-offline"; text.innerText = "OFFLINE";
             banner.style.display = "flex"; connStatus.innerText = "DESCONECTADO"; connStatus.style.color = "var(--neon-red)"; icon.className = "icon-box icon-off";
         } else { 
@@ -465,8 +496,9 @@
 
         if(data.length === 0) return;
 
+        // Nota: Para análisis usamos DHT11 por defecto
         const cleanData = data.map(d => ({
-            val: parseFloat(mode === 'temp' ? d.temperatura : d.humedad),
+            val: parseFloat(mode === 'temp' ? (d.t_dht || d.temperatura) : d.humedad),
             date: new Date(d.fecha)
         })).filter(d => !isNaN(d.val));
 
@@ -480,10 +512,8 @@
 
         document.getElementById('max-stat').innerText = maxObj.val.toFixed(1);
         document.getElementById('max-date').innerText = "Reg: " + formatDate(maxObj.date);
-
         document.getElementById('min-stat').innerText = minObj.val.toFixed(1);
         document.getElementById('min-date').innerText = "Reg: " + formatDate(minObj.date);
-
         document.getElementById('avg-stat').innerText = avg;
 
         if(appState.charts.stats) { 
@@ -492,63 +522,78 @@
         }
     }
 
-    db.ref('/historial').limitToLast(20).on('value', snap => {
+    // --- LOGICA DE FIREBASE PRINCIPAL ---
+    db.ref('/historial').limitToLast(30).on('value', snap => {
         const tbody = document.getElementById('history-body');
         tbody.innerHTML = "";
-        let labels = [], dataChart = [], rows = [];
+        
+        let labels = [];
+        let dataDHT = [];
+        let dataNTC = [];
+        let rows = [];
+        
         appState.fullHistory = []; 
 
-        let lastEntryTime = 0, lastTemp = 0, lastHum = 0, lastRain = 0;
+        let lastEntryTime = 0, lastDHT = 0, lastNTC = 0, lastHum = 0, lastRain = 0;
 
         snap.forEach(child => {
             const val = child.val();
             if(val.fecha) {
                 const dateObj = new Date(val.fecha);
-                const dateStr = dateObj.toLocaleDateString("es-MX", {day: '2-digit', month: '2-digit'});
                 const timeStr = dateObj.toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
                 
                 lastEntryTime = dateObj.getTime();
-                lastTemp = val.temperatura;
-                lastHum = val.humedad;
                 
-                // Leemos lluvia acumulada, si no existe asumimos 0
+                // LÓGICA DE COMPATIBILIDAD (Datos viejos vs Nuevos)
+                let tempDHT = val.t_dht !== undefined ? val.t_dht : val.temperatura;
+                let tempNTC = val.t_termistor !== undefined ? val.t_termistor : 0; // Si no hay dato, 0
+
+                lastDHT = tempDHT;
+                lastNTC = tempNTC;
+                lastHum = val.humedad;
                 lastRain = (val.mm_total !== undefined) ? val.mm_total : 0; 
 
+                // Llenar datos para gráfica
                 labels.push(timeStr);
-                dataChart.push(val.temperatura);
+                dataDHT.push(tempDHT);
+                dataNTC.push(tempNTC);
+                
                 appState.fullHistory.push(val);
 
+                // Llenar Tabla
                 rows.unshift(`<tr>
-                    <td style="color:#94a3b8; font-size:0.85rem;">${dateStr}</td>
                     <td style="color:#f1f5f9;">${timeStr}</td>
-                    <td style="color:#f472b6; font-weight:bold;">${val.temperatura ? val.temperatura : '--'}°</td>
+                    <td style="color:#f472b6; font-weight:bold;">${tempDHT ? parseFloat(tempDHT).toFixed(1) : '--'}°</td>
+                    <td style="color:#fb923c; font-weight:bold;">${tempNTC ? parseFloat(tempNTC).toFixed(1) : '--'}°</td>
                     <td style="color:#38bdf8">${val.humedad ? val.humedad : '--'}%</td>
-                    <td style="color:#c084fc; font-weight:bold;">${lastRain.toFixed(1)} mm</td>
+                    <td style="color:#c084fc;">${lastRain.toFixed(1)} mm</td>
                 </tr>`);
             }
         });
 
+        // Actualizar UI con el último dato
         if (lastEntryTime > 0) {
-            if(lastTemp) document.getElementById('temp-val').innerText = parseFloat(lastTemp).toFixed(1);
+            if(lastDHT) document.getElementById('temp-val').innerText = parseFloat(lastDHT).toFixed(1);
+            if(lastNTC) document.getElementById('temp-ntc-val').innerText = parseFloat(lastNTC).toFixed(1);
             if(lastHum) document.getElementById('hum-val').innerText = parseFloat(lastHum).toFixed(0);
             document.getElementById('rain-val').innerText = parseFloat(lastRain).toFixed(1);
             
             const fullDateStr = new Date(lastEntryTime).toLocaleString("es-MX", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-            document.getElementById('time-val').innerText = fullDateStr;
-            document.getElementById('last-seen-text').innerText = "Último dato: " + fullDateStr;
+            document.getElementById('last-seen-text').innerText = "Último: " + fullDateStr;
 
             appState.lastTimestamp = lastEntryTime;
             checkSystemHealth(); 
-
-            const cardTemp = document.getElementById('temp-val').closest('.glass-card');
-            if(parseFloat(lastTemp) > appState.tempThreshold) cardTemp.classList.add('warning'); else cardTemp.classList.remove('warning');
-            
-            const cardHum = document.getElementById('hum-val').closest('.glass-card');
-            if(parseFloat(lastHum) > appState.humThreshold) cardHum.classList.add('warning'); else cardHum.classList.remove('warning');
         }
 
         tbody.innerHTML = rows.join("");
-        if(appState.charts.temp) { appState.charts.temp.data.labels = labels; appState.charts.temp.data.datasets[0].data = dataChart; appState.charts.temp.update(); }
+        
+        // Actualizar Gráfica
+        if(appState.charts.temp) { 
+            appState.charts.temp.data.labels = labels; 
+            appState.charts.temp.data.datasets[0].data = dataDHT; 
+            appState.charts.temp.data.datasets[1].data = dataNTC; 
+            appState.charts.temp.update(); 
+        }
         updateAnalysisUI();
     });
 
@@ -560,16 +605,9 @@
         setTimeout(() => btn.innerText = "Guardar Cambios", 2000);
     }
 
-    // --- FUNCION DE DESCARGA MAESTRA UNIFICADA ---
-    function downloadMasterCSV() {
-        const btn = document.querySelector('.btn-dl-master');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
-
+    function downloadClimaCSV() {
         db.ref('/historial').once('value').then(snap => {
-            // Encabezados unificados
-            let csv = "Fecha,Hora,Temperatura (C),Humedad (%),Lluvia_Acumulada (mm)\n";
-            
+            let csv = "Fecha,Hora,Temp_DHT11,Temp_Termistor,Humedad (%)\n";
             snap.forEach(child => {
                 const d = child.val();
                 if(d.fecha) {
@@ -577,19 +615,34 @@
                     const date = dateObj.toLocaleDateString("es-MX");
                     const time = dateObj.toLocaleTimeString("es-MX");
                     
-                    const t = d.temperatura !== undefined ? d.temperatura : "";
-                    const h = d.humedad !== undefined ? d.humedad : "";
+                    let t1 = d.t_dht !== undefined ? d.t_dht : (d.temperatura || "");
+                    let t2 = d.t_termistor !== undefined ? d.t_termistor : "";
+                    let h = d.humedad !== undefined ? d.humedad : "";
                     
-                    // AQUI ESTA LA LOGICA DEL 0:
-                    // Si 'mm_total' existe usa su valor, si no existe (undefined) pon 0.
-                    const r = d.mm_total !== undefined ? d.mm_total : 0;
-
-                    csv += `${date},${time},${t},${h},${r}\n`;
+                    csv += `${date},${time},${t1},${t2},${h}\n`;
                 }
             });
-            
-            downloadFile(csv, "Reporte_Estacion_Completo.csv");
-            btn.innerHTML = originalText;
+            downloadFile(csv, "Reporte_Comparativo_Sensores.csv");
+        });
+    }
+
+    function downloadLluviaCSV() {
+        db.ref('/historial').once('value').then(snap => {
+            let csv = "Fecha,Hora,Lluvia_Minuto (mm),Lluvia_Acumulada (mm)\n";
+            let ultimoValorGuardado = -1; 
+            snap.forEach(child => {
+                const d = child.val();
+                if(d.fecha) {
+                    const mmTot = d.mm_total !== undefined ? d.mm_total : 0;
+                    const mmMin = d.mm_min !== undefined ? d.mm_min : 0;
+                    if (mmTot !== ultimoValorGuardado || mmMin > 0) {
+                        const dateObj = new Date(d.fecha);
+                        csv += `${dateObj.toLocaleDateString("es-MX")},${dateObj.toLocaleTimeString("es-MX")},${mmMin},${mmTot}\n`;
+                        ultimoValorGuardado = mmTot;
+                    }
+                }
+            });
+            downloadFile(csv, "Reporte_Lluvia.csv");
         });
     }
 
@@ -604,4 +657,4 @@
 </script>
 
 </body>
-</html>                    
+</html>
