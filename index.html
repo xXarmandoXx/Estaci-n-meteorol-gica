@@ -97,11 +97,10 @@
             align-items: center; gap: 10px; font-size: 0.9rem;
         }
 
-        /* --- 4. COMPONENTES --- */
+        /* --- 4. COMPONENTES Y TARJETAS --- */
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; margin-bottom: 30px; }
         .glass-card { background: var(--glass-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 25px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); transition: var(--transition); }
         .glass-card.warning { border: 1px solid var(--neon-red); box-shadow: 0 0 25px rgba(239, 68, 68, 0.3); animation: pulse-red 2s infinite; }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.3); } 50% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.1); } 100% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.3); } }
 
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .card-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
@@ -117,6 +116,17 @@
         .unit { font-size: 1.2rem; color: var(--text-muted); font-weight: 400; margin-left: 5px; }
         .sub-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; display:flex; justify-content: space-between; }
         .record-date { display: block; font-size: 0.75rem; color: var(--neon-blue); margin-top: 5px; font-weight: 500; opacity: 0.8; }
+
+        /* --- NUEVO: ESTILOS PARA LA TARJETA DUAL DE TEMPERATURA --- */
+        .dual-temp-container { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+        .temp-box { width: 48%; display: flex; flex-direction: column; align-items: center; }
+        .temp-divider { width: 1px; height: 50px; background: rgba(255,255,255,0.1); }
+        
+        .val-dual { font-size: 2.2rem; font-weight: 700; line-height: 1; }
+        .lbl-dual { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .color-dht { color: var(--neon-pink); }
+        .color-ntc { color: var(--neon-orange); }
 
         .chart-wrapper { height: 350px; position: relative; width: 100%; }
         
@@ -139,9 +149,6 @@
             transition: 0.2s; background: var(--neon-green); color: #064e3b; 
         }
         .btn-download:hover { background: #6ee7b7; box-shadow: 0 0 10px rgba(52, 211, 153, 0.4); }
-
-        .secondary-temp { font-size: 1rem; color: var(--neon-orange); font-weight: 600; display: flex; align-items: center; gap: 5px; }
-        .label-sensor { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-right: 5px; }
 
         /* --- 5. IPHONE / MÓVIL --- */
         @media (max-width: 768px) {
@@ -209,7 +216,7 @@
             </div>
         </div>
 
-        <div class="sidebar-footer">v8.3 Full CSV</div>
+        <div class="sidebar-footer">v8.4 Dual Precision</div>
     </nav>
 
     <main class="main-content">
@@ -236,18 +243,21 @@
                     
                     <div class="glass-card">
                         <div class="card-header">
-                            <span class="card-label">Temperatura</span>
+                            <span class="card-label">Comparativa Sensores</span>
                             <div class="icon-box icon-temp"><i class="fa-solid fa-temperature-half"></i></div>
                         </div>
-                        <div class="big-value">
-                            <span id="temp-val">--</span><span class="unit">°C</span>
-                        </div>
-                        <div class="sub-text">
-                            <span class="label-sensor" style="color:var(--neon-pink)">DHT11</span>
+                        
+                        <div class="dual-temp-container">
+                            <div class="temp-box">
+                                <span id="temp-val" class="val-dual color-dht">--</span>
+                                <span class="lbl-dual">DHT11 (Digital)</span>
+                            </div>
                             
-                            <div class="secondary-temp">
-                                <span id="temp-ntc-val">--</span><span style="font-size:0.8rem">°C</span>
-                                <span class="label-sensor" style="color:var(--neon-orange); margin-left:5px;">NTC</span>
+                            <div class="temp-divider"></div>
+                            
+                            <div class="temp-box">
+                                <span id="temp-ntc-val" class="val-dual color-ntc">--</span>
+                                <span class="lbl-dual">Termistor (NTC)</span>
                             </div>
                         </div>
                     </div>
@@ -288,7 +298,7 @@
 
                 <div class="glass-card">
                     <div class="card-header">
-                        <span class="card-label" style="color:white;">Comparativa: DHT11 (Rosa) vs Termistor (Naranja)</span>
+                        <span class="card-label" style="color:white;">Comparativa Gráfica: DHT11 vs NTC</span>
                     </div>
                     <div class="chart-wrapper">
                         <canvas id="tempChart"></canvas>
@@ -399,7 +409,6 @@
 
         const ctxTemp = document.getElementById('tempChart').getContext('2d');
         
-        // Degradados
         const gradPink = ctxTemp.createLinearGradient(0,0,0,300);
         gradPink.addColorStop(0, 'rgba(244, 114, 182, 0.4)');
         gradPink.addColorStop(1, 'rgba(244, 114, 182, 0)');
@@ -413,31 +422,12 @@
             data: { 
                 labels: [], 
                 datasets: [
-                    { 
-                        label: 'DHT11', 
-                        data: [], 
-                        borderColor: '#f472b6', 
-                        backgroundColor: gradPink, 
-                        borderWidth: 3, 
-                        tension: 0.4, 
-                        fill: true,
-                        pointRadius: 0
-                    },
-                    { 
-                        label: 'Termistor', 
-                        data: [], 
-                        borderColor: '#fb923c', 
-                        backgroundColor: gradOrange, 
-                        borderWidth: 3, 
-                        tension: 0.4, 
-                        fill: true,
-                        pointRadius: 0 
-                    }
+                    { label: 'DHT11', data: [], borderColor: '#f472b6', backgroundColor: gradPink, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 0 },
+                    { label: 'Termistor', data: [], borderColor: '#fb923c', backgroundColor: gradOrange, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 0 }
                 ] 
             },
             options: { 
-                responsive: true, 
-                maintainAspectRatio: false, 
+                responsive: true, maintainAspectRatio: false, 
                 plugins: { legend: { display: true, labels: { color: 'white' } } }, 
                 scales: { x: { display: false } },
                 interaction: { mode: 'index', intersect: false }
@@ -483,25 +473,20 @@
         const mode = appState.analysisMode;
         const unit = mode === 'temp' ? '°C' : '%';
         const data = appState.fullHistory;
-
         document.getElementById('unit-1').innerText = unit;
         document.getElementById('unit-2').innerText = unit;
         document.getElementById('unit-3').innerText = unit;
-
         if(data.length === 0) return;
 
-        // Nota: Para análisis usamos DHT11 por defecto
         const cleanData = data.map(d => ({
             val: parseFloat(mode === 'temp' ? (d.t_dht || d.temperatura) : d.humedad),
             date: new Date(d.fecha)
         })).filter(d => !isNaN(d.val));
 
         if(cleanData.length === 0) return;
-
         const maxObj = cleanData.reduce((prev, curr) => (curr.val > prev.val) ? curr : prev);
         const minObj = cleanData.reduce((prev, curr) => (curr.val < prev.val) ? curr : prev);
         const avg = (cleanData.reduce((acc, curr) => acc + curr.val, 0) / cleanData.length).toFixed(1);
-
         const formatDate = (date) => date.toLocaleString("es-MX", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
 
         document.getElementById('max-stat').innerText = maxObj.val.toFixed(1);
@@ -509,23 +494,17 @@
         document.getElementById('min-stat').innerText = minObj.val.toFixed(1);
         document.getElementById('min-date').innerText = "Reg: " + formatDate(minObj.date);
         document.getElementById('avg-stat').innerText = avg;
-
         if(appState.charts.stats) { 
             appState.charts.stats.data.datasets[0].data = [minObj.val, avg, maxObj.val]; 
             appState.charts.stats.update(); 
         }
     }
 
-    // --- LOGICA DE FIREBASE PRINCIPAL ---
+    // --- LOGICA PRINCIPAL FIREBASE ---
     db.ref('/historial').limitToLast(30).on('value', snap => {
         const tbody = document.getElementById('history-body');
         tbody.innerHTML = "";
-        
-        let labels = [];
-        let dataDHT = [];
-        let dataNTC = [];
-        let rows = [];
-        
+        let labels = [], dataDHT = [], dataNTC = [], rows = [];
         appState.fullHistory = []; 
 
         let lastEntryTime = 0, lastDHT = 0, lastNTC = 0, lastHum = 0, lastRain = 0;
@@ -535,10 +514,8 @@
             if(val.fecha) {
                 const dateObj = new Date(val.fecha);
                 const timeStr = dateObj.toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
-                
                 lastEntryTime = dateObj.getTime();
                 
-                // LÓGICA DE COMPATIBILIDAD
                 let tempDHT = val.t_dht !== undefined ? val.t_dht : val.temperatura;
                 let tempNTC = val.t_termistor !== undefined ? val.t_termistor : 0;
 
@@ -547,28 +524,29 @@
                 lastHum = val.humedad;
                 lastRain = (val.mm_total !== undefined) ? val.mm_total : 0; 
 
-                // Llenar datos para gráfica
                 labels.push(timeStr);
                 dataDHT.push(tempDHT);
                 dataNTC.push(tempNTC);
-                
                 appState.fullHistory.push(val);
 
-                // Llenar Tabla
+                // TABLA: AQUI MOSTRAMOS 2 DECIMALES PARA TERMISTOR
                 rows.unshift(`<tr>
                     <td style="color:#f1f5f9;">${timeStr}</td>
                     <td style="color:#f472b6; font-weight:bold;">${tempDHT ? parseFloat(tempDHT).toFixed(1) : '--'}°</td>
-                    <td style="color:#fb923c; font-weight:bold;">${tempNTC ? parseFloat(tempNTC).toFixed(1) : '--'}°</td>
+                    <td style="color:#fb923c; font-weight:bold;">${tempNTC ? parseFloat(tempNTC).toFixed(2) : '--'}°</td>
                     <td style="color:#38bdf8">${val.humedad ? val.humedad : '--'}%</td>
                     <td style="color:#c084fc;">${lastRain.toFixed(1)} mm</td>
                 </tr>`);
             }
         });
 
-        // Actualizar UI con el último dato
+        // ACTUALIZACION DE TARJETAS EN VIVO
         if (lastEntryTime > 0) {
             if(lastDHT) document.getElementById('temp-val').innerText = parseFloat(lastDHT).toFixed(1);
-            if(lastNTC) document.getElementById('temp-ntc-val').innerText = parseFloat(lastNTC).toFixed(1);
+            
+            // --- CAMBIO CLAVE AQUI PARA EL TERMISTOR ---
+            if(lastNTC) document.getElementById('temp-ntc-val').innerText = parseFloat(lastNTC).toFixed(2); 
+
             if(lastHum) document.getElementById('hum-val').innerText = parseFloat(lastHum).toFixed(0);
             document.getElementById('rain-val').innerText = parseFloat(lastRain).toFixed(1);
             
@@ -580,8 +558,6 @@
         }
 
         tbody.innerHTML = rows.join("");
-        
-        // Actualizar Gráfica
         if(appState.charts.temp) { 
             appState.charts.temp.data.labels = labels; 
             appState.charts.temp.data.datasets[0].data = dataDHT; 
@@ -599,12 +575,9 @@
         setTimeout(() => btn.innerText = "Guardar Cambios", 2000);
     }
 
-    // --- NUEVA FUNCION UNIFICADA ---
     function downloadFullCSV() {
         db.ref('/historial').once('value').then(snap => {
-            // Encabezados en una sola fila
             let csv = "Fecha,Hora,Temp_DHT11_Digital(C),Temp_Termistor_Analogo(C),Humedad(%),Lluvia_Total(mm)\n";
-            
             snap.forEach(child => {
                 const d = child.val();
                 if(d.fecha) {
@@ -612,7 +585,6 @@
                     const date = dateObj.toLocaleDateString("es-MX");
                     const time = dateObj.toLocaleTimeString("es-MX");
                     
-                    // Aseguramos que si falta algún dato, no rompa la fila
                     let t_dht = d.t_dht !== undefined ? d.t_dht : (d.temperatura || "");
                     let t_ntc = d.t_termistor !== undefined ? d.t_termistor : "";
                     let h = d.humedad !== undefined ? d.humedad : "";
