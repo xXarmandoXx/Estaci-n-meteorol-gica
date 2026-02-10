@@ -123,7 +123,7 @@
         .temp-divider { width: 1px; height: 50px; background: rgba(255,255,255,0.1); }
         
         .val-dual { font-size: 2.2rem; font-weight: 700; line-height: 1; }
-        .lbl-dual { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .lbl-dual { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;}
         
         .color-dht { color: var(--neon-pink); }
         .color-ntc { color: var(--neon-orange); }
@@ -216,7 +216,7 @@
             </div>
         </div>
 
-        <div class="sidebar-footer">v8.4 Dual Precision</div>
+        <div class="sidebar-footer">v8.5 Clean UI</div>
     </nav>
 
     <main class="main-content">
@@ -250,14 +250,14 @@
                         <div class="dual-temp-container">
                             <div class="temp-box">
                                 <span id="temp-val" class="val-dual color-dht">--</span>
-                                <span class="lbl-dual">DHT11 (Digital)</span>
+                                <span class="lbl-dual">DHT11</span>
                             </div>
                             
                             <div class="temp-divider"></div>
                             
                             <div class="temp-box">
                                 <span id="temp-ntc-val" class="val-dual color-ntc">--</span>
-                                <span class="lbl-dual">Termistor (NTC)</span>
+                                <span class="lbl-dual">Termistor</span>
                             </div>
                         </div>
                     </div>
@@ -298,7 +298,7 @@
 
                 <div class="glass-card">
                     <div class="card-header">
-                        <span class="card-label" style="color:white;">Comparativa Gráfica: DHT11 vs NTC</span>
+                        <span class="card-label" style="color:white;">Comparativa Gráfica: DHT11 vs Termistor</span>
                     </div>
                     <div class="chart-wrapper">
                         <canvas id="tempChart"></canvas>
@@ -529,11 +529,11 @@
                 dataNTC.push(tempNTC);
                 appState.fullHistory.push(val);
 
-                // TABLA: AQUI MOSTRAMOS 2 DECIMALES PARA TERMISTOR
+                // TABLA: AQUI MOSTRAMOS 1 DECIMAL (Regresamos a la configuración original)
                 rows.unshift(`<tr>
                     <td style="color:#f1f5f9;">${timeStr}</td>
                     <td style="color:#f472b6; font-weight:bold;">${tempDHT ? parseFloat(tempDHT).toFixed(1) : '--'}°</td>
-                    <td style="color:#fb923c; font-weight:bold;">${tempNTC ? parseFloat(tempNTC).toFixed(2) : '--'}°</td>
+                    <td style="color:#fb923c; font-weight:bold;">${tempNTC ? parseFloat(tempNTC).toFixed(1) : '--'}°</td>
                     <td style="color:#38bdf8">${val.humedad ? val.humedad : '--'}%</td>
                     <td style="color:#c084fc;">${lastRain.toFixed(1)} mm</td>
                 </tr>`);
@@ -544,8 +544,8 @@
         if (lastEntryTime > 0) {
             if(lastDHT) document.getElementById('temp-val').innerText = parseFloat(lastDHT).toFixed(1);
             
-            // --- CAMBIO CLAVE AQUI PARA EL TERMISTOR ---
-            if(lastNTC) document.getElementById('temp-ntc-val').innerText = parseFloat(lastNTC).toFixed(2); 
+            // --- CAMBIO CLAVE: AQUI TAMBIEN 1 DECIMAL ---
+            if(lastNTC) document.getElementById('temp-ntc-val').innerText = parseFloat(lastNTC).toFixed(1); 
 
             if(lastHum) document.getElementById('hum-val').innerText = parseFloat(lastHum).toFixed(0);
             document.getElementById('rain-val').innerText = parseFloat(lastRain).toFixed(1);
