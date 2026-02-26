@@ -27,11 +27,11 @@
             --glass-border: rgba(255, 255, 255, 0.08);
             
             --neon-blue: #38bdf8;
-            --neon-pink: #f472b6;   /* DHT11 */
-            --neon-orange: #fb923c; /* TERMISTOR */
+            --neon-pink: #f472b6;   /* Temp */
+            --neon-orange: #fb923c; /* Pluv 1 */
             --neon-green: #34d399;
             --neon-red: #ef4444; 
-            --neon-purple: #c084fc;
+            --neon-purple: #c084fc; /* Pluv 2 */
             
             --text-main: #f1f5f9;
             --text-muted: #94a3b8;
@@ -117,14 +117,14 @@
         .sub-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; display:flex; justify-content: space-between; }
         .record-date { display: block; font-size: 0.75rem; color: var(--neon-blue); margin-top: 5px; font-weight: 500; opacity: 0.8; }
 
-        /* Tarjeta Dual */
+        /* Tarjeta Dual Pluviómetros */
         .dual-temp-container { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
         .temp-box { width: 48%; display: flex; flex-direction: column; align-items: center; }
         .temp-divider { width: 1px; height: 50px; background: rgba(255,255,255,0.1); }
         .val-dual { font-size: 2.2rem; font-weight: 700; line-height: 1; }
         .lbl-dual { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;}
-        .color-dht { color: var(--neon-pink); }
-        .color-ntc { color: var(--neon-orange); }
+        .color-p1 { color: var(--neon-orange); }
+        .color-p2 { color: var(--neon-purple); }
 
         .chart-wrapper { height: 350px; position: relative; width: 100%; }
         
@@ -138,9 +138,10 @@
         .toggle-btn.active { background: var(--glass-border); color: white; }
         
         /* Botones específicos activos */
-        #btn-dht.active { color: var(--neon-pink); background: rgba(244, 114, 182, 0.1); border: 1px solid rgba(244, 114, 182, 0.3); }
-        #btn-ntc.active { color: var(--neon-orange); background: rgba(251, 146, 60, 0.1); border: 1px solid rgba(251, 146, 60, 0.3); }
+        #btn-temp.active { color: var(--neon-pink); background: rgba(244, 114, 182, 0.1); border: 1px solid rgba(244, 114, 182, 0.3); }
         #btn-hum.active { color: var(--neon-blue); background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); }
+        #btn-p1.active { color: var(--neon-orange); background: rgba(251, 146, 60, 0.1); border: 1px solid rgba(251, 146, 60, 0.3); }
+        #btn-p2.active { color: var(--neon-purple); background: rgba(192, 132, 252, 0.1); border: 1px solid rgba(192, 132, 252, 0.3); }
 
         .config-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 15px; border-radius: 12px; font-size: 1rem; margin-bottom: 20px; }
         .btn-neon { width: 100%; background: linear-gradient(90deg, var(--neon-blue), #2563eb); border: none; padding: 15px; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
@@ -192,7 +193,7 @@
             <div class="brand-logo-container">
                 <i class="fa-solid fa-cloud-sun brand-icon"></i>
                 <div class="brand-text">
-                    <span class="brand-title-main">Estación</span>
+                    <span class="brand-title-main">Estación INIFAP</span>
                     <span class="brand-subtitle">Meteorológica</span>
                 </div>
             </div>
@@ -214,7 +215,7 @@
             </div>
         </div>
 
-        <div class="sidebar-footer">v8.6 Stats Pro</div>
+        <div class="sidebar-footer">v9.0 LoRa Edition</div>
     </nav>
 
     <main class="main-content">
@@ -233,7 +234,7 @@
 
             <div id="offline-banner" class="offline-banner">
                 <i class="fa-solid fa-triangle-exclamation"></i>
-                <span><strong>ATENCIÓN:</strong> El sensor no ha enviado datos recientemente. Verifique la conexión o energía.</span>
+                <span><strong>ATENCIÓN:</strong> El sensor LoRa no ha enviado datos recientemente. Verifique la conexión o energía.</span>
             </div>
 
             <section id="dashboard" class="view-section active">
@@ -241,21 +242,13 @@
                     
                     <div class="glass-card">
                         <div class="card-header">
-                            <span class="card-label">Comparativa Sensores</span>
+                            <span class="card-label">Temperatura</span>
                             <div class="icon-box icon-temp"><i class="fa-solid fa-temperature-half"></i></div>
                         </div>
-                        
-                        <div class="dual-temp-container">
-                            <div class="temp-box">
-                                <span id="temp-val" class="val-dual color-dht">--</span>
-                                <span class="lbl-dual">DHT11</span>
-                            </div>
-                            <div class="temp-divider"></div>
-                            <div class="temp-box">
-                                <span id="temp-ntc-val" class="val-dual color-ntc">--</span>
-                                <span class="lbl-dual">Termistor</span>
-                            </div>
+                        <div class="big-value" style="color: var(--neon-pink);">
+                            <span id="temp-val">--</span><span class="unit">°C</span>
                         </div>
+                        <div class="sub-text">Sensor SHT41</div>
                     </div>
 
                     <div class="glass-card">
@@ -271,13 +264,20 @@
 
                     <div class="glass-card">
                         <div class="card-header">
-                            <span class="card-label">Lluvia Total</span>
+                            <span class="card-label">Lluvia Acumulada</span>
                             <div class="icon-box icon-rain"><i class="fa-solid fa-cloud-rain"></i></div>
                         </div>
-                        <div class="big-value" style="color: var(--neon-purple);">
-                            <span id="rain-val">--</span><span class="unit">mm</span>
+                        <div class="dual-temp-container">
+                            <div class="temp-box">
+                                <span id="p1-val" class="val-dual color-p1">--</span>
+                                <span class="lbl-dual">Pluv 1 (mm)</span>
+                            </div>
+                            <div class="temp-divider"></div>
+                            <div class="temp-box">
+                                <span id="p2-val" class="val-dual color-p2">--</span>
+                                <span class="lbl-dual">Pluv 2 (mm)</span>
+                            </div>
                         </div>
-                        <div class="sub-text">Acumulado Sesión</div>
                     </div>
 
                     <div class="glass-card">
@@ -294,7 +294,7 @@
 
                 <div class="glass-card">
                     <div class="card-header">
-                        <span class="card-label" style="color:white;">Comparativa Gráfica: DHT11 vs Termistor</span>
+                        <span class="card-label" style="color:white;">Tendencia Climática: Temperatura y Humedad</span>
                     </div>
                     <div class="chart-wrapper">
                         <canvas id="tempChart"></canvas>
@@ -305,16 +305,16 @@
             <section id="historial" class="view-section">
                 <div class="glass-card">
                     <div class="card-header">
-                        <span class="card-label">Últimos Registros</span>
+                        <span class="card-label">Últimos Registros (Estación 1)</span>
                         <button class="btn-download" onclick="downloadFullCSV()">
-                            <i class="fa-solid fa-file-excel"></i> Reporte Completo
+                            <i class="fa-solid fa-file-excel"></i> Reporte CSV
                         </button>
                     </div>
                     <div style="overflow-x: auto;">
                         <table>
-                            <thead><tr><th>Hora</th><th>DHT11</th><th>Termistor</th><th>Hum</th><th>Lluvia</th></tr></thead>
+                            <thead><tr><th>Hora</th><th>Temp</th><th>Hum</th><th>Pluv 1</th><th>Pluv 2</th></tr></thead>
                             <tbody id="history-body">
-                                <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando...</td></tr>
+                                <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando base de datos...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -323,9 +323,10 @@
 
             <section id="analisis" class="view-section">
                 <div class="toggle-group">
-                    <button class="toggle-btn active" id="btn-dht" onclick="switchAnalysisMode('dht')">Temp DHT11</button>
-                    <button class="toggle-btn" id="btn-ntc" onclick="switchAnalysisMode('ntc')">Temp Termistor</button>
+                    <button class="toggle-btn active" id="btn-temp" onclick="switchAnalysisMode('temp')">Temperatura</button>
                     <button class="toggle-btn" id="btn-hum" onclick="switchAnalysisMode('hum')">Humedad</button>
+                    <button class="toggle-btn" id="btn-p1" onclick="switchAnalysisMode('p1')">Pluviómetro 1</button>
+                    <button class="toggle-btn" id="btn-p2" onclick="switchAnalysisMode('p2')">Pluviómetro 2</button>
                 </div>
 
                 <div class="metrics-grid">
@@ -342,7 +343,7 @@
                     <div class="glass-card">
                         <div class="card-header"><span class="card-label">Promedio General</span></div>
                         <div class="big-value" style="font-size: 2.5rem;"><span id="avg-stat">--</span><span class="unit" id="unit-3"></span></div>
-                        <span class="sub-text">Últimas 20 lecturas</span>
+                        <span class="sub-text">Últimas lecturas</span>
                     </div>
                 </div>
 
@@ -385,7 +386,7 @@
         tempThreshold: 35,
         humThreshold: 70,
         fullHistory: [], 
-        analysisMode: 'dht', // Por defecto vemos DHT11
+        analysisMode: 'temp', 
         lastTimestamp: 0,
         charts: {}
     };
@@ -408,17 +409,17 @@
         const gradPink = ctxTemp.createLinearGradient(0,0,0,300);
         gradPink.addColorStop(0, 'rgba(244, 114, 182, 0.4)');
         gradPink.addColorStop(1, 'rgba(244, 114, 182, 0)');
-        const gradOrange = ctxTemp.createLinearGradient(0,0,0,300);
-        gradOrange.addColorStop(0, 'rgba(251, 146, 60, 0.4)');
-        gradOrange.addColorStop(1, 'rgba(251, 146, 60, 0)');
+        const gradBlue = ctxTemp.createLinearGradient(0,0,0,300);
+        gradBlue.addColorStop(0, 'rgba(56, 189, 248, 0.4)');
+        gradBlue.addColorStop(1, 'rgba(56, 189, 248, 0)');
 
         appState.charts.temp = new Chart(ctxTemp, {
             type: 'line',
             data: { 
                 labels: [], 
                 datasets: [
-                    { label: 'DHT11', data: [], borderColor: '#f472b6', backgroundColor: gradPink, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 0 },
-                    { label: 'Termistor', data: [], borderColor: '#fb923c', backgroundColor: gradOrange, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 0 }
+                    { label: 'Temperatura (°C)', data: [], borderColor: '#f472b6', backgroundColor: gradPink, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 0 },
+                    { label: 'Humedad (%)', data: [], borderColor: '#38bdf8', backgroundColor: gradBlue, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 0 }
                 ] 
             },
             options: { 
@@ -448,7 +449,7 @@
         const icon = document.getElementById('signal-icon');
 
         if (diffMinutes > 15) { 
-            badge.className = "status-badge status-offline"; dot.className = "dot dot-offline"; text.innerText = "OFFLINE";
+            badge.className = "status-badge status-offline"; dot.className = "dot offline"; text.innerText = "OFFLINE";
             banner.style.display = "flex"; connStatus.innerText = "DESCONECTADO"; connStatus.style.color = "var(--neon-red)"; icon.className = "icon-box icon-off";
         } else { 
             badge.className = "status-badge status-online"; dot.className = "dot dot-online"; text.innerText = "ONLINE";
@@ -457,12 +458,9 @@
     }
     setInterval(checkSystemHealth, 60000);
 
-    // --- NUEVA LÓGICA DE SELECCIÓN DE SENSOR PARA ESTADÍSTICAS ---
     function switchAnalysisMode(mode) {
         appState.analysisMode = mode;
-        // Quitar active a todos
         document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        // Poner active al seleccionado
         document.getElementById('btn-' + mode).classList.add('active');
         updateAnalysisUI();
     }
@@ -473,6 +471,7 @@
         
         let unit = '°C';
         if (mode === 'hum') unit = '%';
+        if (mode === 'p1' || mode === 'p2') unit = 'mm';
 
         document.getElementById('unit-1').innerText = unit;
         document.getElementById('unit-2').innerText = unit;
@@ -480,20 +479,15 @@
         
         if(data.length === 0) return;
 
-        // FILTRADO DE DATOS SEGUN SENSOR
         const cleanData = data.map(d => {
-            let val;
-            if (mode === 'dht') {
-                // Compatible con datos viejos y nuevos
-                val = d.t_dht !== undefined ? d.t_dht : d.temperatura;
-            } else if (mode === 'ntc') {
-                val = d.t_termistor; // Solo datos nuevos con termistor
-            } else {
-                val = d.humedad;
-            }
+            let val = 0;
+            if (mode === 'temp') val = d.temperatura;
+            else if (mode === 'hum') val = d.humedad;
+            else if (mode === 'p1') val = d.pluv1_mm;
+            else if (mode === 'p2') val = d.pluv2_mm;
             
             return { val: parseFloat(val), date: new Date(d.fecha) };
-        }).filter(d => !isNaN(d.val)); // Eliminamos los nulos (ej. datos viejos sin termistor)
+        }).filter(d => !isNaN(d.val)); 
 
         if(cleanData.length === 0) {
             document.getElementById('max-stat').innerText = "--";
@@ -519,14 +513,14 @@
         }
     }
 
-    // --- LOGICA PRINCIPAL FIREBASE ---
-    db.ref('/historial').limitToLast(30).on('value', snap => {
+    // --- LOGICA PRINCIPAL FIREBASE (ACTUALIZADA A /estacion1/historial) ---
+    db.ref('/estacion1/historial').limitToLast(30).on('value', snap => {
         const tbody = document.getElementById('history-body');
         tbody.innerHTML = "";
-        let labels = [], dataDHT = [], dataNTC = [], rows = [];
+        let labels = [], dataTemp = [], dataHum = [], rows = [];
         appState.fullHistory = []; 
 
-        let lastEntryTime = 0, lastDHT = 0, lastNTC = 0, lastHum = 0, lastRain = 0;
+        let lastEntryTime = 0, lastTemp = 0, lastHum = 0, lastP1 = 0, lastP2 = 0;
 
         snap.forEach(child => {
             const val = child.val();
@@ -535,34 +529,31 @@
                 const timeStr = dateObj.toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
                 lastEntryTime = dateObj.getTime();
                 
-                let tempDHT = val.t_dht !== undefined ? val.t_dht : val.temperatura;
-                let tempNTC = val.t_termistor !== undefined ? val.t_termistor : 0;
-
-                lastDHT = tempDHT;
-                lastNTC = tempNTC;
-                lastHum = val.humedad;
-                lastRain = (val.mm_total !== undefined) ? val.mm_total : 0; 
+                lastTemp = val.temperatura !== undefined ? val.temperatura : 0;
+                lastHum = val.humedad !== undefined ? val.humedad : 0;
+                lastP1 = val.pluv1_mm !== undefined ? val.pluv1_mm : 0;
+                lastP2 = val.pluv2_mm !== undefined ? val.pluv2_mm : 0; 
 
                 labels.push(timeStr);
-                dataDHT.push(tempDHT);
-                dataNTC.push(tempNTC);
+                dataTemp.push(lastTemp);
+                dataHum.push(lastHum);
                 appState.fullHistory.push(val);
 
                 rows.unshift(`<tr>
                     <td style="color:#f1f5f9;">${timeStr}</td>
-                    <td style="color:#f472b6; font-weight:bold;">${tempDHT ? parseFloat(tempDHT).toFixed(1) : '--'}°</td>
-                    <td style="color:#fb923c; font-weight:bold;">${tempNTC ? parseFloat(tempNTC).toFixed(1) : '--'}°</td>
-                    <td style="color:#38bdf8">${val.humedad ? val.humedad : '--'}%</td>
-                    <td style="color:#c084fc;">${lastRain.toFixed(1)} mm</td>
+                    <td style="color:#f472b6; font-weight:bold;">${parseFloat(lastTemp).toFixed(1)}°</td>
+                    <td style="color:#38bdf8; font-weight:bold;">${parseFloat(lastHum).toFixed(1)}%</td>
+                    <td style="color:#fb923c;">${parseFloat(lastP1).toFixed(1)} mm</td>
+                    <td style="color:#c084fc;">${parseFloat(lastP2).toFixed(1)} mm</td>
                 </tr>`);
             }
         });
 
         if (lastEntryTime > 0) {
-            if(lastDHT) document.getElementById('temp-val').innerText = parseFloat(lastDHT).toFixed(1);
-            if(lastNTC) document.getElementById('temp-ntc-val').innerText = parseFloat(lastNTC).toFixed(1); 
-            if(lastHum) document.getElementById('hum-val').innerText = parseFloat(lastHum).toFixed(0);
-            document.getElementById('rain-val').innerText = parseFloat(lastRain).toFixed(1);
+            document.getElementById('temp-val').innerText = parseFloat(lastTemp).toFixed(1);
+            document.getElementById('hum-val').innerText = parseFloat(lastHum).toFixed(0);
+            document.getElementById('p1-val').innerText = parseFloat(lastP1).toFixed(1);
+            document.getElementById('p2-val').innerText = parseFloat(lastP2).toFixed(1);
             
             const fullDateStr = new Date(lastEntryTime).toLocaleString("es-MX", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
             document.getElementById('last-seen-text').innerText = "Último: " + fullDateStr;
@@ -574,8 +565,8 @@
         tbody.innerHTML = rows.join("");
         if(appState.charts.temp) { 
             appState.charts.temp.data.labels = labels; 
-            appState.charts.temp.data.datasets[0].data = dataDHT; 
-            appState.charts.temp.data.datasets[1].data = dataNTC; 
+            appState.charts.temp.data.datasets[0].data = dataTemp; 
+            appState.charts.temp.data.datasets[1].data = dataHum; 
             appState.charts.temp.update(); 
         }
         updateAnalysisUI();
@@ -590,22 +581,22 @@
     }
 
     function downloadFullCSV() {
-        db.ref('/historial').once('value').then(snap => {
-            let csv = "Fecha,Hora,Temp_DHT11_Digital(C),Temp_Termistor_Analogo(C),Humedad(%),Lluvia_Total(mm)\n";
+        db.ref('/estacion1/historial').once('value').then(snap => {
+            let csv = "Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm)\n";
             snap.forEach(child => {
                 const d = child.val();
                 if(d.fecha) {
                     const dateObj = new Date(d.fecha);
                     const date = dateObj.toLocaleDateString("es-MX");
                     const time = dateObj.toLocaleTimeString("es-MX");
-                    let t_dht = d.t_dht !== undefined ? d.t_dht : (d.temperatura || "");
-                    let t_ntc = d.t_termistor !== undefined ? d.t_termistor : "";
+                    let t = d.temperatura !== undefined ? d.temperatura : "";
                     let h = d.humedad !== undefined ? d.humedad : "";
-                    let r = d.mm_total !== undefined ? d.mm_total : 0;
-                    csv += `${date},${time},${t_dht},${t_ntc},${h},${r}\n`;
+                    let p1 = d.pluv1_mm !== undefined ? d.pluv1_mm : "";
+                    let p2 = d.pluv2_mm !== undefined ? d.pluv2_mm : "";
+                    csv += `${date},${time},${t},${h},${p1},${p2}\n`;
                 }
             });
-            downloadFile(csv, "Reporte_Completo_Estacion.csv");
+            downloadFile(csv, "Reporte_INIFAP_LoRa.csv");
         });
     }
 
