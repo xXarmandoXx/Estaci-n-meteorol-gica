@@ -213,7 +213,7 @@
             </div>
         </div>
 
-        <div class="sidebar-footer">v9.0 LoRa Edition</div>
+        <div class="sidebar-footer">v9.1 LoRa ID Edition</div>
     </nav>
 
     <main class="main-content">
@@ -310,9 +310,9 @@
                     </div>
                     <div style="overflow-x: auto;">
                         <table>
-                            <thead><tr><th>Hora</th><th>Temp</th><th>Hum</th><th>Pluv 1</th><th>Pluv 2</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Hora</th><th>Temp</th><th>Hum</th><th>Pluv 1</th><th>Pluv 2</th></tr></thead>
                             <tbody id="history-body">
-                                <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando base de datos...</td></tr>
+                                <tr><td colspan="6" style="text-align:center; padding:20px;">Cargando base de datos...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -367,8 +367,18 @@
                             <i class="fa-solid fa-spinner fa-spin"></i> Sincronizando...
                         </div>
                     </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--glass-border); margin-top: 5px;">
+                        <span style="color: var(--text-main); font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-hashtag" style="color: var(--text-muted);"></i> ID del Mensaje LoRa
+                        </span>
+                        <span id="msg-id-badge" style="font-weight: 700; font-size: 1rem; color: var(--neon-blue);">
+                            --
+                        </span>
+                    </div>
+
                     <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; opacity: 0.8;">
-                        Indica si el datalogger en Las Margaritas está guardando el respaldo físico correctamente en la tarjeta MicroSD.
+                        Indica si el datalogger en Las Margaritas está guardando el respaldo físico correctamente en la MicroSD y muestra el identificador del último paquete LoRa recibido.
                     </p>
                 </div>
 
@@ -473,9 +483,13 @@
             document.getElementById('sd-status-badge').style.background = 'rgba(100, 116, 139, 0.2)';
             document.getElementById('sd-status-badge').style.color = 'var(--text-muted)';
             document.getElementById('sd-status-badge').style.border = '1px solid transparent';
+            
+            document.getElementById('msg-id-badge').innerText = "--";
+            document.getElementById('msg-id-badge').style.color = 'var(--text-muted)';
         } else { 
             badge.className = "status-badge status-online"; dot.className = "dot dot-online"; text.innerText = "ONLINE";
             banner.style.display = "none"; connStatus.innerText = "CONECTADO"; connStatus.style.color = "var(--neon-green)"; icon.className = "icon-box icon-stat";
+            document.getElementById('msg-id-badge').style.color = 'var(--neon-blue)';
         }
     }
     setInterval(checkSystemHealth, 60000);
@@ -542,7 +556,7 @@
         let labels = [], dataTemp = [], dataHum = [], rows = [];
         appState.fullHistory = []; 
 
-        let lastEntryTime = 0, lastTemp = 0, lastHum = 0, lastP1 = 0, lastP2 = 0, lastEstadoSD = 1;
+        let lastEntryTime = 0, lastTemp = 0, lastHum = 0, lastP1 = 0, lastP2 = 0, lastEstadoSD = 1, lastIdMsg = "--";
 
         snap.forEach(child => {
             const val = child.val();
@@ -556,15 +570,18 @@
                 lastP1 = val.pluv1_mm !== undefined ? val.pluv1_mm : 0;
                 lastP2 = val.pluv2_mm !== undefined ? val.pluv2_mm : 0; 
                 
-                // Extraemos el estado de la SD
+                // Extraemos el estado de la SD y el ID de Mensaje
                 lastEstadoSD = val.estado_sd !== undefined ? val.estado_sd : 1; 
+                lastIdMsg = val.id_mensaje !== undefined ? val.id_mensaje : "--";
 
                 labels.push(timeStr);
                 dataTemp.push(lastTemp);
                 dataHum.push(lastHum);
                 appState.fullHistory.push(val);
 
+                // SE AGREGA LA COLUMNA DE ID AL HTML DE LA TABLA
                 rows.unshift(`<tr>
+                    <td style="color:#94a3b8; font-size: 0.8rem;">#${lastIdMsg}</td>
                     <td style="color:#f1f5f9;">${timeStr}</td>
                     <td style="color:#f472b6; font-weight:bold;">${parseFloat(lastTemp).toFixed(1)}°</td>
                     <td style="color:#38bdf8; font-weight:bold;">${parseFloat(lastHum).toFixed(1)}%</td>
@@ -597,6 +614,9 @@
                 sdBadge.style.border = '1px solid rgba(239, 68, 68, 0.3)';
             }
 
+            // --- ACTUALIZAR EL ID DE MENSAJE EN EL DIAGNÓSTICO ---
+            document.getElementById('msg-id-badge').innerText = "#" + lastIdMsg;
+
             appState.lastTimestamp = lastEntryTime;
             checkSystemHealth(); 
         }
@@ -619,20 +639,25 @@
         setTimeout(() => btn.innerText = "Guardar Cambios", 2000);
     }
 
+    // --- DESCARGAR REPORTE ACTUALIZADO CON ID Y ESTADO SD ---
     function downloadFullCSV() {
         db.ref('/estacion1/historial').once('value').then(snap => {
-            let csv = "Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm)\n";
+            let csv = "ID_Mensaje,Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm),Estado_SD\n";
             snap.forEach(child => {
                 const d = child.val();
                 if(d.fecha) {
                     const dateObj = new Date(d.fecha);
                     const date = dateObj.toLocaleDateString("es-MX");
                     const time = dateObj.toLocaleTimeString("es-MX");
+                    
+                    let idMsg = d.id_mensaje !== undefined ? d.id_mensaje : "N/A";
                     let t = d.temperatura !== undefined ? d.temperatura : "";
                     let h = d.humedad !== undefined ? d.humedad : "";
                     let p1 = d.pluv1_mm !== undefined ? d.pluv1_mm : "";
                     let p2 = d.pluv2_mm !== undefined ? d.pluv2_mm : "";
-                    csv += `${date},${time},${t},${h},${p1},${p2}\n`;
+                    let esd = d.estado_sd !== undefined ? (d.estado_sd === 1 ? "OK" : "ERROR") : "";
+                    
+                    csv += `${idMsg},${date},${time},${t},${h},${p1},${p2},${esd}\n`;
                 }
             });
             downloadFile(csv, "Reporte_INIFAP_LoRa.csv");
