@@ -213,7 +213,7 @@
             </div>
         </div>
 
-        <div class="sidebar-footer">v9.1 LoRa ID Edition</div>
+        <div class="sidebar-footer">v9.2 Lluvia Diaria Edition</div>
     </nav>
 
     <main class="main-content">
@@ -262,19 +262,23 @@
 
                     <div class="glass-card">
                         <div class="card-header">
-                            <span class="card-label">Lluvia Acumulada</span>
+                            <span class="card-label">Lluvia Acumulada (Hoy)</span>
                             <div class="icon-box icon-rain"><i class="fa-solid fa-cloud-rain"></i></div>
                         </div>
                         <div class="dual-temp-container">
                             <div class="temp-box">
-                                <span id="p1-val" class="val-dual color-p1">--</span>
+                                <span id="p1-sum-val" class="val-dual color-p1">0.0</span>
                                 <span class="lbl-dual">Pluv 1 (mm)</span>
                             </div>
                             <div class="temp-divider"></div>
                             <div class="temp-box">
-                                <span id="p2-val" class="val-dual color-p2">--</span>
+                                <span id="p2-sum-val" class="val-dual color-p2">0.0</span>
                                 <span class="lbl-dual">Pluv 2 (mm)</span>
                             </div>
+                        </div>
+                        <div class="sub-text" style="display:flex; justify-content:space-between; margin-top:15px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.05); font-size: 0.75rem;">
+                            <span>Últ. intervalo: <span id="p1-val" style="color:var(--neon-orange); font-weight:600;">--</span> mm</span>
+                            <span>Últ. intervalo: <span id="p2-val" style="color:var(--neon-purple); font-weight:600;">--</span> mm</span>
                         </div>
                     </div>
 
@@ -414,7 +418,9 @@
         fullHistory: [], 
         analysisMode: 'temp', 
         lastTimestamp: 0,
-        charts: {}
+        charts: {},
+        currentDayStamp: new Date().setHours(0,0,0,0), // <- NUEVO: Guarda el día actual a la medianoche
+        lluviaListener: null // <- NUEVO: Guarda la conexión para la lluvia
     };
 
     function switchView(viewId, btn) {
@@ -464,7 +470,43 @@
         });
     }
 
+    // --- NUEVA FUNCIÓN: Sumar Lluvia desde las 00:00 ---
+    function calcularLluviaDiaria() {
+        const timestampInicio = appState.currentDayStamp;
+
+        // Si ya había una conexión activa para la lluvia, la desconectamos para no sobrecargar
+        if(appState.lluviaListener) {
+            db.ref('/estacion1/historial').off('value', appState.lluviaListener);
+        }
+
+        appState.lluviaListener = db.ref('/estacion1/historial').orderByChild('fecha').startAt(timestampInicio).on('value', snap => {
+            let sumaP1 = 0;
+            let sumaP2 = 0;
+
+            snap.forEach(child => {
+                const val = child.val();
+                if(val.pluv1_mm !== undefined && !isNaN(parseFloat(val.pluv1_mm))) {
+                    sumaP1 += parseFloat(val.pluv1_mm);
+                }
+                if(val.pluv2_mm !== undefined && !isNaN(parseFloat(val.pluv2_mm))) {
+                    sumaP2 += parseFloat(val.pluv2_mm);
+                }
+            });
+
+            // Actualizamos los números grandotes en el dashboard
+            document.getElementById('p1-sum-val').innerText = sumaP1.toFixed(1);
+            document.getElementById('p2-sum-val').innerText = sumaP2.toFixed(1);
+        });
+    }
+
     function checkSystemHealth() {
+        // --- NUEVO: REVISAR SI YA ES MEDIA NOCHE PARA REINICIAR CONTADOR ---
+        const nowDayStamp = new Date().setHours(0,0,0,0);
+        if(appState.currentDayStamp !== nowDayStamp) {
+            appState.currentDayStamp = nowDayStamp;
+            calcularLluviaDiaria(); // Se reinicia el cálculo para el nuevo día
+        }
+
         if (appState.lastTimestamp === 0) return;
         const diffMinutes = (Date.now() - appState.lastTimestamp) / 1000 / 60;
         const badge = document.getElementById('status-badge');
@@ -478,7 +520,6 @@
             badge.className = "status-badge status-offline"; dot.className = "dot offline"; text.innerText = "OFFLINE";
             banner.style.display = "flex"; connStatus.innerText = "DESCONECTADO"; connStatus.style.color = "var(--neon-red)"; icon.className = "icon-box icon-off";
             
-            // Si está desconectado, marcamos la SD como desconocida por seguridad
             document.getElementById('sd-status-badge').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Sin Conexión';
             document.getElementById('sd-status-badge').style.background = 'rgba(100, 116, 139, 0.2)';
             document.getElementById('sd-status-badge').style.color = 'var(--text-muted)';
@@ -570,7 +611,6 @@
                 lastP1 = val.pluv1_mm !== undefined ? val.pluv1_mm : 0;
                 lastP2 = val.pluv2_mm !== undefined ? val.pluv2_mm : 0; 
                 
-                // Extraemos el estado de la SD y el ID de Mensaje
                 lastEstadoSD = val.estado_sd !== undefined ? val.estado_sd : 1; 
                 lastIdMsg = val.id_mensaje !== undefined ? val.id_mensaje : "--";
 
@@ -579,7 +619,6 @@
                 dataHum.push(lastHum);
                 appState.fullHistory.push(val);
 
-                // SE AGREGA LA COLUMNA DE ID AL HTML DE LA TABLA
                 rows.unshift(`<tr>
                     <td style="color:#94a3b8; font-size: 0.8rem;">#${lastIdMsg}</td>
                     <td style="color:#f1f5f9;">${timeStr}</td>
@@ -594,13 +633,14 @@
         if (lastEntryTime > 0) {
             document.getElementById('temp-val').innerText = parseFloat(lastTemp).toFixed(1);
             document.getElementById('hum-val').innerText = parseFloat(lastHum).toFixed(0);
+            
+            // Los pulsos pequeños se muestran en el subtexto de abajo
             document.getElementById('p1-val').innerText = parseFloat(lastP1).toFixed(1);
             document.getElementById('p2-val').innerText = parseFloat(lastP2).toFixed(1);
             
             const fullDateStr = new Date(lastEntryTime).toLocaleString("es-MX", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
             document.getElementById('last-seen-text').innerText = "Último: " + fullDateStr;
 
-            // --- ACTUALIZAR BADGE DE LA TARJETA SD ---
             const sdBadge = document.getElementById('sd-status-badge');
             if (lastEstadoSD === 1) {
                 sdBadge.innerHTML = '<i class="fa-solid fa-check"></i> Operativa';
@@ -614,7 +654,6 @@
                 sdBadge.style.border = '1px solid rgba(239, 68, 68, 0.3)';
             }
 
-            // --- ACTUALIZAR EL ID DE MENSAJE EN EL DIAGNÓSTICO ---
             document.getElementById('msg-id-badge').innerText = "#" + lastIdMsg;
 
             appState.lastTimestamp = lastEntryTime;
@@ -639,7 +678,6 @@
         setTimeout(() => btn.innerText = "Guardar Cambios", 2000);
     }
 
-    // --- DESCARGAR REPORTE ACTUALIZADO CON ID Y ESTADO SD ---
     function downloadFullCSV() {
         db.ref('/estacion1/historial').once('value').then(snap => {
             let csv = "ID_Mensaje,Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm),Estado_SD\n";
@@ -671,7 +709,11 @@
         link.click();
     }
 
-    document.addEventListener('DOMContentLoaded', initCharts);
+    // --- INICIAMOS TODO AL CARGAR LA PÁGINA ---
+    document.addEventListener('DOMContentLoaded', () => {
+        initCharts();
+        calcularLluviaDiaria(); // Arrancamos el contador de lluvia
+    });
 </script>
 
 </body>
