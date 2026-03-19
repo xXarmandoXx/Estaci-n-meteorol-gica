@@ -680,7 +680,7 @@
 
     function downloadFullCSV() {
         db.ref('/estacion1/historial').once('value').then(snap => {
-            let csv = "ID_Mensaje,Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm),Estado_SD\n";
+            let csv = "ID_Mensaje,Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm)\n";
             snap.forEach(child => {
                 const d = child.val();
                 if(d.fecha) {
@@ -693,9 +693,8 @@
                     let h = d.humedad !== undefined ? d.humedad : "";
                     let p1 = d.pluv1_mm !== undefined ? d.pluv1_mm : "";
                     let p2 = d.pluv2_mm !== undefined ? d.pluv2_mm : "";
-                    let esd = d.estado_sd !== undefined ? (d.estado_sd === 1 ? "OK" : "ERROR") : "";
                     
-                    csv += `${idMsg},${date},${time},${t},${h},${p1},${p2},${esd}\n`;
+                    csv += `${idMsg},${date},${time},${t},${h},${p1},${p2}\n`;
                 }
             });
             downloadFile(csv, "Reporte_INIFAP_LoRa.csv");
