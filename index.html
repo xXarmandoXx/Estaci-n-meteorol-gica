@@ -8,9 +8,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Clima Mando">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/color/480/clouds.png">
     
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -19,6 +18,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         /* --- 1. VARIABLES Y RESET --- */
@@ -33,13 +35,13 @@
             --accent-blue: #38bdf8;
             --accent-pink: #f472b6;   
             --accent-orange: #fb923c; 
-            --accent-yellow: #facc15;
             --accent-green: #34d399;
             --accent-purple: #c084fc; 
+            --accent-disabled: #475569; /* Color para módulos inactivos */
             
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --transition: all 0.3s ease;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body { 
@@ -54,33 +56,32 @@
                 radial-gradient(circle at 85% 30%, rgba(244, 114, 182, 0.03) 0%, transparent 25%);
         }
 
-        /* --- 2. SIDEBAR COMPACTO --- */
+        /* --- 2. SIDEBAR INTERACTIVO --- */
         .sidebar { width: 80px; background: var(--bg-sidebar); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; z-index: 100; transition: width 0.3s; }
-        .sidebar:hover { width: 220px; align-items: flex-start; padding: 20px; }
+        .sidebar:hover { width: 220px; align-items: flex-start; padding: 20px; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
         
-        .brand-icon { font-size: 1.8rem; color: var(--accent-blue); filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.3)); margin-bottom: 40px; }
-        .sidebar:hover .brand-icon { margin-left: 10px; }
+        .brand-icon { font-size: 1.8rem; color: var(--accent-blue); filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.3)); margin-bottom: 40px; transition: var(--transition); }
+        .sidebar:hover .brand-icon { margin-left: 10px; transform: scale(1.1); }
         
-        .menu-items { display: flex; flex-direction: column; gap: 15px; width: 100%; }
-        .menu-btn { padding: 12px; width: 100%; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: var(--transition); }
+        .menu-items { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .menu-btn { padding: 14px; width: 100%; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: var(--transition); border: 1px solid transparent; }
         .sidebar:hover .menu-btn { justify-content: flex-start; padding-left: 15px; gap: 15px; }
         .menu-btn span { display: none; font-weight: 500; font-size: 0.95rem; white-space: nowrap; }
         .sidebar:hover .menu-btn span { display: block; }
         
-        .menu-btn:hover { background: rgba(255, 255, 255, 0.05); color: white; }
-        .menu-btn.active { color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); border-left: 3px solid var(--accent-blue); }
+        .menu-btn:hover { background: rgba(255, 255, 255, 0.05); color: white; border: 1px solid rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .menu-btn.active { color: var(--accent-blue); background: rgba(56, 189, 248, 0.05); border-left: 3px solid var(--accent-blue); border-top: 1px solid transparent; border-right: 1px solid transparent; border-bottom: 1px solid transparent; }
 
         /* --- 3. MAIN CONTENT Y GRID --- */
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px; }
-        .header-info h1 { font-size: 1.5rem; font-weight: 700; }
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 30px; scroll-behavior: smooth; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header-info h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(90deg, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        /* Dashboard Grid - Estilo Profesional */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
             grid-auto-rows: minmax(150px, auto);
-            gap: 15px;
+            gap: 20px;
             max-width: 1600px;
             margin: 0 auto;
             width: 100%;
@@ -90,14 +91,16 @@
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 15px;
+            border-radius: 20px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transition: var(--transition);
         }
+        .widget:hover { border-color: rgba(255,255,255,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
 
         /* Tamaños de Grid */
         .w-map { grid-column: span 8; grid-row: span 2; padding: 0; border: none; }
@@ -106,55 +109,74 @@
         .w-rain { grid-column: span 6; grid-row: span 1; }
         .w-mini { grid-column: span 3; grid-row: span 1; }
 
-        /* --- 4. ESTILOS INTERNOS DE WIDGETS --- */
-        .widget-header { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px; }
-        
-        /* Map Container */
-        #station-map { width: 100%; height: 100%; border-radius: 16px; z-index: 1; }
-        
-        /* Gauge Containers */
-        .gauge-container { position: relative; width: 100%; height: 100px; display: flex; justify-content: center; }
-        .gauge-value-center { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); text-align: center; }
-        .gauge-val { font-size: 1.8rem; font-weight: 700; line-height: 1; }
-        .gauge-unit { font-size: 0.8rem; color: var(--text-muted); }
+        /* Módulos Inactivos */
+        .widget-inactive { opacity: 0.5; background: rgba(10, 10, 10, 0.4); border: 1px dashed var(--glass-border); filter: grayscale(100%); cursor: not-allowed; }
+        .widget-inactive:hover { opacity: 0.7; transform: none; box-shadow: none; }
+        .badge-na { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Valores Grandes */
-        .big-value { font-size: 2.5rem; font-weight: 700; display: flex; align-items: baseline; gap: 5px; }
-        .big-value .unit { font-size: 1rem; color: var(--text-muted); font-weight: 400; }
+        /* --- 4. COMPONENTES INTERNOS --- */
+        .widget-header { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px; }
+        
+        #station-map { width: 100%; height: 100%; border-radius: 20px; z-index: 1; }
+        
+        .gauge-container { position: relative; width: 100%; height: 110px; display: flex; justify-content: center; }
+        .gauge-value-center { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center; }
+        .gauge-val { font-size: 2rem; font-weight: 700; line-height: 1; text-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .gauge-unit { font-size: 0.85rem; color: var(--text-muted); }
 
-        /* Tarjeta de Lluvia */
+        .big-value { font-size: 3rem; font-weight: 700; display: flex; align-items: baseline; gap: 5px; }
+        .big-value .unit { font-size: 1.2rem; color: var(--text-muted); font-weight: 400; }
+
         .rain-flex { display: flex; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
         .rain-box { text-align: center; }
         .rain-divider { width: 1px; height: 60%; background: var(--glass-border); }
 
-        /* Elementos Decorativos */
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        
-        .moon-phase { width: 60px; height: 60px; background: radial-gradient(circle at 30% 30%, #fff, #888); border-radius: 50%; box-shadow: inset -10px -10px 20px rgba(0,0,0,0.8), 0 0 15px rgba(255,255,255,0.2); margin: 10px auto; }
+        @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } 50% { opacity: 0.4; box-shadow: 0 0 2px var(--accent-green); } 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } }
 
-        /* Vista Oculta */
-        .view-section { display: none; animation: fadeIn 0.3s ease; }
+        /* --- 5. TABLA Y BOTONES (MODO HISTORIAL) --- */
+        .view-section { display: none; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-top: 15px; }
+        th { text-align: left; padding: 15px; color: var(--text-muted); border-bottom: 2px solid var(--glass-border); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-main); transition: var(--transition); }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        /* Botón Desplegable Interactivo */
+        .dropdown-wrapper { position: relative; display: inline-block; }
+        .btn-action { background: linear-gradient(135deg, var(--accent-blue), #2563eb); border: none; padding: 10px 20px; border-radius: 10px; color: white; font-family: 'Outfit'; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: var(--transition); box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); }
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5); }
+        
+        .dropdown-menu { position: absolute; right: 0; top: calc(100% + 10px); background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 12px; width: 200px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: var(--transition); z-index: 1000; }
+        .dropdown-menu.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        
+        .dropdown-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: var(--text-main); text-decoration: none; border-radius: 8px; transition: var(--transition); font-size: 0.9rem; font-weight: 500; }
+        .dropdown-item:hover { background: rgba(255,255,255,0.1); padding-left: 20px; }
+        .dropdown-item i { font-size: 1.1rem; }
+        .item-csv i { color: var(--accent-green); }
+        .item-json i { color: var(--accent-orange); }
+        .item-pdf i { color: var(--accent-pink); }
 
         /* --- MÓVIL --- */
         @media (max-width: 1024px) {
             .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
-            .w-map { grid-column: span 6; height: 250px; }
+            .w-map { grid-column: span 6; height: 300px; }
             .w-status, .w-rain { grid-column: span 6; }
             .w-gauge, .w-mini { grid-column: span 3; }
         }
         @media (max-width: 600px) {
-            .sidebar { width: 100%; height: 60px; flex-direction: row; padding: 0 15px; position: fixed; bottom: 0; border-top: 1px solid var(--glass-border); border-right: none; z-index: 1000; }
-            .sidebar:hover { width: 100%; padding: 0 15px; }
+            .sidebar { width: 100%; height: 70px; flex-direction: row; padding: 0 10px; position: fixed; bottom: 0; border-top: 1px solid var(--glass-border); border-right: none; z-index: 1000; background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); }
+            .sidebar:hover { width: 100%; padding: 0 10px; box-shadow: none; }
             .brand-icon { display: none; }
-            .menu-items { flex-direction: row; justify-content: space-around; }
-            .menu-btn { padding: 10px; width: auto; }
+            .menu-items { flex-direction: row; justify-content: space-around; gap: 5px; }
+            .menu-btn { padding: 10px; flex-direction: column; gap: 5px; border-radius: 8px; }
             .sidebar:hover .menu-btn span { display: none; }
-            .main-content { padding-bottom: 80px; }
+            .main-content { padding-bottom: 90px; padding-left: 15px; padding-right: 15px; }
             .dashboard-grid { grid-template-columns: 1fr; }
             .w-map, .w-status, .w-gauge, .w-rain, .w-mini { grid-column: span 1; }
+            .big-value { font-size: 2.5rem; }
         }
     </style>
 </head>
@@ -167,10 +189,10 @@
                 <i class="fa-solid fa-border-all"></i> <span>Dashboard</span>
             </div>
             <div class="menu-btn" onclick="switchView('historial', this)">
-                <i class="fa-solid fa-chart-line"></i> <span>Historial</span>
+                <i class="fa-solid fa-chart-line"></i> <span>Datos & Gráficos</span>
             </div>
             <div class="menu-btn" onclick="switchView('config', this)">
-                <i class="fa-solid fa-microchip"></i> <span>Sistema</span>
+                <i class="fa-solid fa-microchip"></i> <span>Hardware</span>
             </div>
         </div>
     </nav>
@@ -179,14 +201,14 @@
         <div class="header-top">
             <div class="header-info">
                 <h1 id="page-title">INIFAP Las Margaritas</h1>
-                <p style="color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+                <p style="color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; margin-top: 5px;">
                     <span class="status-dot" id="header-dot"></span> 
-                    <span id="header-status">Recibiendo datos LoRa</span>
+                    <span id="header-status">Sensor SHT41 vía LoRa</span>
                 </p>
             </div>
-            <div style="text-align: right;">
-                <h2 style="font-size: 1.8rem; font-weight: 300;" id="clock">00:00:00</h2>
-                <p style="color: var(--text-muted); font-size: 0.8rem;" id="date-display">--</p>
+            <div style="text-align: right; background: var(--glass-bg); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border);">
+                <h2 style="font-size: 1.5rem; font-weight: 400; letter-spacing: 2px; color: var(--accent-blue);" id="clock">00:00:00</h2>
+                <p style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;" id="date-display">--</p>
             </div>
         </div>
 
@@ -197,21 +219,21 @@
                     <div id="station-map"></div>
                 </div>
 
-                <div class="widget w-status" style="background: linear-gradient(145deg, rgba(30,41,59,0.8), rgba(15,23,42,0.9));">
+                <div class="widget w-status" style="background: linear-gradient(145deg, rgba(30,41,59,0.5), rgba(15,23,42,0.8));">
                     <div class="widget-header">
-                        <span>SHT41 Temperatura Exterior</span>
-                        <i class="fa-solid fa-temperature-full" style="color: var(--accent-pink);"></i>
+                        <span>Estado Actual</span>
+                        <i class="fa-solid fa-bolt" style="color: var(--accent-blue);"></i>
                     </div>
                     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                        <i class="fa-solid fa-cloud" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 10px;"></i>
-                        <div class="big-value" style="color: white; font-size: 3.5rem;">
-                            <span id="temp-main">--</span><span class="unit">°C</span>
+                        <i class="fa-solid fa-cloud" style="font-size: 2.5rem; color: rgba(255,255,255,0.2); margin-bottom: 10px;"></i>
+                        <div class="big-value" style="color: white; font-size: 4rem;">
+                            <span id="temp-main">--</span><span class="unit" style="font-size: 1.5rem;">°C</span>
                         </div>
-                        <div style="color: var(--accent-blue); font-weight: 600; margin-top: 5px;">
-                            Humedad: <span id="hum-main">--</span>%
+                        <div style="color: var(--accent-blue); font-weight: 500; font-size: 1.1rem; margin-top: 5px;">
+                            <i class="fa-solid fa-droplet"></i> Humedad: <span id="hum-main">--</span>%
                         </div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 15px; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 12px;">
-                            Último msg: #<span id="msg-id">--</span>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 25px; border-top: 1px solid var(--glass-border); padding-top: 10px; width: 100%; text-align: center;">
+                            Paquete LoRa Ref: <span id="msg-id" style="color: white; font-weight: bold;">--</span>
                         </div>
                     </div>
                 </div>
@@ -236,41 +258,40 @@
                     </div>
                 </div>
 
-                <div class="widget w-gauge">
-                    <div class="widget-header">Presión Atm</div>
+                <div class="widget w-gauge widget-inactive">
+                    <div class="widget-header">Presión Atm <span class="badge-na">No Disp.</span></div>
                     <div class="gauge-container">
                         <canvas id="gaugePres"></canvas>
                         <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-yellow);">1015</div>
-                            <div class="gauge-unit">hPa</div>
+                            <div class="gauge-val" style="color: var(--accent-disabled);">N/A</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="widget w-gauge" style="text-align: center;">
-                    <div class="widget-header">Fase Lunar</div>
-                    <div class="moon-phase"></div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Luna Menguante</div>
+                <div class="widget w-gauge widget-inactive" style="text-align: center;">
+                    <div class="widget-header">Fase Lunar <span class="badge-na">No Disp.</span></div>
+                    <i class="fa-solid fa-moon" style="font-size: 3rem; color: var(--accent-disabled); margin-top: 15px;"></i>
+                    <div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-disabled); margin-top: 15px;">N/A</div>
                 </div>
 
                 <div class="widget w-rain">
                     <div class="widget-header">
-                        <span>Precipitación Acumulada (24h)</span>
-                        <i class="fa-solid fa-cloud-showers-heavy" style="color: var(--accent-blue);"></i>
+                        <span>Precipitación Acumulada (Desde medianoche)</span>
+                        <i class="fa-solid fa-cloud-showers-heavy" style="color: var(--accent-purple);"></i>
                     </div>
                     <div class="rain-flex">
                         <div class="rain-box">
-                            <div class="big-value" style="color: var(--accent-orange);">
+                            <div class="big-value" style="color: var(--accent-orange); justify-content: center;">
                                 <span id="p1-sum-val">0.0</span><span class="unit">mm</span>
                             </div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Pluviómetro 1</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUVIÓMETRO 1</div>
                         </div>
                         <div class="rain-divider"></div>
                         <div class="rain-box">
-                            <div class="big-value" style="color: var(--accent-purple);">
+                            <div class="big-value" style="color: var(--accent-purple); justify-content: center;">
                                 <span id="p2-sum-val">0.0</span><span class="unit">mm</span>
                             </div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Pluviómetro 2</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUVIÓMETRO 2</div>
                         </div>
                     </div>
                 </div>
@@ -279,11 +300,12 @@
                     <div class="widget-header">Tendencia Temp</div>
                     <div style="height: 60px; width: 100%;"><canvas id="sparkTemp"></canvas></div>
                 </div>
-                <div class="widget w-mini">
-                    <div class="widget-header">Viento (Próx.)</div>
-                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; gap: 10px;">
-                        <i class="fa-solid fa-wind" style="font-size: 1.5rem; color: var(--text-muted);"></i>
-                        <span style="font-size: 1.2rem; font-weight: bold; color: var(--text-muted);">N/A km/h</span>
+                
+                <div class="widget w-mini widget-inactive">
+                    <div class="widget-header">Anemómetro <span class="badge-na">No Disp.</span></div>
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; gap: 15px;">
+                        <i class="fa-solid fa-wind" style="font-size: 2rem; color: var(--accent-disabled);"></i>
+                        <span style="font-size: 1.5rem; font-weight: bold; color: var(--accent-disabled);">N/A</span>
                     </div>
                 </div>
 
@@ -291,24 +313,66 @@
         </section>
 
         <section id="historial" class="view-section">
-            <div class="widget" style="min-height: 400px;">
-                <div class="widget-header" style="font-size: 1rem;">Gráfico General 24h</div>
+            <div class="widget" style="margin-bottom: 20px;">
+                <div class="widget-header" style="font-size: 1rem;">
+                    <span><i class="fa-solid fa-chart-area"></i> Gráfico General (Últimas lecturas)</span>
+                    
+                    <div class="dropdown-wrapper">
+                        <button class="btn-action" onclick="toggleDropdown(event)">
+                            Exportar <i class="fa-solid fa-caret-down"></i>
+                        </button>
+                        <div class="dropdown-menu" id="exportMenu">
+                            <a href="#" class="dropdown-item item-csv" onclick="exportData('csv', event)">
+                                <i class="fa-solid fa-file-csv"></i> Descargar CSV
+                            </a>
+                            <a href="#" class="dropdown-item item-json" onclick="exportData('json', event)">
+                                <i class="fa-solid fa-file-code"></i> Descargar JSON
+                            </a>
+                            <a href="#" class="dropdown-item item-pdf" onclick="exportData('pdf', event)">
+                                <i class="fa-solid fa-file-pdf"></i> Generar Reporte PDF
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 <div style="position: relative; height: 350px; width: 100%;">
                     <canvas id="mainChart"></canvas>
                 </div>
             </div>
+
+            <div class="widget" style="overflow-x: auto;">
+                <div class="widget-header">Registro Detallado</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Temp (°C)</th>
+                            <th>Hum (%)</th>
+                            <th>Pluv 1 (mm)</th>
+                            <th>Pluv 2 (mm)</th>
+                            <th>Estado SD</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando base de datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <section id="config" class="view-section">
-            <div class="widget" style="max-width: 500px;">
-                <div class="widget-header">Diagnóstico SD y LoRa</div>
-                <div style="padding: 10px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between;">
-                    <span>Estado Memoria SD:</span>
-                    <span id="sd-status-text" style="color: var(--accent-green); font-weight: bold;">Verificando...</span>
+            <div class="widget" style="max-width: 600px;">
+                <div class="widget-header">Diagnóstico de Hardware</div>
+                <div style="padding: 15px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-sd-card"></i> Estado Memoria SD (Datalogger):</span>
+                    <span id="sd-status-text" style="padding: 5px 12px; border-radius: 8px; font-weight: bold; background: rgba(255,255,255,0.1);">Verificando...</span>
                 </div>
-                <div style="padding: 10px 0; display: flex; justify-content: space-between;">
-                    <span>Latencia (Aprox):</span>
-                    <span style="color: var(--text-muted);">2s</span>
+                <div style="padding: 15px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-microchip"></i> Microcontrolador:</span>
+                    <span style="color: var(--text-main); font-weight: 500;">Heltec LoRa V3 (ESP32)</span>
+                </div>
+                <div style="padding: 15px 0; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-temperature-half"></i> Sensor Principal:</span>
+                    <span style="color: var(--accent-pink); font-weight: 500;">SHT41 (I2C)</span>
                 </div>
             </div>
         </section>
@@ -316,11 +380,16 @@
     </main>
 
 <script>
+    // --- APP STATE (Para exportar datos) ---
+    const appState = {
+        rawData: [] // Aquí guardaremos los últimos datos descargados de Firebase
+    };
+
     // --- RELOJ ---
     function updateClock() {
         const now = new Date();
         document.getElementById('clock').innerText = now.toLocaleTimeString('es-MX', {hour12: false});
-        document.getElementById('date-display').innerText = now.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('date-display').innerText = now.toLocaleDateString('es-MX', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
     }
     setInterval(updateClock, 1000);
     updateClock();
@@ -331,75 +400,169 @@
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(viewId).classList.add('active');
+        
+        // Cierra el menú dropdown si cambias de vista
+        document.getElementById('exportMenu').classList.remove('show');
+    }
+
+    // --- LÓGICA DEL DROPDOWN DE EXPORTACIÓN ---
+    function toggleDropdown(e) {
+        e.preventDefault();
+        document.getElementById('exportMenu').classList.toggle('show');
+    }
+
+    // Cerrar menú si haces clic afuera
+    window.onclick = function(event) {
+        if (!event.target.matches('.btn-action') && !event.target.matches('.fa-caret-down')) {
+            const dropdowns = document.getElementsByClassName("dropdown-menu");
+            for (let i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].classList.contains('show')) {
+                    dropdowns[i].classList.remove('show');
+                }
+            }
+        }
+    }
+
+    function exportData(format, e) {
+        e.preventDefault();
+        if (appState.rawData.length === 0) {
+            alert("No hay datos disponibles para exportar aún.");
+            return;
+        }
+
+        const dateStr = new Date().toISOString().split('T')[0];
+        const fileName = `INIFAP_Margaritas_Reporte_${dateStr}`;
+
+        if (format === 'csv') {
+            let csvContent = "Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm)\n";
+            appState.rawData.forEach(row => {
+                const dt = new Date(row.fecha);
+                csvContent += `${dt.toLocaleDateString('es-MX')},${dt.toLocaleTimeString('es-MX')},${row.temperatura || 0},${row.humedad || 0},${row.pluv1_mm || 0},${row.pluv2_mm || 0}\n`;
+            });
+            downloadBlob(csvContent, `${fileName}.csv`, 'text/csv');
+        } 
+        else if (format === 'json') {
+            const jsonContent = JSON.stringify(appState.rawData, null, 2);
+            downloadBlob(jsonContent, `${fileName}.json`, 'application/json');
+        }
+        else if (format === 'pdf') {
+            generarPDF(fileName);
+        }
+    }
+
+    function downloadBlob(content, fileName, contentType) {
+        const a = document.createElement("a");
+        const file = new Blob([content], { type: contentType });
+        a.href = URL.createObjectURL(file);
+        a.download = fileName;
+        a.click();
+    }
+
+    function generarPDF(fileName) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Título del PDF
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.text("Reporte Climatológico - Estación INIFAP Las Margaritas", 14, 20);
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Fecha de generación: ${new Date().toLocaleString('es-MX')}`, 14, 28);
+        doc.text(`Sensor: SHT41 | Transmisión: LoRa`, 14, 33);
+
+        // Preparar datos para la tabla
+        const tableColumn = ["Fecha", "Hora", "Temp (°C)", "Hum (%)", "Pluv 1 (mm)", "Pluv 2 (mm)"];
+        const tableRows = [];
+
+        appState.rawData.forEach(row => {
+            const dt = new Date(row.fecha);
+            const rowData = [
+                dt.toLocaleDateString('es-MX'),
+                dt.toLocaleTimeString('es-MX'),
+                (row.temperatura || 0).toString(),
+                (row.humedad || 0).toString(),
+                (row.pluv1_mm || 0).toString(),
+                (row.pluv2_mm || 0).toString()
+            ];
+            tableRows.push(rowData);
+        });
+
+        // Generar Tabla
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 40,
+            theme: 'striped',
+            headStyles: { fillColor: [56, 189, 248] }, // Color Azul Accent
+            styles: { fontSize: 9 }
+        });
+
+        doc.save(`${fileName}.pdf`);
     }
 
     // --- MAPA LEAFLET ---
-    // Coordenadas INIFAP Las Margaritas (Aprox Hueytamalco)
     const map = L.map('station-map', { zoomControl: false }).setView([19.996, -97.306], 12);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        subdomains: 'abcd',
-        maxZoom: 20
+        attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20
     }).addTo(map);
     
-    // Marcador personalizado
     const stationIcon = L.divIcon({
         className: 'custom-div-icon',
-        html: "<div style='background-color:var(--accent-blue); width:15px; height:15px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>",
-        iconSize: [15, 15],
-        iconAnchor: [7, 7]
+        html: "<div style='background-color:var(--accent-blue); width:16px; height:16px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>",
+        iconSize: [16, 16], iconAnchor: [8, 8]
     });
     L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map)
-        .bindPopup('<b style="color:black;">Estación LoRa</b><br>Las Margaritas, INIFAP')
+        .bindPopup('<b style="color:black;">Estación LoRa Mando</b><br>Las Margaritas, INIFAP')
         .openPopup();
 
     // --- GRÁFICOS (CHART.JS) ---
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = 'Outfit';
 
-    // Configuración base para Gauges (Doughnut a la mitad)
     const gaugeOptions = {
         circumference: 180, rotation: -90, cutout: '80%',
         plugins: { legend: { display: false }, tooltip: { enabled: false } },
         maintainAspectRatio: false, responsive: true
     };
 
-    // Gauge Temperatura
+    // Gauge Temp
     const ctxGaugeTemp = document.getElementById('gaugeTemp').getContext('2d');
     const chartGaugeTemp = new Chart(ctxGaugeTemp, {
         type: 'doughnut',
-        data: { datasets: [{ data: [0, 50], backgroundColor: ['#f472b6', '#1e293b'], borderWidth: 0, borderRadius: 5 }] },
+        data: { datasets: [{ data: [0, 50], backgroundColor: ['#f472b6', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
         options: gaugeOptions
     });
 
-    // Gauge Humedad
+    // Gauge Hum
     const ctxGaugeHum = document.getElementById('gaugeHum').getContext('2d');
     const chartGaugeHum = new Chart(ctxGaugeHum, {
         type: 'doughnut',
-        data: { datasets: [{ data: [0, 100], backgroundColor: ['#38bdf8', '#1e293b'], borderWidth: 0, borderRadius: 5 }] },
+        data: { datasets: [{ data: [0, 100], backgroundColor: ['#38bdf8', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
         options: gaugeOptions
     });
 
-    // Gauge Presión (Ficticio para estética)
+    // Gauge Inactivo (Presión Estática visualmente)
     const ctxGaugePres = document.getElementById('gaugePres').getContext('2d');
     new Chart(ctxGaugePres, {
         type: 'doughnut',
-        data: { datasets: [{ data: [1015, 1050-1015], backgroundColor: ['#facc15', '#1e293b'], borderWidth: 0, borderRadius: 5 }] },
+        data: { datasets: [{ data: [1, 1], backgroundColor: ['#475569', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
         options: gaugeOptions
     });
 
-    // Gráfico Historial General (Líneas)
+    // Gráfico Historial General
     const ctxMain = document.getElementById('mainChart').getContext('2d');
     const mainChart = new Chart(ctxMain, {
         type: 'line',
         data: { labels: [], datasets: [
-            { label: 'Temp °C', data: [], borderColor: '#f472b6', tension: 0.4, borderWidth: 2, pointRadius: 0 },
-            { label: 'Hum %', data: [], borderColor: '#38bdf8', tension: 0.4, borderWidth: 2, pointRadius: 0 }
+            { label: 'Temp °C', data: [], borderColor: '#f472b6', tension: 0.4, borderWidth: 3, pointRadius: 0, fill: true, backgroundColor: 'rgba(244, 114, 182, 0.05)' },
+            { label: 'Hum %', data: [], borderColor: '#38bdf8', tension: 0.4, borderWidth: 3, pointRadius: 0, fill: true, backgroundColor: 'rgba(56, 189, 248, 0.05)' }
         ]},
         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
     });
 
-    // Sparkline Temperatura
+    // Sparkline Temp
     const ctxSpark = document.getElementById('sparkTemp').getContext('2d');
     const sparkChart = new Chart(ctxSpark, {
         type: 'line',
@@ -414,7 +577,7 @@
 
     let currentDayStamp = new Date().setHours(0,0,0,0);
     
-    // Lluvia
+    // Suma de lluvia diaria
     function calcularLluvia() {
         db.ref('/estacion1/historial').orderByChild('fecha').startAt(currentDayStamp).on('value', snap => {
             let sP1 = 0, sP2 = 0;
@@ -429,38 +592,64 @@
     }
     calcularLluvia();
 
-    // Datos en Tiempo Real
+    // Listener Principal (Últimos 30 registros)
     db.ref('/estacion1/historial').limitToLast(30).on('value', snap => {
         let labels = [], dTemp = [], dHum = [];
+        let tableRowsHTML = "";
         let lastT = 0, lastH = 0, lastId = "--", lastSD = 1;
+        
+        // Vaciamos el array global para tener siempre los últimos datos frescos para exportar
+        appState.rawData = []; 
 
         snap.forEach(child => {
             const val = child.val();
             if(val.fecha) {
+                appState.rawData.push(val); // Guardar para exportación
+                
                 const timeStr = new Date(val.fecha).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
                 labels.push(timeStr);
-                dTemp.push(val.temperatura || 0);
-                dHum.push(val.humedad || 0);
                 
-                lastT = val.temperatura || 0;
-                lastH = val.humedad || 0;
-                lastId = val.id_mensaje || "--";
-                lastSD = val.estado_sd !== undefined ? val.estado_sd : 1;
+                const temp = val.temperatura !== undefined ? parseFloat(val.temperatura).toFixed(1) : 0;
+                const hum = val.humedad !== undefined ? parseFloat(val.humedad).toFixed(0) : 0;
+                const p1 = val.pluv1_mm !== undefined ? parseFloat(val.pluv1_mm).toFixed(1) : 0;
+                const p2 = val.pluv2_mm !== undefined ? parseFloat(val.pluv2_mm).toFixed(1) : 0;
+                const sd = val.estado_sd !== undefined ? val.estado_sd : 1;
+
+                dTemp.push(temp);
+                dHum.push(hum);
+                
+                lastT = temp; lastH = hum; lastId = val.id_mensaje || "--"; lastSD = sd;
+
+                // Generar filas de la tabla (insertadas al revés para ver lo más nuevo arriba)
+                let sdBadge = sd === 1 ? `<span style="color:var(--accent-green);"><i class="fa-solid fa-check"></i> OK</span>` : `<span style="color:var(--accent-pink);"><i class="fa-solid fa-xmark"></i> Falla</span>`;
+                
+                tableRowsHTML = `<tr>
+                    <td style="color:#f1f5f9; font-weight:500;">${timeStr}</td>
+                    <td style="color:var(--accent-pink); font-weight:bold;">${temp}°</td>
+                    <td style="color:var(--accent-blue); font-weight:bold;">${hum}%</td>
+                    <td style="color:var(--accent-orange);">${p1}</td>
+                    <td style="color:var(--accent-purple);">${p2}</td>
+                    <td>${sdBadge}</td>
+                </tr>` + tableRowsHTML;
             }
         });
 
-        // Actualizar UI
-        document.getElementById('temp-main').innerText = parseFloat(lastT).toFixed(1);
-        document.getElementById('hum-main').innerText = parseFloat(lastH).toFixed(0);
+        // Actualizar Tabla UI
+        if(tableRowsHTML === "") tableRowsHTML = "<tr><td colspan='6' style='text-align:center;'>No hay datos recientes.</td></tr>";
+        document.getElementById('history-table-body').innerHTML = tableRowsHTML;
+
+        // Actualizar UI General
+        document.getElementById('temp-main').innerText = lastT;
+        document.getElementById('hum-main').innerText = lastH;
         document.getElementById('msg-id').innerText = lastId;
 
         // Actualizar Gauges
-        document.getElementById('g-temp-val').innerText = parseFloat(lastT).toFixed(1) + "°";
-        chartGaugeTemp.data.datasets[0].data = [lastT, Math.max(0, 50 - lastT)]; // Max 50C
+        document.getElementById('g-temp-val').innerText = lastT + "°";
+        chartGaugeTemp.data.datasets[0].data = [lastT, Math.max(0, 50 - lastT)];
         chartGaugeTemp.update();
 
-        document.getElementById('g-hum-val').innerText = parseFloat(lastH).toFixed(0) + "%";
-        chartGaugeHum.data.datasets[0].data = [lastH, Math.max(0, 100 - lastH)]; // Max 100%
+        document.getElementById('g-hum-val').innerText = lastH + "%";
+        chartGaugeHum.data.datasets[0].data = [lastH, Math.max(0, 100 - lastH)];
         chartGaugeHum.update();
 
         // Actualizar Gráficos Lineales
@@ -473,14 +662,16 @@
         sparkChart.data.datasets[0].data = dTemp;
         sparkChart.update();
 
-        // SD Status
+        // SD Status en vista Hardware
         const sdText = document.getElementById('sd-status-text');
         if (lastSD === 1) {
-            sdText.innerText = "OPERATIVA";
+            sdText.innerHTML = '<i class="fa-solid fa-circle-check"></i> OPERATIVA';
             sdText.style.color = "var(--accent-green)";
+            sdText.style.background = "rgba(52, 211, 153, 0.1)";
         } else {
-            sdText.innerText = "FALLO DETECTADO";
+            sdText.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> FALLA DETECTADA';
             sdText.style.color = "var(--accent-pink)";
+            sdText.style.background = "rgba(244, 114, 182, 0.1)";
         }
     });
 </script>
