@@ -37,7 +37,7 @@
             --accent-orange: #fb923c; 
             --accent-green: #34d399;
             --accent-purple: #c084fc; 
-            --accent-disabled: #475569; /* Color para módulos inactivos */
+            --accent-disabled: #475569; 
             
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
@@ -147,14 +147,15 @@
         /* Botón Desplegable Interactivo */
         .dropdown-wrapper { position: relative; display: inline-block; }
         .btn-action { background: linear-gradient(135deg, var(--accent-blue), #2563eb); border: none; padding: 10px 20px; border-radius: 10px; color: white; font-family: 'Outfit'; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: var(--transition); box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); }
-        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5); }
+        .btn-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5); }
+        .btn-action:disabled { opacity: 0.7; cursor: not-allowed; }
         
-        .dropdown-menu { position: absolute; right: 0; top: calc(100% + 10px); background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 12px; width: 200px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: var(--transition); z-index: 1000; }
+        .dropdown-menu { position: absolute; right: 0; top: calc(100% + 10px); background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 12px; width: 220px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: var(--transition); z-index: 1000; }
         .dropdown-menu.show { opacity: 1; visibility: visible; transform: translateY(0); }
         
         .dropdown-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: var(--text-main); text-decoration: none; border-radius: 8px; transition: var(--transition); font-size: 0.9rem; font-weight: 500; }
         .dropdown-item:hover { background: rgba(255,255,255,0.1); padding-left: 20px; }
-        .dropdown-item i { font-size: 1.1rem; }
+        .dropdown-item i { font-size: 1.1rem; width: 20px; text-align: center; }
         .item-csv i { color: var(--accent-green); }
         .item-json i { color: var(--accent-orange); }
         .item-pdf i { color: var(--accent-pink); }
@@ -269,9 +270,9 @@
                 </div>
 
                 <div class="widget w-gauge widget-inactive" style="text-align: center;">
-                    <div class="widget-header">Fase Lunar <span class="badge-na">No Disp.</span></div>
-                    <i class="fa-solid fa-moon" style="font-size: 3rem; color: var(--accent-disabled); margin-top: 15px;"></i>
-                    <div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-disabled); margin-top: 15px;">N/A</div>
+                    <div class="widget-header">Radiación Solar <span class="badge-na">No Disp.</span></div>
+                    <i class="fa-solid fa-sun" style="font-size: 3rem; color: var(--accent-disabled); margin-top: 15px;"></i>
+                    <div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-disabled); margin-top: 15px;">N/A W/m²</div>
                 </div>
 
                 <div class="widget w-rain">
@@ -318,18 +319,18 @@
                     <span><i class="fa-solid fa-chart-area"></i> Gráfico General (Últimas lecturas)</span>
                     
                     <div class="dropdown-wrapper">
-                        <button class="btn-action" onclick="toggleDropdown(event)">
-                            Exportar <i class="fa-solid fa-caret-down"></i>
+                        <button class="btn-action" id="btnExport" onclick="toggleDropdown(event)">
+                            <i class="fa-solid fa-download"></i> Exportar Historial Completo <i class="fa-solid fa-caret-down"></i>
                         </button>
                         <div class="dropdown-menu" id="exportMenu">
                             <a href="#" class="dropdown-item item-csv" onclick="exportData('csv', event)">
-                                <i class="fa-solid fa-file-csv"></i> Descargar CSV
+                                <i class="fa-solid fa-file-csv"></i> Excel (.CSV)
                             </a>
                             <a href="#" class="dropdown-item item-json" onclick="exportData('json', event)">
-                                <i class="fa-solid fa-file-code"></i> Descargar JSON
+                                <i class="fa-solid fa-file-code"></i> Formato crudo (.JSON)
                             </a>
                             <a href="#" class="dropdown-item item-pdf" onclick="exportData('pdf', event)">
-                                <i class="fa-solid fa-file-pdf"></i> Generar Reporte PDF
+                                <i class="fa-solid fa-file-pdf"></i> Reporte Limpio (.PDF)
                             </a>
                         </div>
                     </div>
@@ -340,7 +341,7 @@
             </div>
 
             <div class="widget" style="overflow-x: auto;">
-                <div class="widget-header">Registro Detallado</div>
+                <div class="widget-header">Registro Detallado (Últimos recibidos)</div>
                 <table>
                     <thead>
                         <tr>
@@ -380,11 +381,6 @@
     </main>
 
 <script>
-    // --- APP STATE (Para exportar datos) ---
-    const appState = {
-        rawData: [] // Aquí guardaremos los últimos datos descargados de Firebase
-    };
-
     // --- RELOJ ---
     function updateClock() {
         const now = new Date();
@@ -401,19 +397,17 @@
         btn.classList.add('active');
         document.getElementById(viewId).classList.add('active');
         
-        // Cierra el menú dropdown si cambias de vista
         document.getElementById('exportMenu').classList.remove('show');
     }
 
-    // --- LÓGICA DEL DROPDOWN DE EXPORTACIÓN ---
+    // --- LÓGICA DEL DROPDOWN Y EXPORTACIÓN ---
     function toggleDropdown(e) {
         e.preventDefault();
         document.getElementById('exportMenu').classList.toggle('show');
     }
 
-    // Cerrar menú si haces clic afuera
     window.onclick = function(event) {
-        if (!event.target.matches('.btn-action') && !event.target.matches('.fa-caret-down')) {
+        if (!event.target.closest('.btn-action') && !event.target.closest('.dropdown-menu')) {
             const dropdowns = document.getElementsByClassName("dropdown-menu");
             for (let i = 0; i < dropdowns.length; i++) {
                 if (dropdowns[i].classList.contains('show')) {
@@ -425,29 +419,57 @@
 
     function exportData(format, e) {
         e.preventDefault();
-        if (appState.rawData.length === 0) {
-            alert("No hay datos disponibles para exportar aún.");
-            return;
-        }
+        document.getElementById('exportMenu').classList.remove('show');
+        
+        const btn = document.getElementById('btnExport');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Obteniendo todos los datos...';
+        btn.disabled = true;
 
-        const dateStr = new Date().toISOString().split('T')[0];
-        const fileName = `INIFAP_Margaritas_Reporte_${dateStr}`;
-
-        if (format === 'csv') {
-            let csvContent = "Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm)\n";
-            appState.rawData.forEach(row => {
-                const dt = new Date(row.fecha);
-                csvContent += `${dt.toLocaleDateString('es-MX')},${dt.toLocaleTimeString('es-MX')},${row.temperatura || 0},${row.humedad || 0},${row.pluv1_mm || 0},${row.pluv2_mm || 0}\n`;
+        // HACEMOS UNA CONSULTA COMPLETA A FIREBASE SOLO PARA LA DESCARGA
+        db.ref('/estacion1/historial').once('value').then(snap => {
+            const allData = [];
+            snap.forEach(child => {
+                if(child.val().fecha) {
+                    allData.push(child.val());
+                }
             });
-            downloadBlob(csvContent, `${fileName}.csv`, 'text/csv');
-        } 
-        else if (format === 'json') {
-            const jsonContent = JSON.stringify(appState.rawData, null, 2);
-            downloadBlob(jsonContent, `${fileName}.json`, 'application/json');
-        }
-        else if (format === 'pdf') {
-            generarPDF(fileName);
-        }
+
+            if (allData.length === 0) {
+                alert("No hay datos en la base de datos para exportar.");
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                return;
+            }
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            const fileName = `INIFAP_Margaritas_Historial_${dateStr}`;
+
+            if (format === 'csv') {
+                let csvContent = "Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm)\n";
+                allData.forEach(row => {
+                    const dt = new Date(row.fecha);
+                    csvContent += `${dt.toLocaleDateString('es-MX')},${dt.toLocaleTimeString('es-MX')},${row.temperatura || 0},${row.humedad || 0},${row.pluv1_mm || 0},${row.pluv2_mm || 0}\n`;
+                });
+                downloadBlob(csvContent, `${fileName}.csv`, 'text/csv');
+            } 
+            else if (format === 'json') {
+                const jsonContent = JSON.stringify(allData, null, 2);
+                downloadBlob(jsonContent, `${fileName}.json`, 'application/json');
+            }
+            else if (format === 'pdf') {
+                generarPDF(fileName, allData);
+            }
+
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+            
+        }).catch(error => {
+            console.error(error);
+            alert("Hubo un error contactando a la base de datos.");
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        });
     }
 
     function downloadBlob(content, fileName, contentType) {
@@ -458,25 +480,23 @@
         a.click();
     }
 
-    function generarPDF(fileName) {
+    function generarPDF(fileName, dataArray) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        // Título del PDF
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
-        doc.text("Reporte Climatológico - Estación INIFAP Las Margaritas", 14, 20);
+        doc.text("Reporte Climatológico Completo - INIFAP Las Margaritas", 14, 20);
         
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         doc.text(`Fecha de generación: ${new Date().toLocaleString('es-MX')}`, 14, 28);
-        doc.text(`Sensor: SHT41 | Transmisión: LoRa`, 14, 33);
+        doc.text(`Sensor: SHT41 | Total de registros: ${dataArray.length}`, 14, 33);
 
-        // Preparar datos para la tabla
         const tableColumn = ["Fecha", "Hora", "Temp (°C)", "Hum (%)", "Pluv 1 (mm)", "Pluv 2 (mm)"];
         const tableRows = [];
 
-        appState.rawData.forEach(row => {
+        dataArray.forEach(row => {
             const dt = new Date(row.fecha);
             const rowData = [
                 dt.toLocaleDateString('es-MX'),
@@ -489,13 +509,12 @@
             tableRows.push(rowData);
         });
 
-        // Generar Tabla
         doc.autoTable({
             head: [tableColumn],
             body: tableRows,
             startY: 40,
             theme: 'striped',
-            headStyles: { fillColor: [56, 189, 248] }, // Color Azul Accent
+            headStyles: { fillColor: [56, 189, 248] }, 
             styles: { fontSize: 9 }
         });
 
@@ -527,7 +546,6 @@
         maintainAspectRatio: false, responsive: true
     };
 
-    // Gauge Temp
     const ctxGaugeTemp = document.getElementById('gaugeTemp').getContext('2d');
     const chartGaugeTemp = new Chart(ctxGaugeTemp, {
         type: 'doughnut',
@@ -535,7 +553,6 @@
         options: gaugeOptions
     });
 
-    // Gauge Hum
     const ctxGaugeHum = document.getElementById('gaugeHum').getContext('2d');
     const chartGaugeHum = new Chart(ctxGaugeHum, {
         type: 'doughnut',
@@ -543,7 +560,6 @@
         options: gaugeOptions
     });
 
-    // Gauge Inactivo (Presión Estática visualmente)
     const ctxGaugePres = document.getElementById('gaugePres').getContext('2d');
     new Chart(ctxGaugePres, {
         type: 'doughnut',
@@ -551,7 +567,6 @@
         options: gaugeOptions
     });
 
-    // Gráfico Historial General
     const ctxMain = document.getElementById('mainChart').getContext('2d');
     const mainChart = new Chart(ctxMain, {
         type: 'line',
@@ -562,7 +577,6 @@
         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
     });
 
-    // Sparkline Temp
     const ctxSpark = document.getElementById('sparkTemp').getContext('2d');
     const sparkChart = new Chart(ctxSpark, {
         type: 'line',
@@ -577,7 +591,6 @@
 
     let currentDayStamp = new Date().setHours(0,0,0,0);
     
-    // Suma de lluvia diaria
     function calcularLluvia() {
         db.ref('/estacion1/historial').orderByChild('fecha').startAt(currentDayStamp).on('value', snap => {
             let sP1 = 0, sP2 = 0;
@@ -592,20 +605,15 @@
     }
     calcularLluvia();
 
-    // Listener Principal (Últimos 30 registros)
+    // Listener Principal para la UI (Mantiene la página rápida con solo 30 registros)
     db.ref('/estacion1/historial').limitToLast(30).on('value', snap => {
         let labels = [], dTemp = [], dHum = [];
         let tableRowsHTML = "";
         let lastT = 0, lastH = 0, lastId = "--", lastSD = 1;
-        
-        // Vaciamos el array global para tener siempre los últimos datos frescos para exportar
-        appState.rawData = []; 
 
         snap.forEach(child => {
             const val = child.val();
             if(val.fecha) {
-                appState.rawData.push(val); // Guardar para exportación
-                
                 const timeStr = new Date(val.fecha).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
                 labels.push(timeStr);
                 
@@ -620,7 +628,6 @@
                 
                 lastT = temp; lastH = hum; lastId = val.id_mensaje || "--"; lastSD = sd;
 
-                // Generar filas de la tabla (insertadas al revés para ver lo más nuevo arriba)
                 let sdBadge = sd === 1 ? `<span style="color:var(--accent-green);"><i class="fa-solid fa-check"></i> OK</span>` : `<span style="color:var(--accent-pink);"><i class="fa-solid fa-xmark"></i> Falla</span>`;
                 
                 tableRowsHTML = `<tr>
@@ -634,16 +641,13 @@
             }
         });
 
-        // Actualizar Tabla UI
         if(tableRowsHTML === "") tableRowsHTML = "<tr><td colspan='6' style='text-align:center;'>No hay datos recientes.</td></tr>";
         document.getElementById('history-table-body').innerHTML = tableRowsHTML;
 
-        // Actualizar UI General
         document.getElementById('temp-main').innerText = lastT;
         document.getElementById('hum-main').innerText = lastH;
         document.getElementById('msg-id').innerText = lastId;
 
-        // Actualizar Gauges
         document.getElementById('g-temp-val').innerText = lastT + "°";
         chartGaugeTemp.data.datasets[0].data = [lastT, Math.max(0, 50 - lastT)];
         chartGaugeTemp.update();
@@ -652,7 +656,6 @@
         chartGaugeHum.data.datasets[0].data = [lastH, Math.max(0, 100 - lastH)];
         chartGaugeHum.update();
 
-        // Actualizar Gráficos Lineales
         mainChart.data.labels = labels;
         mainChart.data.datasets[0].data = dTemp;
         mainChart.data.datasets[1].data = dHum;
@@ -662,7 +665,6 @@
         sparkChart.data.datasets[0].data = dTemp;
         sparkChart.update();
 
-        // SD Status en vista Hardware
         const sdText = document.getElementById('sd-status-text');
         if (lastSD === 1) {
             sdText.innerHTML = '<i class="fa-solid fa-circle-check"></i> OPERATIVA';
