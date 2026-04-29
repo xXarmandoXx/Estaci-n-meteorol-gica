@@ -159,12 +159,15 @@
         .item-json i { color: var(--accent-orange); }
         .item-pdf i { color: var(--accent-pink); }
 
-        /* --- MÓVIL --- */
+        /* --- MÓVIL Y TABLET (Ajustes de UX) --- */
         @media (max-width: 1024px) {
             .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
             .w-map { grid-column: span 6; height: 300px; }
             .w-status, .w-rain { grid-column: span 6; }
             .w-gauge, .w-mini { grid-column: span 3; }
+            
+            /* TRUCO UX: Empujar módulos inactivos hasta el fondo en pantallas estrechas */
+            .widget-inactive { order: 99; }
         }
         @media (max-width: 600px) {
             .sidebar { width: 100%; height: 70px; flex-direction: row; padding: 0 10px; position: fixed; bottom: 0; border-top: 1px solid var(--glass-border); border-right: none; z-index: 1000; background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); }
