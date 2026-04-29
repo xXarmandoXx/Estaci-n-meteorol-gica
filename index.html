@@ -1,681 +1,1242 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Estación Meteorológica | Mando</title>
+    <title>Centro de Comando INIFAP | Mando</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Clima Mando">
+    <meta name="theme-color" content="#0a0a0a">
     
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-        /* --- 1. VARIABLES Y RESET --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
+        /* ==========================================================================
+           1. SISTEMA DE VARIABLES Y TEMAS (MODO OSCURO / CLARO)
+           ========================================================================== */
         :root {
-            --bg-body: #121212; 
-            --bg-sidebar: #0a0a0a;
-            --glass-bg: rgba(25, 25, 25, 0.6); 
+            /* Tema Oscuro por Defecto */
+            --bg-body: #0b0f19; 
+            --bg-sidebar: #05070a;
+            --bg-panel: rgba(15, 23, 42, 0.7);
+            --bg-panel-solid: #0f172a;
             --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
             
-            --accent-blue: #38bdf8;
-            --accent-pink: #f472b6;   
-            --accent-orange: #fb923c; 
-            --accent-green: #34d399;
-            --accent-purple: #c084fc; 
-            --accent-disabled: #475569; 
+            /* Colores de Acento SCADA */
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.4);
+            --secondary: #818cf8;
+            --accent-temp: #f472b6;   
+            --accent-rain: #c084fc; 
+            --accent-sun: #fbbf24;
             
+            /* Estados del Sistema */
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.1);
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --offline: #64748b;
+            
+            /* Tipografía */
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-ui: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            /* Transiciones y Layout */
+            --transition-fast: 0.2s ease;
+            --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --sidebar-width: 80px;
+            --sidebar-width-expanded: 260px;
         }
 
+        [data-theme="light"] {
+            --bg-body: #f1f5f9; 
+            --bg-sidebar: #ffffff;
+            --bg-panel: rgba(255, 255, 255, 0.8);
+            --bg-panel-solid: #ffffff;
+            --glass-border: rgba(0, 0, 0, 0.08);
+            --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+            
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary-glow: rgba(56, 189, 248, 0.2);
+        }
+
+        /* ==========================================================================
+           2. RESET Y ESTILOS GLOBALES
+           ========================================================================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body { 
-            font-family: 'Outfit', sans-serif; 
+            font-family: var(--font-ui); 
             background-color: var(--bg-body); 
             color: var(--text-main); 
             height: 100vh; 
             display: flex; 
             overflow: hidden; 
+            transition: background-color var(--transition-smooth);
+            /* Fondo sutil tipo malla topográfica */
             background-image: 
-                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.03) 0%, transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(244, 114, 182, 0.03) 0%, transparent 25%);
+                radial-gradient(circle at 15% 50%, var(--primary-glow) 0%, transparent 25%),
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
         }
 
-        /* --- 2. SIDEBAR INTERACTIVO --- */
-        .sidebar { width: 80px; background: var(--bg-sidebar); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; z-index: 100; transition: width 0.3s; }
-        .sidebar:hover { width: 220px; align-items: flex-start; padding: 20px; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
-        
-        .brand-icon { font-size: 1.8rem; color: var(--accent-blue); filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.3)); margin-bottom: 40px; transition: var(--transition); }
-        .sidebar:hover .brand-icon { margin-left: 10px; transform: scale(1.1); }
-        
-        .menu-items { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        .menu-btn { padding: 14px; width: 100%; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: var(--transition); border: 1px solid transparent; }
-        .sidebar:hover .menu-btn { justify-content: flex-start; padding-left: 15px; gap: 15px; }
-        .menu-btn span { display: none; font-weight: 500; font-size: 0.95rem; white-space: nowrap; }
-        .sidebar:hover .menu-btn span { display: block; }
-        
-        .menu-btn:hover { background: rgba(255, 255, 255, 0.05); color: white; border: 1px solid rgba(255,255,255,0.1); transform: translateY(-2px); }
-        .menu-btn.active { color: var(--accent-blue); background: rgba(56, 189, 248, 0.05); border-left: 3px solid var(--accent-blue); border-top: 1px solid transparent; border-right: 1px solid transparent; border-bottom: 1px solid transparent; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-        /* --- 3. MAIN CONTENT Y GRID --- */
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 30px; scroll-behavior: smooth; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .header-info h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(90deg, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        /* ==========================================================================
+           3. SIDEBAR (NAVEGACIÓN LATERAL)
+           ========================================================================== */
+        .sidebar { 
+            width: var(--sidebar-width); 
+            background: var(--bg-sidebar); 
+            border-right: 1px solid var(--glass-border); 
+            display: flex; 
+            flex-direction: column; 
+            padding: 25px 0; 
+            z-index: 1000; 
+            transition: width var(--transition-smooth), box-shadow var(--transition-smooth); 
+            position: relative;
+        }
         
-        .dashboard-grid {
+        .sidebar:hover { 
+            width: var(--sidebar-width-expanded); 
+            box-shadow: 15px 0 40px rgba(0,0,0,0.4); 
+        }
+        
+        .brand-section {
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            margin-bottom: 40px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .brand-icon { 
+            font-size: 1.8rem; 
+            color: var(--primary); 
+            filter: drop-shadow(0 0 8px var(--primary-glow)); 
+            min-width: 30px;
+        }
+        
+        .brand-text {
+            margin-left: 15px;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: var(--transition-smooth);
+        }
+        
+        .sidebar:hover .brand-text {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .brand-title { font-weight: 800; font-size: 1.1rem; letter-spacing: 1px; }
+        .brand-subtitle { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; }
+
+        .nav-menu { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 5px; 
+            width: 100%; 
+            padding: 0 10px;
+        }
+        
+        .nav-btn { 
+            padding: 15px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            color: var(--text-muted); 
+            transition: var(--transition-fast); 
+            border: 1px solid transparent; 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-btn i { font-size: 1.2rem; min-width: 30px; text-align: center; z-index: 2; }
+        .nav-btn span { 
+            font-weight: 500; 
+            margin-left: 10px; 
+            white-space: nowrap; 
+            opacity: 0; 
+            transition: opacity var(--transition-fast);
+            z-index: 2;
+        }
+        
+        .sidebar:hover .nav-btn span { opacity: 1; }
+        
+        .nav-btn:hover { 
+            color: var(--text-main); 
+            background: rgba(255, 255, 255, 0.03); 
+        }
+        
+        .nav-btn.active { 
+            color: var(--primary); 
+            background: var(--primary-glow); 
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .nav-btn.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 10%;
+            height: 80%;
+            width: 4px;
+            background: var(--primary);
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        /* ==========================================================================
+           4. ESTRUCTURA PRINCIPAL Y HEADER
+           ========================================================================== */
+        .main-wrapper { 
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative;
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        .top-header {
+            height: 80px;
+            padding: 0 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(11, 15, 25, 0.4);
+            backdrop-filter: blur(20px);
+            z-index: 100;
+        }
+
+        .header-title-wrapper h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .system-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            background: var(--success-bg);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--success);
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pulsing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .header-tools {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .digital-clock {
+            text-align: right;
+            font-family: var(--font-mono);
+        }
+        
+        .digital-clock .time { font-size: 1.5rem; font-weight: 700; color: var(--primary); letter-spacing: 1px;}
+        .digital-clock .date { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-ui); text-transform: uppercase;}
+
+        .tool-btn {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            position: relative;
+        }
+
+        .tool-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: bold;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--bg-body);
+        }
+
+        /* ==========================================================================
+           5. ÁREA DE CONTENIDO Y GRID SYSTEM
+           ========================================================================== */
+        .content-area {
+            flex-grow: 1;
+            padding: 30px 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .view-section {
+            display: none;
+            animation: fade-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .view-section.active { display: block; }
+
+        @keyframes fade-slide-up {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .grid-scada {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
-            grid-auto-rows: minmax(150px, auto);
+            grid-auto-rows: minmax(140px, auto);
             gap: 20px;
-            max-width: 1600px;
-            margin: 0 auto;
             width: 100%;
+            max-width: 1800px;
+            margin: 0 auto;
         }
 
-        .widget {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
+        .panel {
+            background: var(--bg-panel);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 20px;
+            border-radius: 24px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
             position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            transition: var(--transition);
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.3s ease, border-color 0.3s ease;
         }
-        .widget:hover { border-color: rgba(255,255,255,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
 
-        /* Tamaños de Grid */
-        .w-map { grid-column: span 8; grid-row: span 2; padding: 0; border: none; }
-        .w-status { grid-column: span 4; grid-row: span 2; }
-        .w-gauge { grid-column: span 3; grid-row: span 1; align-items: center; justify-content: center; }
-        .w-rain { grid-column: span 6; grid-row: span 1; }
-        .w-mini { grid-column: span 3; grid-row: span 1; }
+        .panel:hover { border-color: rgba(255,255,255,0.15); }
 
-        /* Módulos Inactivos */
-        .widget-inactive { opacity: 0.5; background: rgba(10, 10, 10, 0.4); border: 1px dashed var(--glass-border); filter: grayscale(100%); cursor: not-allowed; }
-        .widget-inactive:hover { opacity: 0.7; transform: none; box-shadow: none; }
-        .badge-na { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        /* Helpers de Grid */
+        .col-12 { grid-column: span 12; }
+        .col-8 { grid-column: span 8; }
+        .col-6 { grid-column: span 6; }
+        .col-4 { grid-column: span 4; }
+        .col-3 { grid-column: span 3; }
+        .row-2 { grid-row: span 2; }
 
-        /* --- 4. COMPONENTES INTERNOS --- */
-        .widget-header { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px; }
-        
-        #station-map { width: 100%; height: 100%; border-radius: 20px; z-index: 1; }
-        
-        .gauge-container { position: relative; width: 100%; height: 110px; display: flex; justify-content: center; }
-        .gauge-value-center { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center; }
-        .gauge-val { font-size: 2rem; font-weight: 700; line-height: 1; text-shadow: 0 0 15px rgba(0,0,0,0.5); }
-        .gauge-unit { font-size: 0.85rem; color: var(--text-muted); }
-
-        .big-value { font-size: 3rem; font-weight: 700; display: flex; align-items: baseline; gap: 5px; }
-        .big-value .unit { font-size: 1.2rem; color: var(--text-muted); font-weight: 400; }
-
-        .rain-flex { display: flex; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
-        .rain-box { text-align: center; }
-        .rain-divider { width: 1px; height: 60%; background: var(--glass-border); }
-
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } 50% { opacity: 0.4; box-shadow: 0 0 2px var(--accent-green); } 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } }
-
-        /* --- 5. TABLA Y BOTONES (MODO HISTORIAL) --- */
-        .view-section { display: none; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-top: 15px; }
-        th { text-align: left; padding: 15px; color: var(--text-muted); border-bottom: 2px solid var(--glass-border); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
-        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-main); transition: var(--transition); }
-        tr:hover td { background: rgba(255,255,255,0.02); }
-
-        /* Botón Desplegable Interactivo */
-        .dropdown-wrapper { position: relative; display: inline-block; }
-        .btn-action { background: linear-gradient(135deg, var(--accent-blue), #2563eb); border: none; padding: 10px 20px; border-radius: 10px; color: white; font-family: 'Outfit'; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: var(--transition); box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); }
-        .btn-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5); }
-        .btn-action:disabled { opacity: 0.7; cursor: not-allowed; }
-        
-        .dropdown-menu { position: absolute; right: 0; top: calc(100% + 10px); background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 12px; width: 220px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: var(--transition); z-index: 1000; }
-        .dropdown-menu.show { opacity: 1; visibility: visible; transform: translateY(0); }
-        
-        .dropdown-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: var(--text-main); text-decoration: none; border-radius: 8px; transition: var(--transition); font-size: 0.9rem; font-weight: 500; }
-        .dropdown-item:hover { background: rgba(255,255,255,0.1); padding-left: 20px; }
-        .dropdown-item i { font-size: 1.1rem; width: 20px; text-align: center; }
-        .item-csv i { color: var(--accent-green); }
-        .item-json i { color: var(--accent-orange); }
-        .item-pdf i { color: var(--accent-pink); }
-
-        /* --- MÓVIL --- */
-        @media (max-width: 1024px) {
-            .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
-            .w-map { grid-column: span 6; height: 300px; }
-            .w-status, .w-rain { grid-column: span 6; }
-            .w-gauge, .w-mini { grid-column: span 3; }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
         }
-        @media (max-width: 600px) {
-            .sidebar { width: 100%; height: 70px; flex-direction: row; padding: 0 10px; position: fixed; bottom: 0; border-top: 1px solid var(--glass-border); border-right: none; z-index: 1000; background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); }
-            .sidebar:hover { width: 100%; padding: 0 10px; box-shadow: none; }
-            .brand-icon { display: none; }
-            .menu-items { flex-direction: row; justify-content: space-around; gap: 5px; }
-            .menu-btn { padding: 10px; flex-direction: column; gap: 5px; border-radius: 8px; }
-            .sidebar:hover .menu-btn span { display: none; }
-            .main-content { padding-bottom: 90px; padding-left: 15px; padding-right: 15px; }
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .w-map, .w-status, .w-gauge, .w-rain, .w-mini { grid-column: span 1; }
-            .big-value { font-size: 2.5rem; }
+
+        .panel-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
+        /* ==========================================================================
+           6. COMPONENTES INTERNOS DE LOS PANELES
+           ========================================================================== */
+        
+        /* Contenedores de Valores (KPIs) */
+        .kpi-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .kpi-value {
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1;
+            font-family: var(--font-mono);
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .kpi-unit {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            font-family: var(--font-ui);
+            font-weight: 500;
+        }
+
+        /* Gauges (Gráficos de medio círculo) */
+        .gauge-wrapper {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .gauge-text {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        /* Tablas de Datos Avanzadas */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .scada-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .scada-table th {
+            background: rgba(0,0,0,0.2);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid var(--glass-border);
+        }
+
+        .scada-table td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-family: var(--font-mono);
+        }
+
+        .scada-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+        /* ==========================================================================
+           7. SISTEMA DE TOASTS (NOTIFICACIONES EMERGENTES)
+           ========================================================================== */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 9999;
+        }
+
+        .toast {
+            background: var(--bg-panel-solid);
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border-radius: 8px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            min-width: 300px;
+            max-width: 400px;
+            transform: translateX(120%);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .toast.show { transform: translateX(0); opacity: 1; }
+        
+        .toast.error { border-color: var(--danger); }
+        .toast.error .toast-icon { color: var(--danger); }
+        .toast.warning { border-color: var(--warning); }
+        .toast.warning .toast-icon { color: var(--warning); }
+
+        .toast-icon { font-size: 1.5rem; margin-top: 2px; }
+        .toast-content h4 { font-size: 0.95rem; margin-bottom: 4px; }
+        .toast-content p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+
     </style>
 </head>
 <body>
 
     <nav class="sidebar">
-        <i class="fa-solid fa-satellite-dish brand-icon"></i>
-        <div class="menu-items">
-            <div class="menu-btn active" onclick="switchView('dashboard', this)">
-                <i class="fa-solid fa-border-all"></i> <span>Dashboard</span>
+        <div class="brand-section">
+            <i class="fa-solid fa-satellite-dish brand-icon"></i>
+            <div class="brand-text">
+                <div class="brand-title">SYS INIFAP</div>
+                <div class="brand-subtitle">Estación Mando</div>
             </div>
-            <div class="menu-btn" onclick="switchView('historial', this)">
-                <i class="fa-solid fa-chart-line"></i> <span>Datos & Gráficos</span>
+        </div>
+
+        <div class="nav-menu">
+            <div class="nav-btn active" onclick="switchView('view-dashboard', this)">
+                <i class="fa-solid fa-border-all"></i>
+                <span>Panel Principal</span>
             </div>
-            <div class="menu-btn" onclick="switchView('config', this)">
-                <i class="fa-solid fa-microchip"></i> <span>Hardware</span>
+            <div class="nav-btn" onclick="switchView('view-history', this)">
+                <i class="fa-solid fa-chart-area"></i>
+                <span>Análisis de Datos</span>
+            </div>
+            <div class="nav-btn" onclick="switchView('view-map', this)">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <span>Geometría y Ubicación</span>
+            </div>
+            <div class="nav-btn" onclick="switchView('view-settings', this)">
+                <i class="fa-solid fa-microchip"></i>
+                <span>Hardware & LoRa</span>
             </div>
         </div>
     </nav>
 
-    <main class="main-content">
-        <div class="header-top">
-            <div class="header-info">
-                <h1 id="page-title">INIFAP Las Margaritas</h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; margin-top: 5px;">
-                    <span class="status-dot" id="header-dot"></span> 
-                    <span id="header-status">Sensor SHT41 vía LoRa</span>
-                </p>
-            </div>
-            <div style="text-align: right; background: var(--glass-bg); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border);">
-                <h2 style="font-size: 1.5rem; font-weight: 400; letter-spacing: 2px; color: var(--accent-blue);" id="clock">00:00:00</h2>
-                <p style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;" id="date-display">--</p>
-            </div>
-        </div>
-
-        <section id="dashboard" class="view-section active">
-            <div class="dashboard-grid">
-                
-                <div class="widget w-map">
-                    <div id="station-map"></div>
-                </div>
-
-                <div class="widget w-status" style="background: linear-gradient(145deg, rgba(30,41,59,0.5), rgba(15,23,42,0.8));">
-                    <div class="widget-header">
-                        <span>Estado Actual</span>
-                        <i class="fa-solid fa-bolt" style="color: var(--accent-blue);"></i>
-                    </div>
-                    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                        <i class="fa-solid fa-cloud" style="font-size: 2.5rem; color: rgba(255,255,255,0.2); margin-bottom: 10px;"></i>
-                        <div class="big-value" style="color: white; font-size: 4rem;">
-                            <span id="temp-main">--</span><span class="unit" style="font-size: 1.5rem;">°C</span>
-                        </div>
-                        <div style="color: var(--accent-blue); font-weight: 500; font-size: 1.1rem; margin-top: 5px;">
-                            <i class="fa-solid fa-droplet"></i> Humedad: <span id="hum-main">--</span>%
-                        </div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 25px; border-top: 1px solid var(--glass-border); padding-top: 10px; width: 100%; text-align: center;">
-                            Paquete LoRa Ref: <span id="msg-id" style="color: white; font-weight: bold;">--</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge">
-                    <div class="widget-header">Índice Térmico</div>
-                    <div class="gauge-container">
-                        <canvas id="gaugeTemp"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-pink);" id="g-temp-val">--</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge">
-                    <div class="widget-header">Humedad Relativa</div>
-                    <div class="gauge-container">
-                        <canvas id="gaugeHum"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-blue);" id="g-hum-val">--</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge widget-inactive">
-                    <div class="widget-header">Presión Atm <span class="badge-na">No Disp.</span></div>
-                    <div class="gauge-container">
-                        <canvas id="gaugePres"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-disabled);">N/A</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge widget-inactive" style="text-align: center;">
-                    <div class="widget-header">Radiación Solar <span class="badge-na">No Disp.</span></div>
-                    <i class="fa-solid fa-sun" style="font-size: 3rem; color: var(--accent-disabled); margin-top: 15px;"></i>
-                    <div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-disabled); margin-top: 15px;">N/A W/m²</div>
-                </div>
-
-                <div class="widget w-rain">
-                    <div class="widget-header">
-                        <span>Precipitación Acumulada (Desde medianoche)</span>
-                        <i class="fa-solid fa-cloud-showers-heavy" style="color: var(--accent-purple);"></i>
-                    </div>
-                    <div class="rain-flex">
-                        <div class="rain-box">
-                            <div class="big-value" style="color: var(--accent-orange); justify-content: center;">
-                                <span id="p1-sum-val">0.0</span><span class="unit">mm</span>
-                            </div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUVIÓMETRO 1</div>
-                        </div>
-                        <div class="rain-divider"></div>
-                        <div class="rain-box">
-                            <div class="big-value" style="color: var(--accent-purple); justify-content: center;">
-                                <span id="p2-sum-val">0.0</span><span class="unit">mm</span>
-                            </div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUVIÓMETRO 2</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-mini">
-                    <div class="widget-header">Tendencia Temp</div>
-                    <div style="height: 60px; width: 100%;"><canvas id="sparkTemp"></canvas></div>
-                </div>
-                
-                <div class="widget w-mini widget-inactive">
-                    <div class="widget-header">Anemómetro <span class="badge-na">No Disp.</span></div>
-                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; gap: 15px;">
-                        <i class="fa-solid fa-wind" style="font-size: 2rem; color: var(--accent-disabled);"></i>
-                        <span style="font-size: 1.5rem; font-weight: bold; color: var(--accent-disabled);">N/A</span>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <section id="historial" class="view-section">
-            <div class="widget" style="margin-bottom: 20px;">
-                <div class="widget-header" style="font-size: 1rem;">
-                    <span><i class="fa-solid fa-chart-area"></i> Gráfico General (Últimas lecturas)</span>
-                    
-                    <div class="dropdown-wrapper">
-                        <button class="btn-action" id="btnExport" onclick="toggleDropdown(event)">
-                            <i class="fa-solid fa-download"></i> Exportar Historial Completo <i class="fa-solid fa-caret-down"></i>
-                        </button>
-                        <div class="dropdown-menu" id="exportMenu">
-                            <a href="#" class="dropdown-item item-csv" onclick="exportData('csv', event)">
-                                <i class="fa-solid fa-file-csv"></i> Excel (.CSV)
-                            </a>
-                            <a href="#" class="dropdown-item item-json" onclick="exportData('json', event)">
-                                <i class="fa-solid fa-file-code"></i> Formato crudo (.JSON)
-                            </a>
-                            <a href="#" class="dropdown-item item-pdf" onclick="exportData('pdf', event)">
-                                <i class="fa-solid fa-file-pdf"></i> Reporte Limpio (.PDF)
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div style="position: relative; height: 350px; width: 100%;">
-                    <canvas id="mainChart"></canvas>
-                </div>
-            </div>
-
-            <div class="widget" style="overflow-x: auto;">
-                <div class="widget-header">Registro Detallado (Últimos recibidos)</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Hora</th>
-                            <th>Temp (°C)</th>
-                            <th>Hum (%)</th>
-                            <th>Pluv 1 (mm)</th>
-                            <th>Pluv 2 (mm)</th>
-                            <th>Estado SD</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-table-body">
-                        <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando base de datos...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="config" class="view-section">
-            <div class="widget" style="max-width: 600px;">
-                <div class="widget-header">Diagnóstico de Hardware</div>
-                <div style="padding: 15px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-sd-card"></i> Estado Memoria SD (Datalogger):</span>
-                    <span id="sd-status-text" style="padding: 5px 12px; border-radius: 8px; font-weight: bold; background: rgba(255,255,255,0.1);">Verificando...</span>
-                </div>
-                <div style="padding: 15px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-microchip"></i> Microcontrolador:</span>
-                    <span style="color: var(--text-main); font-weight: 500;">Heltec LoRa V3 (ESP32)</span>
-                </div>
-                <div style="padding: 15px 0; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-temperature-half"></i> Sensor Principal:</span>
-                    <span style="color: var(--accent-pink); font-weight: 500;">SHT41 (I2C)</span>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-<script>
-    // --- RELOJ ---
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString('es-MX', {hour12: false});
-        document.getElementById('date-display').innerText = now.toLocaleDateString('es-MX', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // --- NAVEGACIÓN ---
-    function switchView(viewId, btn) {
-        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(viewId).classList.add('active');
+    <div class="main-wrapper">
         
-        document.getElementById('exportMenu').classList.remove('show');
-    }
+        <header class="top-header">
+            <div class="header-title-wrapper">
+                <h1 id="view-title">Centro de Comando</h1>
+                <div class="system-status-pill" id="global-status">
+                    <div class="pulsing-dot"></div>
+                    <span>Conexión LoRa Estable</span>
+                </div>
+            </div>
 
-    // --- LÓGICA DEL DROPDOWN Y EXPORTACIÓN ---
-    function toggleDropdown(e) {
-        e.preventDefault();
-        document.getElementById('exportMenu').classList.toggle('show');
-    }
+            <div class="header-tools">
+                <div class="digital-clock">
+                    <div class="time" id="clock-time">00:00:00</div>
+                    <div class="date" id="clock-date">--</div>
+                </div>
+                
+                <button class="tool-btn" onclick="toggleTheme()" title="Cambiar Tema">
+                    <i class="fa-solid fa-moon" id="theme-icon"></i>
+                </button>
+                
+                <button class="tool-btn" onclick="testNotification()" title="Alertas">
+                    <i class="fa-solid fa-bell"></i>
+                    <div class="notification-badge" id="notif-count">0</div>
+                </button>
+            </div>
+        </header>
 
-    window.onclick = function(event) {
-        if (!event.target.closest('.btn-action') && !event.target.closest('.dropdown-menu')) {
-            const dropdowns = document.getElementsByClassName("dropdown-menu");
-            for (let i = 0; i < dropdowns.length; i++) {
-                if (dropdowns[i].classList.contains('show')) {
-                    dropdowns[i].classList.remove('show');
-                }
+        <main class="content-area">
+
+            <section id="view-dashboard" class="view-section active">
+                <div class="grid-scada">
+                    
+                    <div class="panel col-4 row-2">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fa-solid fa-temperature-half" style="color: var(--accent-temp)"></i> Temp. SHT41</span>
+                            <i class="fa-solid fa-circle-info" style="color: var(--text-muted); cursor: pointer;" title="Sensor principal de temperatura"></i>
+                        </div>
+                        <div class="kpi-wrapper">
+                            <div class="kpi-value" style="color: white;">
+                                <span id="dash-temp">--.-</span><span class="kpi-unit">°C</span>
+                            </div>
+                            <div style="margin-top: 20px; width: 100%; height: 60px;">
+                                <canvas id="spark-temp"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel col-4 row-2">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fa-solid fa-droplet" style="color: var(--primary)"></i> Humedad Rel.</span>
+                        </div>
+                        <div class="gauge-wrapper" style="margin-top: 20px; height: 160px;">
+                            <canvas id="gauge-hum"></canvas>
+                            <div class="gauge-text">
+                                <div class="kpi-value" style="font-size: 2.5rem;" id="dash-hum">--</div>
+                                <div class="kpi-unit">% RH</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel col-4 row-2">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fa-solid fa-cloud-showers-heavy" style="color: var(--accent-rain)"></i> Lluvia (24h)</span>
+                        </div>
+                        <div style="display: flex; height: 100%; align-items: center; justify-content: space-around;">
+                            <div style="text-align: center;">
+                                <div class="kpi-value" style="font-size: 2.5rem; color: var(--warning);" id="dash-p1">0.0</div>
+                                <div class="kpi-unit" style="font-size: 0.8rem;">PLUV 1 (mm)</div>
+                            </div>
+                            <div style="width: 1px; height: 80%; background: var(--glass-border);"></div>
+                            <div style="text-align: center;">
+                                <div class="kpi-value" style="font-size: 2.5rem; color: var(--accent-rain);" id="dash-p2">0.0</div>
+                                <div class="kpi-unit" style="font-size: 0.8rem;">PLUV 2 (mm)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel col-8 row-2">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fa-solid fa-chart-line"></i> Tendencia en Tiempo Real</span>
+                        </div>
+                        <div style="position: relative; height: 250px; width: 100%;">
+                            <canvas id="chart-main"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="panel col-4 row-2" style="opacity: 0.6; filter: grayscale(0.8);">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fa-solid fa-sun" style="color: var(--accent-sun)"></i> Radiación Solar</span>
+                            <span style="font-size: 0.6rem; background: var(--danger); padding: 2px 6px; border-radius: 4px;">OFFLINE</span>
+                        </div>
+                        <div class="kpi-wrapper">
+                            <i class="fa-solid fa-solar-panel" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 15px;"></i>
+                            <div class="kpi-value" style="font-size: 2rem; color: var(--text-muted);">N/A <span class="kpi-unit">W/m²</span></div>
+                            <div style="font-size: 0.8rem; margin-top: 10px; color: var(--text-muted);">Módulo no instalado</div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <section id="view-history" class="view-section">
+                </section>
+
+        </main>
+    </div>
+
+    <div class="toast-container" id="toast-box"></div>
+    <section id="view-history" class="view-section">
+                <div class="grid-scada">
+                    <div class="panel col-12">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fa-solid fa-database"></i> Base de Datos Cruda (Últimos Registros)</span>
+                            
+                            <div style="display: flex; gap: 10px;">
+                                <button class="tool-btn" style="width: auto; padding: 0 15px; background: var(--primary-glow); border-color: var(--primary); color: var(--primary);" onclick="exportarDataCompleta('csv')" id="btn-export-csv">
+                                    <i class="fa-solid fa-file-csv" style="margin-right: 8px;"></i> CSV
+                                </button>
+                                <button class="tool-btn" style="width: auto; padding: 0 15px;" onclick="exportarDataCompleta('json')" id="btn-export-json">
+                                    <i class="fa-solid fa-code" style="margin-right: 8px;"></i> JSON
+                                </button>
+                                <button class="tool-btn" style="width: auto; padding: 0 15px;" onclick="exportarDataCompleta('pdf')" id="btn-export-pdf">
+                                    <i class="fa-solid fa-file-pdf" style="margin-right: 8px;"></i> PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="scada-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha / Hora</th>
+                                        <th>Temp SHT41</th>
+                                        <th>Humedad</th>
+                                        <th>Pluv 1 (mm)</th>
+                                        <th>Pluv 2 (mm)</th>
+                                        <th>SD Status</th>
+                                        <th>MSG ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body">
+                                    <tr><td colspan="7" style="text-align: center; padding: 40px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Sincronizando con Firebase...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-map" class="view-section">
+                <div class="grid-scada">
+                    <div class="panel col-12" style="height: 600px; padding: 0; overflow: hidden; border-radius: 24px;">
+                        <div id="scada-map" style="width: 100%; height: 100%;"></div>
+                        
+                        <div style="position: absolute; top: 20px; right: 20px; background: var(--bg-panel-solid); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                            <div style="font-weight: bold; margin-bottom: 5px; color: var(--primary);">Estación Base: INIFAP Las Margaritas</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">LAT: 19.996 | LON: -97.306</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 5px;">Radio LoRa estimado: 5 km</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-settings" class="view-section">
+                <div class="grid-scada">
+                    
+                    <div class="panel col-6 row-2">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fa-solid fa-microchip"></i> Diagnóstico del Nodo LoRa</span>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border);">
+                                <span style="color: var(--text-muted);">Microcontrolador</span>
+                                <span style="font-family: var(--font-mono); color: white;">Heltec ESP32 V3</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border);">
+                                <span style="color: var(--text-muted);">Frecuencia LoRa</span>
+                                <span style="font-family: var(--font-mono); color: white;">915 MHz (US915)</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border);">
+                                <span style="color: var(--text-muted);">Estado SD (Datalogger Local)</span>
+                                <span id="hardware-sd-status" style="font-family: var(--font-mono); font-weight: bold; color: var(--success);">OK</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border);">
+                                <span style="color: var(--text-muted);">Último Paquete Recibido</span>
+                                <span id="hardware-last-msg" style="font-family: var(--font-mono); color: var(--primary);">#--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel col-6 row-2">
+                        <div class="panel-header">
+                            <span class="panel-title"><i class="fa-solid fa-sliders"></i> Simulador de Alertas SCADA</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                            Configura los umbrales para recibir notificaciones (Toasts) en tiempo real si los valores superan estos límites.
+                        </p>
+
+                        <div style="display: flex; flex-direction: column; gap: 20px;">
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Alerta de Alta Temperatura (°C)</label>
+                                <input type="number" id="alert-temp" value="35" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; color: white; font-family: var(--font-mono);">
+                            </div>
+                            
+                            <button class="tool-btn" style="width: 100%; padding: 12px; border-radius: 8px; background: var(--primary); color: #000; font-weight: bold;" onclick="guardarAjustes()">
+                                Guardar Configuración
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        // ==========================================================================
+        // 1. ESTADO GLOBAL DE LA APLICACIÓN (STATE)
+        // ==========================================================================
+        const AppState = {
+            theme: 'dark',
+            alertThresholdTemp: 35, // Default
+            currentDayStamp: new Date().setHours(0,0,0,0),
+            isMapInitialized: false,
+            notificationsCount: 0,
+            lastIdRecibido: null,
+            rawDataCache: [] // Para exportaciones
+        };
+
+        // ==========================================================================
+        // 2. SISTEMA DE UI (RELOJ, TEMA, NAVEGACIÓN, TOASTS)
+        // ==========================================================================
+        
+        // Reloj SCADA
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock-time').innerText = now.toLocaleTimeString('es-MX', {hour12: false});
+            document.getElementById('clock-date').innerText = now.toLocaleDateString('es-MX', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Cambio de Tema (Oscuro/Claro)
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            
+            if(AppState.theme === 'dark') {
+                html.setAttribute('data-theme', 'light');
+                icon.classList.replace('fa-moon', 'fa-sun');
+                AppState.theme = 'light';
+                updateChartsColors('#64748b', '#cbd5e1'); // Actualizar colores de gráficas
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                icon.classList.replace('fa-sun', 'fa-moon');
+                AppState.theme = 'dark';
+                updateChartsColors('#94a3b8', 'rgba(255,255,255,0.1)'); // Volver a colores oscuros
             }
         }
-    }
 
-    function exportData(format, e) {
-        e.preventDefault();
-        document.getElementById('exportMenu').classList.remove('show');
-        
-        const btn = document.getElementById('btnExport');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Obteniendo todos los datos...';
-        btn.disabled = true;
+        // Navegación (Tabs)
+        function switchView(viewId, btnElement) {
+            // Actualizar botones
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            
+            // Actualizar vistas
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
 
-        // HACEMOS UNA CONSULTA COMPLETA A FIREBASE SOLO PARA LA DESCARGA
-        db.ref('/estacion1/historial').once('value').then(snap => {
-            const allData = [];
-            snap.forEach(child => {
-                if(child.val().fecha) {
-                    allData.push(child.val());
+            // Actualizar Título
+            const titles = {
+                'view-dashboard': 'Panel Principal',
+                'view-history': 'Análisis de Datos',
+                'view-map': 'Geometría y Ubicación',
+                'view-settings': 'Configuración de Hardware'
+            };
+            document.getElementById('view-title').innerText = titles[viewId];
+
+            // Inicializar mapa solo cuando sea visible por primera vez (Leaflet render bug fix)
+            if(viewId === 'view-map' && !AppState.isMapInitialized) {
+                initMap();
+                AppState.isMapInitialized = true;
+            }
+        }
+
+        // Sistema SCADA de Toasts (Notificaciones)
+        function showToast(title, message, type = 'warning') {
+            const toastBox = document.getElementById('toast-box');
+            
+            // Iconos según tipo
+            let iconClass = 'fa-triangle-exclamation';
+            if (type === 'error') iconClass = 'fa-circle-xmark';
+            if (type === 'success') iconClass = 'fa-circle-check';
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${iconClass} toast-icon"></i>
+                <div class="toast-content">
+                    <h4>${title}</h4>
+                    <p>${message}</p>
+                </div>
+            `;
+            
+            toastBox.appendChild(toast);
+            
+            // Animar entrada
+            setTimeout(() => toast.classList.add('show'), 50);
+
+            // Incrementar contador visual
+            AppState.notificationsCount++;
+            document.getElementById('notif-count').innerText = AppState.notificationsCount;
+
+            // Eliminar después de 5s
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400); // Esperar animación de salida
+            }, 5000);
+        }
+
+        function testNotification() {
+            showToast("Test del Sistema", "Las notificaciones SCADA están operativas.", "success");
+            AppState.notificationsCount = 0; // Reset
+            document.getElementById('notif-count').innerText = 0;
+        }
+
+        function guardarAjustes() {
+            const val = document.getElementById('alert-temp').value;
+            AppState.alertThresholdTemp = parseFloat(val);
+            showToast("Ajustes Guardados", `Alerta térmica configurada a ${val}°C.`, "success");
+        }
+
+
+        // ==========================================================================
+        // 3. INICIALIZACIÓN DE GRÁFICOS (CHART.JS)
+        // ==========================================================================
+        Chart.defaults.font.family = 'Outfit';
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+
+        const charts = {}; // Objeto para guardar referencias
+
+        function initCharts() {
+            // Sparkline Temperatura
+            charts.spark = new Chart(document.getElementById('spark-temp').getContext('2d'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ data: [], borderColor: '#f472b6', tension: 0.4, borderWidth: 2, pointRadius: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } } }
+            });
+
+            // Gauge Humedad
+            charts.gaugeHum = new Chart(document.getElementById('gauge-hum').getContext('2d'), {
+                type: 'doughnut',
+                data: { datasets: [{ data: [0, 100], backgroundColor: ['#38bdf8', 'rgba(255,255,255,0.05)'], borderWidth: 0, borderRadius: 10 }] },
+                options: { circumference: 180, rotation: -90, cutout: '80%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, responsive: true, maintainAspectRatio: false }
+            });
+
+            // Gráfico Principal (Líneas)
+            charts.main = new Chart(document.getElementById('chart-main').getContext('2d'), {
+                type: 'line',
+                data: { 
+                    labels: [], 
+                    datasets: [
+                        { label: 'Temp °C', data: [], borderColor: '#f472b6', backgroundColor: 'rgba(244, 114, 182, 0.1)', fill: true, tension: 0.4, borderWidth: 3, pointRadius: 0 },
+                        { label: 'Humedad %', data: [], borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.05)', fill: true, tension: 0.4, borderWidth: 3, pointRadius: 0, yAxisID: 'y1' }
+                    ]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { type: 'linear', display: true, position: 'left' },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+                    }
                 }
             });
+        }
+        initCharts();
 
-            if (allData.length === 0) {
-                alert("No hay datos en la base de datos para exportar.");
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-                return;
-            }
-
-            const dateStr = new Date().toISOString().split('T')[0];
-            const fileName = `INIFAP_Margaritas_Historial_${dateStr}`;
-
-            if (format === 'csv') {
-                let csvContent = "Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm)\n";
-                allData.forEach(row => {
-                    const dt = new Date(row.fecha);
-                    csvContent += `${dt.toLocaleDateString('es-MX')},${dt.toLocaleTimeString('es-MX')},${row.temperatura || 0},${row.humedad || 0},${row.pluv1_mm || 0},${row.pluv2_mm || 0}\n`;
-                });
-                downloadBlob(csvContent, `${fileName}.csv`, 'text/csv');
-            } 
-            else if (format === 'json') {
-                const jsonContent = JSON.stringify(allData, null, 2);
-                downloadBlob(jsonContent, `${fileName}.json`, 'application/json');
-            }
-            else if (format === 'pdf') {
-                generarPDF(fileName, allData);
-            }
-
-            btn.innerHTML = originalHTML;
-            btn.disabled = false;
+        // Función para cambiar colores de gráficas si el usuario activa el modo Claro
+        function updateChartsColors(textColor, gridColor) {
+            Chart.defaults.color = textColor;
+            Chart.defaults.borderColor = gridColor;
             
-        }).catch(error => {
-            console.error(error);
-            alert("Hubo un error contactando a la base de datos.");
-            btn.innerHTML = originalHTML;
-            btn.disabled = false;
-        });
-    }
+            if(AppState.theme === 'light') {
+                charts.gaugeHum.data.datasets[0].backgroundColor[1] = 'rgba(0,0,0,0.05)';
+            } else {
+                charts.gaugeHum.data.datasets[0].backgroundColor[1] = 'rgba(255,255,255,0.05)';
+            }
+            
+            charts.main.update();
+            charts.gaugeHum.update();
+        }
 
-    function downloadBlob(content, fileName, contentType) {
-        const a = document.createElement("a");
-        const file = new Blob([content], { type: contentType });
-        a.href = URL.createObjectURL(file);
-        a.download = fileName;
-        a.click();
-    }
-
-    function generarPDF(fileName, dataArray) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        doc.text("Reporte Climatológico Completo - INIFAP Las Margaritas", 14, 20);
-        
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text(`Fecha de generación: ${new Date().toLocaleString('es-MX')}`, 14, 28);
-        doc.text(`Sensor: SHT41 | Total de registros: ${dataArray.length}`, 14, 33);
-
-        const tableColumn = ["Fecha", "Hora", "Temp (°C)", "Hum (%)", "Pluv 1 (mm)", "Pluv 2 (mm)"];
-        const tableRows = [];
-
-        dataArray.forEach(row => {
-            const dt = new Date(row.fecha);
-            const rowData = [
-                dt.toLocaleDateString('es-MX'),
-                dt.toLocaleTimeString('es-MX'),
-                (row.temperatura || 0).toString(),
-                (row.humedad || 0).toString(),
-                (row.pluv1_mm || 0).toString(),
-                (row.pluv2_mm || 0).toString()
-            ];
-            tableRows.push(rowData);
-        });
-
-        doc.autoTable({
-            head: [tableColumn],
-            body: tableRows,
-            startY: 40,
-            theme: 'striped',
-            headStyles: { fillColor: [56, 189, 248] }, 
-            styles: { fontSize: 9 }
-        });
-
-        doc.save(`${fileName}.pdf`);
-    }
-
-    // --- MAPA LEAFLET ---
-    const map = L.map('station-map', { zoomControl: false }).setView([19.996, -97.306], 12);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20
-    }).addTo(map);
-    
-    const stationIcon = L.divIcon({
-        className: 'custom-div-icon',
-        html: "<div style='background-color:var(--accent-blue); width:16px; height:16px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>",
-        iconSize: [16, 16], iconAnchor: [8, 8]
-    });
-    L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map)
-        .bindPopup('<b style="color:black;">Estación LoRa Mando</b><br>Las Margaritas, INIFAP')
-        .openPopup();
-
-    // --- GRÁFICOS (CHART.JS) ---
-    Chart.defaults.color = '#94a3b8';
-    Chart.defaults.font.family = 'Outfit';
-
-    const gaugeOptions = {
-        circumference: 180, rotation: -90, cutout: '80%',
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-        maintainAspectRatio: false, responsive: true
-    };
-
-    const ctxGaugeTemp = document.getElementById('gaugeTemp').getContext('2d');
-    const chartGaugeTemp = new Chart(ctxGaugeTemp, {
-        type: 'doughnut',
-        data: { datasets: [{ data: [0, 50], backgroundColor: ['#f472b6', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
-        options: gaugeOptions
-    });
-
-    const ctxGaugeHum = document.getElementById('gaugeHum').getContext('2d');
-    const chartGaugeHum = new Chart(ctxGaugeHum, {
-        type: 'doughnut',
-        data: { datasets: [{ data: [0, 100], backgroundColor: ['#38bdf8', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
-        options: gaugeOptions
-    });
-
-    const ctxGaugePres = document.getElementById('gaugePres').getContext('2d');
-    new Chart(ctxGaugePres, {
-        type: 'doughnut',
-        data: { datasets: [{ data: [1, 1], backgroundColor: ['#475569', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
-        options: gaugeOptions
-    });
-
-    const ctxMain = document.getElementById('mainChart').getContext('2d');
-    const mainChart = new Chart(ctxMain, {
-        type: 'line',
-        data: { labels: [], datasets: [
-            { label: 'Temp °C', data: [], borderColor: '#f472b6', tension: 0.4, borderWidth: 3, pointRadius: 0, fill: true, backgroundColor: 'rgba(244, 114, 182, 0.05)' },
-            { label: 'Hum %', data: [], borderColor: '#38bdf8', tension: 0.4, borderWidth: 3, pointRadius: 0, fill: true, backgroundColor: 'rgba(56, 189, 248, 0.05)' }
-        ]},
-        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
-    });
-
-    const ctxSpark = document.getElementById('sparkTemp').getContext('2d');
-    const sparkChart = new Chart(ctxSpark, {
-        type: 'line',
-        data: { labels: [], datasets: [{ data: [], borderColor: '#f472b6', tension: 0.4, borderWidth: 2, pointRadius: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
-    });
-
-    // --- FIREBASE LOGIC ---
-    const firebaseConfig = { databaseURL: "https://estacion-texcoco-default-rtdb.firebaseio.com" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    let currentDayStamp = new Date().setHours(0,0,0,0);
-    
-    function calcularLluvia() {
-        db.ref('/estacion1/historial').orderByChild('fecha').startAt(currentDayStamp).on('value', snap => {
-            let sP1 = 0, sP2 = 0;
-            snap.forEach(child => {
-                const v = child.val();
-                if(v.pluv1_mm) sP1 += parseFloat(v.pluv1_mm);
-                if(v.pluv2_mm) sP2 += parseFloat(v.pluv2_mm);
+        // ==========================================================================
+        // 4. MAPA LEAFLET
+        // ==========================================================================
+        let scadaMap;
+        function initMap() {
+            scadaMap = L.map('scada-map', { zoomControl: false }).setView([19.996, -97.306], 13);
+            
+            // Usamos un mapa Oscuro por defecto
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20
+            }).addTo(scadaMap);
+            
+            const stationIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:var(--primary); width:18px; height:18px; border-radius:50%; box-shadow: 0 0 20px var(--primary); border: 2px solid white; animation: pulse-dot 2s infinite;'></div>",
+                iconSize: [18, 18], iconAnchor: [9, 9]
             });
-            document.getElementById('p1-sum-val').innerText = sP1.toFixed(1);
-            document.getElementById('p2-sum-val').innerText = sP2.toFixed(1);
-        });
-    }
-    calcularLluvia();
+            
+            L.marker([19.996, -97.306], {icon: stationIcon}).addTo(scadaMap);
+            
+            // Círculo de cobertura de radio LoRa
+            L.circle([19.996, -97.306], {
+                color: '#38bdf8',
+                fillColor: '#38bdf8',
+                fillOpacity: 0.1,
+                radius: 5000 // 5 km de radio
+            }).addTo(scadaMap);
 
-    // Listener Principal para la UI (Mantiene la página rápida con solo 30 registros)
-    db.ref('/estacion1/historial').limitToLast(30).on('value', snap => {
-        let labels = [], dTemp = [], dHum = [];
-        let tableRowsHTML = "";
-        let lastT = 0, lastH = 0, lastId = "--", lastSD = 1;
+            L.control.zoom({ position: 'bottomright' }).addTo(scadaMap);
+        }
 
-        snap.forEach(child => {
-            const val = child.val();
-            if(val.fecha) {
+        // ==========================================================================
+        // 5. NÚCLEO DE DATOS Y CONEXIÓN A FIREBASE
+        // ==========================================================================
+        const firebaseConfig = { databaseURL: "https://estacion-texcoco-default-rtdb.firebaseio.com" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 5.1 Función: Calcular Lluvia Diaria (Reset a medianoche)
+        function startPluviometerListener() {
+            db.ref('/estacion1/historial').orderByChild('fecha').startAt(AppState.currentDayStamp).on('value', snap => {
+                let sP1 = 0, sP2 = 0;
+                snap.forEach(child => {
+                    const v = child.val();
+                    if(v.pluv1_mm && !isNaN(parseFloat(v.pluv1_mm))) sP1 += parseFloat(v.pluv1_mm);
+                    if(v.pluv2_mm && !isNaN(parseFloat(v.pluv2_mm))) sP2 += parseFloat(v.pluv2_mm);
+                });
+                document.getElementById('dash-p1').innerText = sP1.toFixed(1);
+                document.getElementById('dash-p2').innerText = sP2.toFixed(1);
+            });
+        }
+        startPluviometerListener();
+
+        // Comprobar si cambió el día para reiniciar pluviómetro
+        setInterval(() => {
+            const todayStamp = new Date().setHours(0,0,0,0);
+            if(AppState.currentDayStamp !== todayStamp) {
+                AppState.currentDayStamp = todayStamp;
+                startPluviometerListener(); // Reiniciar consulta
+            }
+        }, 60000); // Check cada minuto
+
+
+        // 5.2 Listener Principal: Tiempo Real (Últimos 30 registros)
+        db.ref('/estacion1/historial').limitToLast(30).on('value', snap => {
+            let labels = [], dTemp = [], dHum = [];
+            let tableHTML = "";
+            let latestObj = null;
+
+            // Recorrer datos (Firebase los manda ordenados cronológicamente si el key o el index es correcto)
+            snap.forEach(child => {
+                const val = child.val();
+                if(!val.fecha) return;
+                
+                latestObj = val; // El último iterado será el más reciente
+                
                 const timeStr = new Date(val.fecha).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
                 labels.push(timeStr);
                 
-                const temp = val.temperatura !== undefined ? parseFloat(val.temperatura).toFixed(1) : 0;
-                const hum = val.humedad !== undefined ? parseFloat(val.humedad).toFixed(0) : 0;
+                const t = val.temperatura !== undefined ? parseFloat(val.temperatura).toFixed(1) : 0;
+                const h = val.humedad !== undefined ? parseFloat(val.humedad).toFixed(0) : 0;
                 const p1 = val.pluv1_mm !== undefined ? parseFloat(val.pluv1_mm).toFixed(1) : 0;
                 const p2 = val.pluv2_mm !== undefined ? parseFloat(val.pluv2_mm).toFixed(1) : 0;
                 const sd = val.estado_sd !== undefined ? val.estado_sd : 1;
+                const msgId = val.id_mensaje || "--";
 
-                dTemp.push(temp);
-                dHum.push(hum);
-                
-                lastT = temp; lastH = hum; lastId = val.id_mensaje || "--"; lastSD = sd;
+                dTemp.push(t);
+                dHum.push(h);
 
-                let sdBadge = sd === 1 ? `<span style="color:var(--accent-green);"><i class="fa-solid fa-check"></i> OK</span>` : `<span style="color:var(--accent-pink);"><i class="fa-solid fa-xmark"></i> Falla</span>`;
-                
-                tableRowsHTML = `<tr>
-                    <td style="color:#f1f5f9; font-weight:500;">${timeStr}</td>
-                    <td style="color:var(--accent-pink); font-weight:bold;">${temp}°</td>
-                    <td style="color:var(--accent-blue); font-weight:bold;">${hum}%</td>
-                    <td style="color:var(--accent-orange);">${p1}</td>
-                    <td style="color:var(--accent-purple);">${p2}</td>
-                    <td>${sdBadge}</td>
-                </tr>` + tableRowsHTML;
+                // Construir fila de tabla (invertimos el orden agregando al inicio)
+                const sdStatus = sd === 1 ? `<span style="color:var(--success)">OK</span>` : `<span style="color:var(--danger)">FALLA</span>`;
+                tableHTML = `<tr>
+                    <td>${new Date(val.fecha).toLocaleString("es-MX", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</td>
+                    <td style="color:var(--accent-temp); font-weight:bold;">${t}°</td>
+                    <td style="color:var(--primary);">${h}%</td>
+                    <td>${p1}</td>
+                    <td>${p2}</td>
+                    <td>${sdStatus}</td>
+                    <td style="color:var(--text-muted);">#${msgId}</td>
+                </tr>` + tableHTML;
+            });
+
+            // Si hay datos, actualizar UI
+            if (latestObj) {
+                const tFinal = latestObj.temperatura !== undefined ? parseFloat(latestObj.temperatura).toFixed(1) : 0;
+                const hFinal = latestObj.humedad !== undefined ? parseFloat(latestObj.humedad).toFixed(0) : 0;
+                const idFinal = latestObj.id_mensaje || "--";
+                const sdFinal = latestObj.estado_sd !== undefined ? latestObj.estado_sd : 1;
+
+                // Actualizar KPIs de Texto
+                document.getElementById('dash-temp').innerText = tFinal;
+                document.getElementById('dash-hum').innerText = hFinal;
+                document.getElementById('hardware-last-msg').innerText = "#" + idFinal;
+
+                // Actualizar Gráficos Gauges
+                charts.gaugeHum.data.datasets[0].data = [hFinal, Math.max(0, 100 - hFinal)];
+                charts.gaugeHum.update();
+
+                // Actualizar Gráficos de Líneas
+                charts.main.data.labels = labels;
+                charts.main.data.datasets[0].data = dTemp;
+                charts.main.data.datasets[1].data = dHum;
+                charts.main.update();
+
+                charts.spark.data.labels = labels;
+                charts.spark.data.datasets[0].data = dTemp;
+                charts.spark.update();
+
+                // Actualizar Tabla SCADA
+                document.getElementById('table-body').innerHTML = tableHTML;
+
+                // Actualizar Estatus Hardware
+                const sdSpan = document.getElementById('hardware-sd-status');
+                if(sdFinal === 1) {
+                    sdSpan.innerText = "OK"; sdSpan.style.color = "var(--success)";
+                } else {
+                    sdSpan.innerText = "ERROR - SD NO DETECTADA"; sdSpan.style.color = "var(--danger)";
+                }
+
+                // SISTEMA DE ALERTAS (Revisar solo si hay un nuevo mensaje basado en ID)
+                if (AppState.lastIdRecibido !== idFinal) {
+                    AppState.lastIdRecibido = idFinal;
+                    
+                    // Checar Temperatura alta
+                    if (parseFloat(tFinal) >= AppState.alertThresholdTemp) {
+                        showToast("Alerta de Temperatura", `Se detectaron ${tFinal}°C. El umbral está en ${AppState.alertThresholdTemp}°C.`, "error");
+                    }
+                    
+                    // Checar Error SD
+                    if (sdFinal === 0) {
+                        showToast("Falla de Datalogger", "El nodo LoRa reporta error escribiendo en la memoria SD local.", "warning");
+                    }
+                }
+
+            } else {
+                document.getElementById('table-body').innerHTML = "<tr><td colspan='7' style='text-align: center;'>Sin datos.</td></tr>";
             }
         });
 
-        if(tableRowsHTML === "") tableRowsHTML = "<tr><td colspan='6' style='text-align:center;'>No hay datos recientes.</td></tr>";
-        document.getElementById('history-table-body').innerHTML = tableRowsHTML;
 
-        document.getElementById('temp-main').innerText = lastT;
-        document.getElementById('hum-main').innerText = lastH;
-        document.getElementById('msg-id').innerText = lastId;
+        // ==========================================================================
+        // 6. EXPORTACIÓN AVANZADA (SCADA REPORTING)
+        // ==========================================================================
+        function exportarDataCompleta(format) {
+            
+            // Cambiar UI de botones a estado "Cargando"
+            const btnCsv = document.getElementById('btn-export-csv');
+            const btnJson = document.getElementById('btn-export-json');
+            const btnPdf = document.getElementById('btn-export-pdf');
+            
+            btnCsv.disabled = true; btnJson.disabled = true; btnPdf.disabled = true;
+            showToast("Sincronizando...", "Descargando historial completo de Firebase.", "success");
 
-        document.getElementById('g-temp-val').innerText = lastT + "°";
-        chartGaugeTemp.data.datasets[0].data = [lastT, Math.max(0, 50 - lastT)];
-        chartGaugeTemp.update();
+            // Consulta PESADA a Firebase (Trae todo el historial)
+            db.ref('/estacion1/historial').once('value').then(snap => {
+                const allData = [];
+                snap.forEach(child => {
+                    if(child.val().fecha) allData.push(child.val());
+                });
 
-        document.getElementById('g-hum-val').innerText = lastH + "%";
-        chartGaugeHum.data.datasets[0].data = [lastH, Math.max(0, 100 - lastH)];
-        chartGaugeHum.update();
+                if (allData.length === 0) {
+                    showToast("Error", "La base de datos está vacía.", "error");
+                    resetExportBtns(btnCsv, btnJson, btnPdf);
+                    return;
+                }
 
-        mainChart.data.labels = labels;
-        mainChart.data.datasets[0].data = dTemp;
-        mainChart.data.datasets[1].data = dHum;
-        mainChart.update();
+                const dateStr = new Date().toISOString().split('T')[0];
+                const fileName = `INIFAP_SCADA_Report_${dateStr}`;
 
-        sparkChart.data.labels = labels;
-        sparkChart.data.datasets[0].data = dTemp;
-        sparkChart.update();
+                if (format === 'csv') {
+                    let csv = "Fecha,Hora,Temp_SHT41(C),Hum(%),Pluv1(mm),Pluv2(mm),EstadoSD,ID_Msg\n";
+                    allData.forEach(r => {
+                        const dt = new Date(r.fecha);
+                        csv += `${dt.toLocaleDateString('es-MX')},${dt.toLocaleTimeString('es-MX')},${r.temperatura||0},${r.humedad||0},${r.pluv1_mm||0},${r.pluv2_mm||0},${r.estado_sd!==undefined?r.estado_sd:1},${r.id_mensaje||""}\n`;
+                    });
+                    downloadBlob(csv, `${fileName}.csv`, 'text/csv');
+                    showToast("Descarga Lista", "Archivo CSV generado exitosamente.", "success");
+                } 
+                else if (format === 'json') {
+                    const json = JSON.stringify(allData, null, 2);
+                    downloadBlob(json, `${fileName}.json`, 'application/json');
+                    showToast("Descarga Lista", "Respaldo JSON generado exitosamente.", "success");
+                }
+                else if (format === 'pdf') {
+                    generarPDF(fileName, allData);
+                    showToast("Descarga Lista", "Reporte PDF generado exitosamente.", "success");
+                }
 
-        const sdText = document.getElementById('sd-status-text');
-        if (lastSD === 1) {
-            sdText.innerHTML = '<i class="fa-solid fa-circle-check"></i> OPERATIVA';
-            sdText.style.color = "var(--accent-green)";
-            sdText.style.background = "rgba(52, 211, 153, 0.1)";
-        } else {
-            sdText.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> FALLA DETECTADA';
-            sdText.style.color = "var(--accent-pink)";
-            sdText.style.background = "rgba(244, 114, 182, 0.1)";
+                resetExportBtns(btnCsv, btnJson, btnPdf);
+
+            }).catch(error => {
+                console.error(error);
+                showToast("Falla de Conexión", "No se pudo recuperar el historial de Firebase.", "error");
+                resetExportBtns(btnCsv, btnJson, btnPdf);
+            });
         }
-    });
-</script>
+
+        function resetExportBtns(b1, b2, b3) {
+            b1.disabled = false; b2.disabled = false; b3.disabled = false;
+        }
+
+        function downloadBlob(content, fileName, contentType) {
+            const a = document.createElement("a");
+            const file = new Blob([content], { type: contentType });
+            a.href = URL.createObjectURL(file);
+            a.download = fileName;
+            a.click();
+        }
+
+        function generarPDF(fileName, dataArray) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Estilos del Reporte Profesional SCADA
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.setTextColor(15, 23, 42); // Dark slate
+            doc.text("Reporte de Análisis Estación INIFAP", 14, 22);
+            
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(100, 116, 139); // Muted
+            doc.text(`Fecha de exportación: ${new Date().toLocaleString('es-MX')}`, 14, 30);
+            doc.text(`Total de registros procesados: ${dataArray.length}`, 14, 35);
+            doc.text(`Identificador de Nodo: Heltec V3 LoRa / SHT41`, 14, 40);
+
+            // Línea separadora
+            doc.setDrawColor(56, 189, 248); // Primary Blue
+            doc.setLineWidth(0.5);
+            doc.line(14, 45, 196, 45);
+
+            const tableColumn = ["Fecha", "Hora", "Temp (°C)", "Hum (%)", "P1(mm)", "P2(mm)", "ID"];
+            const tableRows = [];
+
+            // Limitar a los últimos 500 registros para no saturar el PDF (opcional, pero buena práctica)
+            const recentData = dataArray.slice(-500);
+
+            recentData.forEach(row => {
+                const dt = new Date(row.fecha);
+                tableRows.push([
+                    dt.toLocaleDateString('es-MX'),
+                    dt.toLocaleTimeString('es-MX'),
+                    (row.temperatura || 0).toString(),
+                    (row.humedad || 0).toString(),
+                    (row.pluv1_mm || 0).toString(),
+                    (row.pluv2_mm || 0).toString(),
+                    row.id_mensaje ? `#${row.id_mensaje}` : "--"
+                ]);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 50,
+                theme: 'grid',
+                headStyles: { fillColor: [15, 23, 42], textColor: [255,255,255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [241, 245, 249] },
+                styles: { fontSize: 8, font: 'helvetica', cellPadding: 3 }
+            });
+
+            doc.save(`${fileName}.pdf`);
+        }
+
+    </script>
 </body>
 </html>
