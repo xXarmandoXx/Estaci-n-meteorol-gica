@@ -159,16 +159,14 @@
         .item-json i { color: var(--accent-orange); }
         .item-pdf i { color: var(--accent-pink); }
 
-        /* --- MÓVIL Y TABLET (Ajustes de UX) --- */
+        /* --- MÓVIL Y TABLET (Ajustes UX y Orden) --- */
         @media (max-width: 1024px) {
             .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
             .w-map { grid-column: span 6; height: 300px; }
             .w-status, .w-rain { grid-column: span 6; }
             .w-gauge, .w-mini { grid-column: span 3; }
-            
-            /* TRUCO UX: Empujar módulos inactivos hasta el fondo en pantallas estrechas */
-            .widget-inactive { order: 99; }
         }
+        
         @media (max-width: 600px) {
             .sidebar { width: 100%; height: 70px; flex-direction: row; padding: 0 10px; position: fixed; bottom: 0; border-top: 1px solid var(--glass-border); border-right: none; z-index: 1000; background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); }
             .sidebar:hover { width: 100%; padding: 0 10px; box-shadow: none; }
@@ -177,8 +175,19 @@
             .menu-btn { padding: 10px; flex-direction: column; gap: 5px; border-radius: 8px; }
             .sidebar:hover .menu-btn span { display: none; }
             .main-content { padding-bottom: 90px; padding-left: 15px; padding-right: 15px; }
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .w-map, .w-status, .w-gauge, .w-rain, .w-mini { grid-column: span 1; }
+            
+            /* TRUCO UX: Cambiamos de Grid a Flexbox en móviles para garantizar el orden de los elementos */
+            .dashboard-grid { display: flex; flex-direction: column; gap: 15px; }
+            
+            /* ORDEN ESPECÍFICO EN CELULAR */
+            .w-map { order: 1; height: 250px; }
+            .w-status { order: 2; }
+            .w-rain { order: 3; }
+            .widget { order: 4; } /* Los demás widgets activos (Gauges de temp/hum) */
+            
+            /* Forzamos los widgets inactivos al final de la página */
+            .widget-inactive { order: 99 !important; }
+            
             .big-value { font-size: 2.5rem; }
         }
     </style>
@@ -222,7 +231,7 @@
                     <div id="station-map"></div>
                 </div>
 
-                <div class="widget w-status" style="background: linear-gradient(145deg, rgba(30,41,59,0.5), rgba(15,23,42,0.8));">
+                <div class="widget w-status">
                     <div class="widget-header">
                         <span>Estado Actual</span>
                         <i class="fa-solid fa-bolt" style="color: var(--accent-blue);"></i>
@@ -239,42 +248,6 @@
                             Paquete LoRa Ref: <span id="msg-id" style="color: white; font-weight: bold;">--</span>
                         </div>
                     </div>
-                </div>
-
-                <div class="widget w-gauge">
-                    <div class="widget-header">Índice Térmico</div>
-                    <div class="gauge-container">
-                        <canvas id="gaugeTemp"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-pink);" id="g-temp-val">--</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge">
-                    <div class="widget-header">Humedad Relativa</div>
-                    <div class="gauge-container">
-                        <canvas id="gaugeHum"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-blue);" id="g-hum-val">--</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge widget-inactive">
-                    <div class="widget-header">Presión Atm <span class="badge-na">No Disp.</span></div>
-                    <div class="gauge-container">
-                        <canvas id="gaugePres"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-disabled);">N/A</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge widget-inactive" style="text-align: center;">
-                    <div class="widget-header">Radiación Solar <span class="badge-na">No Disp.</span></div>
-                    <i class="fa-solid fa-sun" style="font-size: 3rem; color: var(--accent-disabled); margin-top: 15px;"></i>
-                    <div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-disabled); margin-top: 15px;">N/A W/m²</div>
                 </div>
 
                 <div class="widget w-rain">
@@ -299,9 +272,45 @@
                     </div>
                 </div>
 
+                <div class="widget w-gauge">
+                    <div class="widget-header">Índice Térmico</div>
+                    <div class="gauge-container">
+                        <canvas id="gaugeTemp"></canvas>
+                        <div class="gauge-value-center">
+                            <div class="gauge-val" style="color: var(--accent-pink);" id="g-temp-val">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget w-gauge">
+                    <div class="widget-header">Humedad Relativa</div>
+                    <div class="gauge-container">
+                        <canvas id="gaugeHum"></canvas>
+                        <div class="gauge-value-center">
+                            <div class="gauge-val" style="color: var(--accent-blue);" id="g-hum-val">--</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="widget w-mini">
                     <div class="widget-header">Tendencia Temp</div>
                     <div style="height: 60px; width: 100%;"><canvas id="sparkTemp"></canvas></div>
+                </div>
+
+                <div class="widget w-gauge widget-inactive">
+                    <div class="widget-header">Presión Atm <span class="badge-na">No Disp.</span></div>
+                    <div class="gauge-container">
+                        <canvas id="gaugePres"></canvas>
+                        <div class="gauge-value-center">
+                            <div class="gauge-val" style="color: var(--accent-disabled);">N/A</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget w-gauge widget-inactive" style="text-align: center;">
+                    <div class="widget-header">Radiación Solar <span class="badge-na">No Disp.</span></div>
+                    <i class="fa-solid fa-sun" style="font-size: 3rem; color: var(--accent-disabled); margin-top: 15px;"></i>
+                    <div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-disabled); margin-top: 15px;">N/A W/m²</div>
                 </div>
                 
                 <div class="widget w-mini widget-inactive">
@@ -418,7 +427,7 @@
         }
     }
 
-    // Esta es la función clave que busca TODO en Firebase
+    // Exportación completa a Firebase
     function exportData(format, e) {
         e.preventDefault();
         document.getElementById('exportMenu').classList.remove('show');
@@ -426,11 +435,9 @@
         const btn = document.getElementById('btnExport');
         const originalHTML = btn.innerHTML;
         
-        // Efecto visual de carga
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Descargando miles de datos...';
         btn.disabled = true;
 
-        // HACEMOS UNA CONSULTA COMPLETA A FIREBASE (.once('value') sin limites)
         db.ref('/estacion1/historial').once('value').then(snap => {
             const allData = [];
             snap.forEach(child => {
@@ -465,7 +472,6 @@
                 generarPDF(fileName, allData);
             }
 
-            // Restaurar botón
             btn.innerHTML = originalHTML;
             btn.disabled = false;
             
@@ -609,7 +615,6 @@
     }
     calcularLluvia();
 
-    // Listener Principal para la UI (Mantiene la página rápida con solo 30 registros)
     db.ref('/estacion1/historial').limitToLast(30).on('value', snap => {
         let labels = [], dTemp = [], dHum = [];
         let tableRowsHTML = "";
