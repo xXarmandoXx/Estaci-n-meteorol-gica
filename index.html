@@ -3,717 +3,486 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Estación Meteorológica | Armando G.</title>
+    <title>Estación Meteorológica | Mando</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Clima Mando">
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/480/clouds.png">
+    
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
-        /* --- 1. VARIABLES --- */
+        /* --- 1. VARIABLES Y RESET --- */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         :root {
-            --bg-body: #0f172a; 
-            --bg-sidebar: #020617;
-            --glass-card: rgba(30, 41, 59, 0.7); 
+            --bg-body: #121212; 
+            --bg-sidebar: #0a0a0a;
+            --glass-bg: rgba(25, 25, 25, 0.6); 
             --glass-border: rgba(255, 255, 255, 0.08);
             
-            --neon-blue: #38bdf8;
-            --neon-pink: #f472b6;   /* Temp */
-            --neon-orange: #fb923c; /* Pluv 1 */
-            --neon-green: #34d399;
-            --neon-red: #ef4444; 
-            --neon-purple: #c084fc; /* Pluv 2 */
+            --accent-blue: #38bdf8;
+            --accent-pink: #f472b6;   
+            --accent-orange: #fb923c; 
+            --accent-yellow: #facc15;
+            --accent-green: #34d399;
+            --accent-purple: #c084fc; 
             
-            --text-main: #f1f5f9;
+            --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            
             --transition: all 0.3s ease;
         }
 
         body { 
             font-family: 'Outfit', sans-serif; 
             background-color: var(--bg-body); 
-            background-image: radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 20%),
-                              radial-gradient(circle at 90% 80%, rgba(244, 114, 182, 0.05) 0%, transparent 20%);
             color: var(--text-main); 
             height: 100vh; 
             display: flex; 
             overflow: hidden; 
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.03) 0%, transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(244, 114, 182, 0.03) 0%, transparent 25%);
         }
 
-        /* --- 2. SIDEBAR --- */
-        .sidebar { width: 260px; background: var(--bg-sidebar); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; padding: 25px; flex-shrink: 0; z-index: 100; }
+        /* --- 2. SIDEBAR COMPACTO --- */
+        .sidebar { width: 80px; background: var(--bg-sidebar); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; z-index: 100; transition: width 0.3s; }
+        .sidebar:hover { width: 220px; align-items: flex-start; padding: 20px; }
         
-        .brand-section { margin-bottom: 40px; display: flex; flex-direction: column; gap: 8px; }
-        .brand-logo-container { display: flex; align-items: center; gap: 12px; }
-        .brand-icon { font-size: 1.8rem; color: var(--neon-blue); filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.3)); }
-        .brand-text { display: flex; flex-direction: column; line-height: 1.2; }
-        .brand-title-main { font-size: 1rem; font-weight: 700; color: white; letter-spacing: 0.5px; }
-        .brand-subtitle { font-size: 0.8rem; color: var(--neon-blue); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .author-credit-pc { font-size: 0.7rem; color: var(--text-muted); opacity: 0.6; margin-left: 5px; font-weight: 400; }
-        .mobile-footer-credit { display: none; }
-
-        .menu-items { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; margin-top: 10px; }
-        .menu-btn { padding: 14px 18px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 15px; color: var(--text-muted); transition: var(--transition); font-weight: 500; font-size: 0.95rem; }
+        .brand-icon { font-size: 1.8rem; color: var(--accent-blue); filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.3)); margin-bottom: 40px; }
+        .sidebar:hover .brand-icon { margin-left: 10px; }
+        
+        .menu-items { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+        .menu-btn { padding: 12px; width: 100%; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: var(--transition); }
+        .sidebar:hover .menu-btn { justify-content: flex-start; padding-left: 15px; gap: 15px; }
+        .menu-btn span { display: none; font-weight: 500; font-size: 0.95rem; white-space: nowrap; }
+        .sidebar:hover .menu-btn span { display: block; }
+        
         .menu-btn:hover { background: rgba(255, 255, 255, 0.05); color: white; }
-        .menu-btn.active { background: linear-gradient(90deg, rgba(56, 189, 248, 0.15), transparent); color: var(--neon-blue); border-left: 3px solid var(--neon-blue); }
-        .menu-btn.active i { color: var(--neon-blue); }
-        .sidebar-footer { margin-top: auto; font-size: 0.7rem; color: var(--text-muted); text-align: center; opacity: 0.4; }
+        .menu-btn.active { color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); border-left: 3px solid var(--accent-blue); }
 
-        /* --- 3. CONTENIDO PRINCIPAL --- */
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .header-top { padding: 25px 40px; display: flex; justify-content: space-between; align-items: center; }
-        .header-info h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 5px; }
-        .header-info p { color: var(--text-muted); font-size: 0.9rem; }
-
-        .status-badge { 
-            padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
-            display: flex; align-items: center; gap: 8px; transition: var(--transition);
+        /* --- 3. MAIN CONTENT Y GRID --- */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px; }
+        .header-info h1 { font-size: 1.5rem; font-weight: 700; }
+        
+        /* Dashboard Grid - Estilo Profesional */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-auto-rows: minmax(150px, auto);
+            gap: 15px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
         }
-        .status-online { background: rgba(52, 211, 153, 0.1); color: var(--neon-green); border: 1px solid rgba(52, 211, 153, 0.3); }
-        .status-offline { background: rgba(239, 68, 68, 0.1); color: var(--neon-red); border: 1px solid rgba(239, 68, 68, 0.3); }
-        .dot { width: 8px; height: 8px; border-radius: 50%; }
-        .dot-online { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); animation: pulse-green 2s infinite; }
-        .dot-offline { background: var(--neon-red); box-shadow: 0 0 10px var(--neon-red); }
-        @keyframes pulse-green { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        .content-area { flex-grow: 1; overflow-y: auto; padding: 10px 40px 40px 40px; -webkit-overflow-scrolling: touch; }
-        .view-section { display: none; animation: fadeIn 0.4s ease; }
+        .widget {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Tamaños de Grid */
+        .w-map { grid-column: span 8; grid-row: span 2; padding: 0; border: none; }
+        .w-status { grid-column: span 4; grid-row: span 2; }
+        .w-gauge { grid-column: span 3; grid-row: span 1; align-items: center; justify-content: center; }
+        .w-rain { grid-column: span 6; grid-row: span 1; }
+        .w-mini { grid-column: span 3; grid-row: span 1; }
+
+        /* --- 4. ESTILOS INTERNOS DE WIDGETS --- */
+        .widget-header { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px; }
+        
+        /* Map Container */
+        #station-map { width: 100%; height: 100%; border-radius: 16px; z-index: 1; }
+        
+        /* Gauge Containers */
+        .gauge-container { position: relative; width: 100%; height: 100px; display: flex; justify-content: center; }
+        .gauge-value-center { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); text-align: center; }
+        .gauge-val { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+        .gauge-unit { font-size: 0.8rem; color: var(--text-muted); }
+
+        /* Valores Grandes */
+        .big-value { font-size: 2.5rem; font-weight: 700; display: flex; align-items: baseline; gap: 5px; }
+        .big-value .unit { font-size: 1rem; color: var(--text-muted); font-weight: 400; }
+
+        /* Tarjeta de Lluvia */
+        .rain-flex { display: flex; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
+        .rain-box { text-align: center; }
+        .rain-divider { width: 1px; height: 60%; background: var(--glass-border); }
+
+        /* Elementos Decorativos */
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        
+        .moon-phase { width: 60px; height: 60px; background: radial-gradient(circle at 30% 30%, #fff, #888); border-radius: 50%; box-shadow: inset -10px -10px 20px rgba(0,0,0,0.8), 0 0 15px rgba(255,255,255,0.2); margin: 10px auto; }
+
+        /* Vista Oculta */
+        .view-section { display: none; animation: fadeIn 0.3s ease; }
         .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .offline-banner {
-            background: rgba(239, 68, 68, 0.15); border: 1px solid var(--neon-red); color: #fca5a5;
-            padding: 15px; border-radius: 12px; margin-bottom: 20px; display: none;
-            align-items: center; gap: 10px; font-size: 0.9rem;
+        /* --- MÓVIL --- */
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
+            .w-map { grid-column: span 6; height: 250px; }
+            .w-status, .w-rain { grid-column: span 6; }
+            .w-gauge, .w-mini { grid-column: span 3; }
         }
-
-        /* --- 4. COMPONENTES Y TARJETAS --- */
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; margin-bottom: 30px; }
-        .glass-card { background: var(--glass-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 25px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); transition: var(--transition); }
-        
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .card-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .icon-box { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        
-        .icon-temp { background: rgba(244, 114, 182, 0.15); color: var(--neon-pink); }
-        .icon-hum { background: rgba(56, 189, 248, 0.15); color: var(--neon-blue); }
-        .icon-rain { background: rgba(192, 132, 252, 0.15); color: var(--neon-purple); }
-        .icon-stat { background: rgba(52, 211, 153, 0.15); color: var(--neon-green); }
-        .icon-off { background: rgba(100, 116, 139, 0.3); color: var(--text-muted); }
-
-        .big-value { font-size: 3.5rem; font-weight: 700; color: white; line-height: 1; }
-        .unit { font-size: 1.2rem; color: var(--text-muted); font-weight: 400; margin-left: 5px; }
-        .sub-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; display:flex; justify-content: space-between; }
-        .record-date { display: block; font-size: 0.75rem; color: var(--neon-blue); margin-top: 5px; font-weight: 500; opacity: 0.8; }
-
-        /* Tarjeta Dual Pluviómetros */
-        .dual-temp-container { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
-        .temp-box { width: 48%; display: flex; flex-direction: column; align-items: center; }
-        .temp-divider { width: 1px; height: 50px; background: rgba(255,255,255,0.1); }
-        .val-dual { font-size: 2.2rem; font-weight: 700; line-height: 1; }
-        .lbl-dual { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;}
-        .color-p1 { color: var(--neon-orange); }
-        .color-p2 { color: var(--neon-purple); }
-
-        .chart-wrapper { height: 350px; position: relative; width: 100%; }
-        
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th { text-align: left; padding: 15px; color: var(--text-muted); border-bottom: 1px solid var(--glass-border); font-weight: 600; }
-        td { padding: 15px; border-bottom: 1px solid var(--glass-border); color: var(--text-main); }
-        tr:hover { background: rgba(255,255,255,0.02); }
-
-        .toggle-group { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 4px; display: inline-flex; margin-bottom: 25px; flex-wrap: wrap; gap: 5px; }
-        .toggle-btn { padding: 8px 15px; border: none; background: transparent; color: var(--text-muted); font-weight: 600; cursor: pointer; border-radius: 8px; transition: 0.3s; font-size: 0.85rem; }
-        .toggle-btn.active { background: var(--glass-border); color: white; }
-        
-        #btn-temp.active { color: var(--neon-pink); background: rgba(244, 114, 182, 0.1); border: 1px solid rgba(244, 114, 182, 0.3); }
-        #btn-hum.active { color: var(--neon-blue); background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); }
-        #btn-p1.active { color: var(--neon-orange); background: rgba(251, 146, 60, 0.1); border: 1px solid rgba(251, 146, 60, 0.3); }
-        #btn-p2.active { color: var(--neon-purple); background: rgba(192, 132, 252, 0.1); border: 1px solid rgba(192, 132, 252, 0.3); }
-
-        .config-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 15px; border-radius: 12px; font-size: 1rem; margin-bottom: 20px; }
-        .btn-neon { width: 100%; background: linear-gradient(90deg, var(--neon-blue), #2563eb); border: none; padding: 15px; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
-        
-        .btn-download { border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: 0.2s; background: var(--neon-green); color: #064e3b; }
-        .btn-download:hover { background: #6ee7b7; box-shadow: 0 0 10px rgba(52, 211, 153, 0.4); }
-
-        /* --- 5. IPHONE / MÓVIL --- */
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            .sidebar {
-                width: 100%; height: 75px; position: fixed; top: 0; left: 0; 
-                flex-direction: row; padding: 0 15px; justify-content: space-between; align-items: center;
-                background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(10px);
-                border-right: none; border-bottom: 1px solid var(--glass-border);
-            }
-            .brand-section { margin-bottom: 0; gap: 0; }
-            .brand-logo-container { gap: 8px; }
-            .brand-icon { font-size: 1.4rem; }
-            .brand-title-main { font-size: 0.9rem; }
-            .brand-subtitle { font-size: 0.7rem; }
-            .author-credit-pc { display: none; }
-            
-            .mobile-footer-credit {
-                display: block; text-align: center; margin-top: 30px; padding: 20px;
-                color: var(--text-muted); font-size: 0.8rem; opacity: 0.7;
-                border-top: 1px solid var(--glass-border);
-            }
-
-            .menu-items { flex-direction: row; flex-grow: 0; gap: 2px; margin-top: 0; }
-            .menu-btn { padding: 8px; border-radius: 8px; flex-direction: column; gap: 0; font-size: 0.7rem; background: transparent !important; border: none !important; }
-            .menu-btn i { font-size: 1.2rem; margin-bottom: 2px; }
-            .menu-btn span { display: none; }
-            .menu-btn.active i { color: var(--neon-blue); text-shadow: 0 0 10px rgba(56,189,248,0.6); }
-            .sidebar-footer { display: none; }
-
-            .main-content { margin-top: 75px; height: calc(100vh - 75px); }
-            .header-top { padding: 20px; flex-direction: column; align-items: flex-start; gap: 10px; }
-            .content-area { padding: 15px; }
-            .chart-wrapper { height: 280px; }
-            .metrics-grid { grid-template-columns: 1fr; }
+        @media (max-width: 600px) {
+            .sidebar { width: 100%; height: 60px; flex-direction: row; padding: 0 15px; position: fixed; bottom: 0; border-top: 1px solid var(--glass-border); border-right: none; z-index: 1000; }
+            .sidebar:hover { width: 100%; padding: 0 15px; }
+            .brand-icon { display: none; }
+            .menu-items { flex-direction: row; justify-content: space-around; }
+            .menu-btn { padding: 10px; width: auto; }
+            .sidebar:hover .menu-btn span { display: none; }
+            .main-content { padding-bottom: 80px; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .w-map, .w-status, .w-gauge, .w-rain, .w-mini { grid-column: span 1; }
         }
     </style>
 </head>
 <body>
 
     <nav class="sidebar">
-        <div class="brand-section">
-            <div class="brand-logo-container">
-                <i class="fa-solid fa-cloud-sun brand-icon"></i>
-                <div class="brand-text">
-                    <span class="brand-title-main">Estación INIFAP</span>
-                    <span class="brand-subtitle">Meteorológica</span>
-                </div>
-            </div>
-            <div class="author-credit-pc">Dev: Armando Gutierrez</div>
-        </div>
-
+        <i class="fa-solid fa-satellite-dish brand-icon"></i>
         <div class="menu-items">
             <div class="menu-btn active" onclick="switchView('dashboard', this)">
-                <i class="fa-solid fa-chart-pie"></i> <span>Monitor</span>
+                <i class="fa-solid fa-border-all"></i> <span>Dashboard</span>
             </div>
             <div class="menu-btn" onclick="switchView('historial', this)">
-                <i class="fa-solid fa-database"></i> <span>Datos</span>
-            </div>
-            <div class="menu-btn" onclick="switchView('analisis', this)">
-                <i class="fa-solid fa-chart-simple"></i> <span>Stats</span>
+                <i class="fa-solid fa-chart-line"></i> <span>Historial</span>
             </div>
             <div class="menu-btn" onclick="switchView('config', this)">
-                <i class="fa-solid fa-sliders"></i> <span>Ajustes</span>
+                <i class="fa-solid fa-microchip"></i> <span>Sistema</span>
             </div>
         </div>
-
-        <div class="sidebar-footer">v9.2 Lluvia Diaria Edition</div>
     </nav>
 
     <main class="main-content">
         <div class="header-top">
             <div class="header-info">
-                <h1 id="page-title">Dashboard</h1>
-                <p id="page-subtitle">Monitoreo en Tiempo Real</p>
+                <h1 id="page-title">INIFAP Las Margaritas</h1>
+                <p style="color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+                    <span class="status-dot" id="header-dot"></span> 
+                    <span id="header-status">Recibiendo datos LoRa</span>
+                </p>
             </div>
-            <div id="status-badge" class="status-badge status-online">
-                <div id="status-dot" class="dot dot-online"></div>
-                <span id="status-text">ONLINE</span>
+            <div style="text-align: right;">
+                <h2 style="font-size: 1.8rem; font-weight: 300;" id="clock">00:00:00</h2>
+                <p style="color: var(--text-muted); font-size: 0.8rem;" id="date-display">--</p>
             </div>
         </div>
 
-        <div class="content-area">
-
-            <div id="offline-banner" class="offline-banner">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <span><strong>ATENCIÓN:</strong> El sensor LoRa no ha enviado datos recientemente. Verifique la conexión o energía.</span>
-            </div>
-
-            <section id="dashboard" class="view-section active">
-                <div class="metrics-grid">
-                    
-                    <div class="glass-card">
-                        <div class="card-header">
-                            <span class="card-label">Temperatura</span>
-                            <div class="icon-box icon-temp"><i class="fa-solid fa-temperature-half"></i></div>
-                        </div>
-                        <div class="big-value" style="color: var(--neon-pink);">
-                            <span id="temp-val">--</span><span class="unit">°C</span>
-                        </div>
-                        <div class="sub-text">Sensor SHT41</div>
-                    </div>
-
-                    <div class="glass-card">
-                        <div class="card-header">
-                            <span class="card-label">Humedad</span>
-                            <div class="icon-box icon-hum"><i class="fa-solid fa-droplet"></i></div>
-                        </div>
-                        <div class="big-value" style="color: var(--neon-blue);">
-                            <span id="hum-val">--</span><span class="unit">%</span>
-                        </div>
-                        <div class="sub-text">Humedad Relativa</div>
-                    </div>
-
-                    <div class="glass-card">
-                        <div class="card-header">
-                            <span class="card-label">Lluvia Acumulada (Hoy)</span>
-                            <div class="icon-box icon-rain"><i class="fa-solid fa-cloud-rain"></i></div>
-                        </div>
-                        <div class="dual-temp-container">
-                            <div class="temp-box">
-                                <span id="p1-sum-val" class="val-dual color-p1">0.0</span>
-                                <span class="lbl-dual">Pluv 1 (mm)</span>
-                            </div>
-                            <div class="temp-divider"></div>
-                            <div class="temp-box">
-                                <span id="p2-sum-val" class="val-dual color-p2">0.0</span>
-                                <span class="lbl-dual">Pluv 2 (mm)</span>
-                            </div>
-                        </div>
-                        <div class="sub-text" style="display:flex; justify-content:space-between; margin-top:15px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.05); font-size: 0.75rem;">
-                            <span>Últ. intervalo: <span id="p1-val" style="color:var(--neon-orange); font-weight:600;">--</span> mm</span>
-                            <span>Últ. intervalo: <span id="p2-val" style="color:var(--neon-purple); font-weight:600;">--</span> mm</span>
-                        </div>
-                    </div>
-
-                    <div class="glass-card">
-                        <div class="card-header">
-                            <span class="card-label">Estado Señal</span>
-                            <div id="signal-icon" class="icon-box icon-stat"><i class="fa-solid fa-wifi"></i></div>
-                        </div>
-                        <div class="big-value" style="font-size: 1.8rem; margin-top: 10px; color: var(--neon-green);" id="connection-status">
-                            CONECTADO
-                        </div>
-                        <div class="sub-text" id="last-seen-text">Sincronizado ahora</div>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <div class="card-header">
-                        <span class="card-label" style="color:white;">Tendencia Climática: Temperatura y Humedad</span>
-                    </div>
-                    <div class="chart-wrapper">
-                        <canvas id="tempChart"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <section id="historial" class="view-section">
-                <div class="glass-card">
-                    <div class="card-header">
-                        <span class="card-label">Últimos Registros (Estación 1)</span>
-                        <button class="btn-download" onclick="downloadFullCSV()">
-                            <i class="fa-solid fa-file-excel"></i> Reporte CSV
-                        </button>
-                    </div>
-                    <div style="overflow-x: auto;">
-                        <table>
-                            <thead><tr><th>ID</th><th>Hora</th><th>Temp</th><th>Hum</th><th>Pluv 1</th><th>Pluv 2</th></tr></thead>
-                            <tbody id="history-body">
-                                <tr><td colspan="6" style="text-align:center; padding:20px;">Cargando base de datos...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <section id="analisis" class="view-section">
-                <div class="toggle-group">
-                    <button class="toggle-btn active" id="btn-temp" onclick="switchAnalysisMode('temp')">Temperatura</button>
-                    <button class="toggle-btn" id="btn-hum" onclick="switchAnalysisMode('hum')">Humedad</button>
-                    <button class="toggle-btn" id="btn-p1" onclick="switchAnalysisMode('p1')">Pluviómetro 1</button>
-                    <button class="toggle-btn" id="btn-p2" onclick="switchAnalysisMode('p2')">Pluviómetro 2</button>
-                </div>
-
-                <div class="metrics-grid">
-                    <div class="glass-card">
-                        <div class="card-header"><span class="card-label">Máxima Registrada</span></div>
-                        <div class="big-value" style="font-size: 2.5rem;"><span id="max-stat">--</span><span class="unit" id="unit-1"></span></div>
-                        <span class="record-date" id="max-date">--/-- --:--</span>
-                    </div>
-                    <div class="glass-card">
-                        <div class="card-header"><span class="card-label">Mínima Registrada</span></div>
-                        <div class="big-value" style="font-size: 2.5rem;"><span id="min-stat">--</span><span class="unit" id="unit-2"></span></div>
-                        <span class="record-date" id="min-date">--/-- --:--</span>
-                    </div>
-                    <div class="glass-card">
-                        <div class="card-header"><span class="card-label">Promedio General</span></div>
-                        <div class="big-value" style="font-size: 2.5rem;"><span id="avg-stat">--</span><span class="unit" id="unit-3"></span></div>
-                        <span class="sub-text">Últimas lecturas</span>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <div class="card-header"><span class="card-label">Distribución Estadística</span></div>
-                    <div class="chart-wrapper">
-                        <canvas id="statsChart"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <section id="config" class="view-section">
+        <section id="dashboard" class="view-section active">
+            <div class="dashboard-grid">
                 
-                <div class="glass-card" style="max-width: 500px; margin-bottom: 25px;">
-                    <div class="card-header"><span class="card-label">Diagnóstico del Hardware Local</span></div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
-                        <span style="color: var(--text-main); font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-microchip" style="color: var(--text-muted);"></i> Estado Memoria SD
-                        </span>
-                        
-                        <div id="sd-status-badge" style="padding: 6px 14px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; background: rgba(100, 116, 139, 0.2); color: var(--text-muted); transition: 0.3s; border: 1px solid transparent;">
-                            <i class="fa-solid fa-spinner fa-spin"></i> Sincronizando...
+                <div class="widget w-map">
+                    <div id="station-map"></div>
+                </div>
+
+                <div class="widget w-status" style="background: linear-gradient(145deg, rgba(30,41,59,0.8), rgba(15,23,42,0.9));">
+                    <div class="widget-header">
+                        <span>SHT41 Temperatura Exterior</span>
+                        <i class="fa-solid fa-temperature-full" style="color: var(--accent-pink);"></i>
+                    </div>
+                    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <i class="fa-solid fa-cloud" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 10px;"></i>
+                        <div class="big-value" style="color: white; font-size: 3.5rem;">
+                            <span id="temp-main">--</span><span class="unit">°C</span>
+                        </div>
+                        <div style="color: var(--accent-blue); font-weight: 600; margin-top: 5px;">
+                            Humedad: <span id="hum-main">--</span>%
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 15px; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 12px;">
+                            Último msg: #<span id="msg-id">--</span>
                         </div>
                     </div>
+                </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--glass-border); margin-top: 5px;">
-                        <span style="color: var(--text-main); font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-hashtag" style="color: var(--text-muted);"></i> ID del Mensaje LoRa
-                        </span>
-                        <span id="msg-id-badge" style="font-weight: 700; font-size: 1rem; color: var(--neon-blue);">
-                            --
-                        </span>
+                <div class="widget w-gauge">
+                    <div class="widget-header">Índice Térmico</div>
+                    <div class="gauge-container">
+                        <canvas id="gaugeTemp"></canvas>
+                        <div class="gauge-value-center">
+                            <div class="gauge-val" style="color: var(--accent-pink);" id="g-temp-val">--</div>
+                        </div>
                     </div>
-
-                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; opacity: 0.8;">
-                        Indica si el datalogger en Las Margaritas está guardando el respaldo físico correctamente en la MicroSD y muestra el identificador del último paquete LoRa recibido.
-                    </p>
                 </div>
 
-                <div class="glass-card" style="max-width: 500px;">
-                    <div class="card-header"><span class="card-label">Configuración de Alertas</span></div>
-                    
-                    <label style="display:block; margin-bottom:10px; color:var(--text-muted);">Alerta Temperatura (°C)</label>
-                    <input type="number" id="temp-threshold" class="config-input" value="35">
-                    
-                    <label style="display:block; margin-bottom:10px; color:var(--text-muted);">Alerta Humedad (%)</label>
-                    <input type="number" id="hum-threshold" class="config-input" value="70">
-
-                    <button class="btn-neon" onclick="saveConfig()">Guardar Cambios</button>
+                <div class="widget w-gauge">
+                    <div class="widget-header">Humedad Relativa</div>
+                    <div class="gauge-container">
+                        <canvas id="gaugeHum"></canvas>
+                        <div class="gauge-value-center">
+                            <div class="gauge-val" style="color: var(--accent-blue);" id="g-hum-val">--</div>
+                        </div>
+                    </div>
                 </div>
-            </section>
 
-            <div class="mobile-footer-credit">
-                Desarrollado por: <strong>Armando Gutierrez</strong>
+                <div class="widget w-gauge">
+                    <div class="widget-header">Presión Atm</div>
+                    <div class="gauge-container">
+                        <canvas id="gaugePres"></canvas>
+                        <div class="gauge-value-center">
+                            <div class="gauge-val" style="color: var(--accent-yellow);">1015</div>
+                            <div class="gauge-unit">hPa</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget w-gauge" style="text-align: center;">
+                    <div class="widget-header">Fase Lunar</div>
+                    <div class="moon-phase"></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Luna Menguante</div>
+                </div>
+
+                <div class="widget w-rain">
+                    <div class="widget-header">
+                        <span>Precipitación Acumulada (24h)</span>
+                        <i class="fa-solid fa-cloud-showers-heavy" style="color: var(--accent-blue);"></i>
+                    </div>
+                    <div class="rain-flex">
+                        <div class="rain-box">
+                            <div class="big-value" style="color: var(--accent-orange);">
+                                <span id="p1-sum-val">0.0</span><span class="unit">mm</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Pluviómetro 1</div>
+                        </div>
+                        <div class="rain-divider"></div>
+                        <div class="rain-box">
+                            <div class="big-value" style="color: var(--accent-purple);">
+                                <span id="p2-sum-val">0.0</span><span class="unit">mm</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Pluviómetro 2</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget w-mini">
+                    <div class="widget-header">Tendencia Temp</div>
+                    <div style="height: 60px; width: 100%;"><canvas id="sparkTemp"></canvas></div>
+                </div>
+                <div class="widget w-mini">
+                    <div class="widget-header">Viento (Próx.)</div>
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; gap: 10px;">
+                        <i class="fa-solid fa-wind" style="font-size: 1.5rem; color: var(--text-muted);"></i>
+                        <span style="font-size: 1.2rem; font-weight: bold; color: var(--text-muted);">N/A km/h</span>
+                    </div>
+                </div>
+
             </div>
+        </section>
 
-        </div>
+        <section id="historial" class="view-section">
+            <div class="widget" style="min-height: 400px;">
+                <div class="widget-header" style="font-size: 1rem;">Gráfico General 24h</div>
+                <div style="position: relative; height: 350px; width: 100%;">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="config" class="view-section">
+            <div class="widget" style="max-width: 500px;">
+                <div class="widget-header">Diagnóstico SD y LoRa</div>
+                <div style="padding: 10px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between;">
+                    <span>Estado Memoria SD:</span>
+                    <span id="sd-status-text" style="color: var(--accent-green); font-weight: bold;">Verificando...</span>
+                </div>
+                <div style="padding: 10px 0; display: flex; justify-content: space-between;">
+                    <span>Latencia (Aprox):</span>
+                    <span style="color: var(--text-muted);">2s</span>
+                </div>
+            </div>
+        </section>
+
     </main>
 
 <script>
-    const firebaseConfig = { databaseURL: "https://estacion-texcoco-default-rtdb.firebaseio.com" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    // --- RELOJ ---
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString('es-MX', {hour12: false});
+        document.getElementById('date-display').innerText = now.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-    const appState = {
-        currentView: 'dashboard',
-        tempThreshold: 35,
-        humThreshold: 70,
-        fullHistory: [], 
-        analysisMode: 'temp', 
-        lastTimestamp: 0,
-        charts: {},
-        currentDayStamp: new Date().setHours(0,0,0,0), // <- NUEVO: Guarda el día actual a la medianoche
-        lluviaListener: null // <- NUEVO: Guarda la conexión para la lluvia
-    };
-
+    // --- NAVEGACIÓN ---
     function switchView(viewId, btn) {
         document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(viewId).classList.add('active');
-        const titles = { dashboard: 'Dashboard', historial: 'Base de Datos', analisis: 'Estadísticas', config: 'Ajustes y Sistema' };
-        document.getElementById('page-title').innerText = titles[viewId];
-        if(viewId === 'analisis' && appState.charts.stats) setTimeout(() => appState.charts.stats.resize(), 100);
     }
 
-    function initCharts() {
-        Chart.defaults.color = '#94a3b8';
-        Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
+    // --- MAPA LEAFLET ---
+    // Coordenadas INIFAP Las Margaritas (Aprox Hueytamalco)
+    const map = L.map('station-map', { zoomControl: false }).setView([19.996, -97.306], 12);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }).addTo(map);
+    
+    // Marcador personalizado
+    const stationIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: "<div style='background-color:var(--accent-blue); width:15px; height:15px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>",
+        iconSize: [15, 15],
+        iconAnchor: [7, 7]
+    });
+    L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map)
+        .bindPopup('<b style="color:black;">Estación LoRa</b><br>Las Margaritas, INIFAP')
+        .openPopup();
 
-        const ctxTemp = document.getElementById('tempChart').getContext('2d');
-        const gradPink = ctxTemp.createLinearGradient(0,0,0,300);
-        gradPink.addColorStop(0, 'rgba(244, 114, 182, 0.4)');
-        gradPink.addColorStop(1, 'rgba(244, 114, 182, 0)');
-        const gradBlue = ctxTemp.createLinearGradient(0,0,0,300);
-        gradBlue.addColorStop(0, 'rgba(56, 189, 248, 0.4)');
-        gradBlue.addColorStop(1, 'rgba(56, 189, 248, 0)');
+    // --- GRÁFICOS (CHART.JS) ---
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = 'Outfit';
 
-        appState.charts.temp = new Chart(ctxTemp, {
-            type: 'line',
-            data: { 
-                labels: [], 
-                datasets: [
-                    { label: 'Temperatura (°C)', data: [], borderColor: '#f472b6', backgroundColor: gradPink, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 0 },
-                    { label: 'Humedad (%)', data: [], borderColor: '#38bdf8', backgroundColor: gradBlue, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 0 }
-                ] 
-            },
-            options: { 
-                responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: { display: true, labels: { color: 'white' } } }, 
-                scales: { x: { display: false } },
-                interaction: { mode: 'index', intersect: false }
-            }
-        });
+    // Configuración base para Gauges (Doughnut a la mitad)
+    const gaugeOptions = {
+        circumference: 180, rotation: -90, cutout: '80%',
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        maintainAspectRatio: false, responsive: true
+    };
 
-        const ctxStats = document.getElementById('statsChart');
-        appState.charts.stats = new Chart(ctxStats, {
-            type: 'bar',
-            data: { labels: ['Min', 'Prom', 'Max'], datasets: [{ data: [0,0,0], backgroundColor: ['#38bdf8', '#818cf8', '#c084fc'], borderRadius: 10 }] },
-            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { display: false } } } }
-        });
-    }
+    // Gauge Temperatura
+    const ctxGaugeTemp = document.getElementById('gaugeTemp').getContext('2d');
+    const chartGaugeTemp = new Chart(ctxGaugeTemp, {
+        type: 'doughnut',
+        data: { datasets: [{ data: [0, 50], backgroundColor: ['#f472b6', '#1e293b'], borderWidth: 0, borderRadius: 5 }] },
+        options: gaugeOptions
+    });
 
-    // --- NUEVA FUNCIÓN: Sumar Lluvia desde las 00:00 ---
-    function calcularLluviaDiaria() {
-        const timestampInicio = appState.currentDayStamp;
+    // Gauge Humedad
+    const ctxGaugeHum = document.getElementById('gaugeHum').getContext('2d');
+    const chartGaugeHum = new Chart(ctxGaugeHum, {
+        type: 'doughnut',
+        data: { datasets: [{ data: [0, 100], backgroundColor: ['#38bdf8', '#1e293b'], borderWidth: 0, borderRadius: 5 }] },
+        options: gaugeOptions
+    });
 
-        // Si ya había una conexión activa para la lluvia, la desconectamos para no sobrecargar
-        if(appState.lluviaListener) {
-            db.ref('/estacion1/historial').off('value', appState.lluviaListener);
-        }
+    // Gauge Presión (Ficticio para estética)
+    const ctxGaugePres = document.getElementById('gaugePres').getContext('2d');
+    new Chart(ctxGaugePres, {
+        type: 'doughnut',
+        data: { datasets: [{ data: [1015, 1050-1015], backgroundColor: ['#facc15', '#1e293b'], borderWidth: 0, borderRadius: 5 }] },
+        options: gaugeOptions
+    });
 
-        appState.lluviaListener = db.ref('/estacion1/historial').orderByChild('fecha').startAt(timestampInicio).on('value', snap => {
-            let sumaP1 = 0;
-            let sumaP2 = 0;
+    // Gráfico Historial General (Líneas)
+    const ctxMain = document.getElementById('mainChart').getContext('2d');
+    const mainChart = new Chart(ctxMain, {
+        type: 'line',
+        data: { labels: [], datasets: [
+            { label: 'Temp °C', data: [], borderColor: '#f472b6', tension: 0.4, borderWidth: 2, pointRadius: 0 },
+            { label: 'Hum %', data: [], borderColor: '#38bdf8', tension: 0.4, borderWidth: 2, pointRadius: 0 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
+    });
 
+    // Sparkline Temperatura
+    const ctxSpark = document.getElementById('sparkTemp').getContext('2d');
+    const sparkChart = new Chart(ctxSpark, {
+        type: 'line',
+        data: { labels: [], datasets: [{ data: [], borderColor: '#f472b6', tension: 0.4, borderWidth: 2, pointRadius: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
+    });
+
+    // --- FIREBASE LOGIC ---
+    const firebaseConfig = { databaseURL: "https://estacion-texcoco-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let currentDayStamp = new Date().setHours(0,0,0,0);
+    
+    // Lluvia
+    function calcularLluvia() {
+        db.ref('/estacion1/historial').orderByChild('fecha').startAt(currentDayStamp).on('value', snap => {
+            let sP1 = 0, sP2 = 0;
             snap.forEach(child => {
-                const val = child.val();
-                if(val.pluv1_mm !== undefined && !isNaN(parseFloat(val.pluv1_mm))) {
-                    sumaP1 += parseFloat(val.pluv1_mm);
-                }
-                if(val.pluv2_mm !== undefined && !isNaN(parseFloat(val.pluv2_mm))) {
-                    sumaP2 += parseFloat(val.pluv2_mm);
-                }
+                const v = child.val();
+                if(v.pluv1_mm) sP1 += parseFloat(v.pluv1_mm);
+                if(v.pluv2_mm) sP2 += parseFloat(v.pluv2_mm);
             });
-
-            // Actualizamos los números grandotes en el dashboard
-            document.getElementById('p1-sum-val').innerText = sumaP1.toFixed(1);
-            document.getElementById('p2-sum-val').innerText = sumaP2.toFixed(1);
+            document.getElementById('p1-sum-val').innerText = sP1.toFixed(1);
+            document.getElementById('p2-sum-val').innerText = sP2.toFixed(1);
         });
     }
+    calcularLluvia();
 
-    function checkSystemHealth() {
-        // --- NUEVO: REVISAR SI YA ES MEDIA NOCHE PARA REINICIAR CONTADOR ---
-        const nowDayStamp = new Date().setHours(0,0,0,0);
-        if(appState.currentDayStamp !== nowDayStamp) {
-            appState.currentDayStamp = nowDayStamp;
-            calcularLluviaDiaria(); // Se reinicia el cálculo para el nuevo día
-        }
-
-        if (appState.lastTimestamp === 0) return;
-        const diffMinutes = (Date.now() - appState.lastTimestamp) / 1000 / 60;
-        const badge = document.getElementById('status-badge');
-        const dot = document.getElementById('status-dot');
-        const text = document.getElementById('status-text');
-        const banner = document.getElementById('offline-banner');
-        const connStatus = document.getElementById('connection-status');
-        const icon = document.getElementById('signal-icon');
-
-        if (diffMinutes > 15) { 
-            badge.className = "status-badge status-offline"; dot.className = "dot offline"; text.innerText = "OFFLINE";
-            banner.style.display = "flex"; connStatus.innerText = "DESCONECTADO"; connStatus.style.color = "var(--neon-red)"; icon.className = "icon-box icon-off";
-            
-            document.getElementById('sd-status-badge').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Sin Conexión';
-            document.getElementById('sd-status-badge').style.background = 'rgba(100, 116, 139, 0.2)';
-            document.getElementById('sd-status-badge').style.color = 'var(--text-muted)';
-            document.getElementById('sd-status-badge').style.border = '1px solid transparent';
-            
-            document.getElementById('msg-id-badge').innerText = "--";
-            document.getElementById('msg-id-badge').style.color = 'var(--text-muted)';
-        } else { 
-            badge.className = "status-badge status-online"; dot.className = "dot dot-online"; text.innerText = "ONLINE";
-            banner.style.display = "none"; connStatus.innerText = "CONECTADO"; connStatus.style.color = "var(--neon-green)"; icon.className = "icon-box icon-stat";
-            document.getElementById('msg-id-badge').style.color = 'var(--neon-blue)';
-        }
-    }
-    setInterval(checkSystemHealth, 60000);
-
-    function switchAnalysisMode(mode) {
-        appState.analysisMode = mode;
-        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-' + mode).classList.add('active');
-        updateAnalysisUI();
-    }
-
-    function updateAnalysisUI() {
-        const mode = appState.analysisMode;
-        const data = appState.fullHistory;
-        
-        let unit = '°C';
-        if (mode === 'hum') unit = '%';
-        if (mode === 'p1' || mode === 'p2') unit = 'mm';
-
-        document.getElementById('unit-1').innerText = unit;
-        document.getElementById('unit-2').innerText = unit;
-        document.getElementById('unit-3').innerText = unit;
-        
-        if(data.length === 0) return;
-
-        const cleanData = data.map(d => {
-            let val = 0;
-            if (mode === 'temp') val = d.temperatura;
-            else if (mode === 'hum') val = d.humedad;
-            else if (mode === 'p1') val = d.pluv1_mm;
-            else if (mode === 'p2') val = d.pluv2_mm;
-            
-            return { val: parseFloat(val), date: new Date(d.fecha) };
-        }).filter(d => !isNaN(d.val)); 
-
-        if(cleanData.length === 0) {
-            document.getElementById('max-stat').innerText = "--";
-            document.getElementById('min-stat').innerText = "--";
-            document.getElementById('avg-stat').innerText = "--";
-            return;
-        }
-
-        const maxObj = cleanData.reduce((prev, curr) => (curr.val > prev.val) ? curr : prev);
-        const minObj = cleanData.reduce((prev, curr) => (curr.val < prev.val) ? curr : prev);
-        const avg = (cleanData.reduce((acc, curr) => acc + curr.val, 0) / cleanData.length).toFixed(1);
-        const formatDate = (date) => date.toLocaleString("es-MX", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-
-        document.getElementById('max-stat').innerText = maxObj.val.toFixed(1);
-        document.getElementById('max-date').innerText = "Reg: " + formatDate(maxObj.date);
-        document.getElementById('min-stat').innerText = minObj.val.toFixed(1);
-        document.getElementById('min-date').innerText = "Reg: " + formatDate(minObj.date);
-        document.getElementById('avg-stat').innerText = avg;
-        
-        if(appState.charts.stats) { 
-            appState.charts.stats.data.datasets[0].data = [minObj.val, avg, maxObj.val]; 
-            appState.charts.stats.update(); 
-        }
-    }
-
-    // --- LOGICA PRINCIPAL FIREBASE ---
+    // Datos en Tiempo Real
     db.ref('/estacion1/historial').limitToLast(30).on('value', snap => {
-        const tbody = document.getElementById('history-body');
-        tbody.innerHTML = "";
-        let labels = [], dataTemp = [], dataHum = [], rows = [];
-        appState.fullHistory = []; 
-
-        let lastEntryTime = 0, lastTemp = 0, lastHum = 0, lastP1 = 0, lastP2 = 0, lastEstadoSD = 1, lastIdMsg = "--";
+        let labels = [], dTemp = [], dHum = [];
+        let lastT = 0, lastH = 0, lastId = "--", lastSD = 1;
 
         snap.forEach(child => {
             const val = child.val();
             if(val.fecha) {
-                const dateObj = new Date(val.fecha);
-                const timeStr = dateObj.toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
-                lastEntryTime = dateObj.getTime();
-                
-                lastTemp = val.temperatura !== undefined ? val.temperatura : 0;
-                lastHum = val.humedad !== undefined ? val.humedad : 0;
-                lastP1 = val.pluv1_mm !== undefined ? val.pluv1_mm : 0;
-                lastP2 = val.pluv2_mm !== undefined ? val.pluv2_mm : 0; 
-                
-                lastEstadoSD = val.estado_sd !== undefined ? val.estado_sd : 1; 
-                lastIdMsg = val.id_mensaje !== undefined ? val.id_mensaje : "--";
-
+                const timeStr = new Date(val.fecha).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
                 labels.push(timeStr);
-                dataTemp.push(lastTemp);
-                dataHum.push(lastHum);
-                appState.fullHistory.push(val);
-
-                rows.unshift(`<tr>
-                    <td style="color:#94a3b8; font-size: 0.8rem;">#${lastIdMsg}</td>
-                    <td style="color:#f1f5f9;">${timeStr}</td>
-                    <td style="color:#f472b6; font-weight:bold;">${parseFloat(lastTemp).toFixed(1)}°</td>
-                    <td style="color:#38bdf8; font-weight:bold;">${parseFloat(lastHum).toFixed(1)}%</td>
-                    <td style="color:#fb923c;">${parseFloat(lastP1).toFixed(1)} mm</td>
-                    <td style="color:#c084fc;">${parseFloat(lastP2).toFixed(1)} mm</td>
-                </tr>`);
+                dTemp.push(val.temperatura || 0);
+                dHum.push(val.humedad || 0);
+                
+                lastT = val.temperatura || 0;
+                lastH = val.humedad || 0;
+                lastId = val.id_mensaje || "--";
+                lastSD = val.estado_sd !== undefined ? val.estado_sd : 1;
             }
         });
 
-        if (lastEntryTime > 0) {
-            document.getElementById('temp-val').innerText = parseFloat(lastTemp).toFixed(1);
-            document.getElementById('hum-val').innerText = parseFloat(lastHum).toFixed(0);
-            
-            // Los pulsos pequeños se muestran en el subtexto de abajo
-            document.getElementById('p1-val').innerText = parseFloat(lastP1).toFixed(1);
-            document.getElementById('p2-val').innerText = parseFloat(lastP2).toFixed(1);
-            
-            const fullDateStr = new Date(lastEntryTime).toLocaleString("es-MX", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-            document.getElementById('last-seen-text').innerText = "Último: " + fullDateStr;
+        // Actualizar UI
+        document.getElementById('temp-main').innerText = parseFloat(lastT).toFixed(1);
+        document.getElementById('hum-main').innerText = parseFloat(lastH).toFixed(0);
+        document.getElementById('msg-id').innerText = lastId;
 
-            const sdBadge = document.getElementById('sd-status-badge');
-            if (lastEstadoSD === 1) {
-                sdBadge.innerHTML = '<i class="fa-solid fa-check"></i> Operativa';
-                sdBadge.style.background = 'rgba(52, 211, 153, 0.15)';
-                sdBadge.style.color = 'var(--neon-green)';
-                sdBadge.style.border = '1px solid rgba(52, 211, 153, 0.3)';
-            } else {
-                sdBadge.innerHTML = '<i class="fa-solid fa-xmark"></i> Falla en SD';
-                sdBadge.style.background = 'rgba(239, 68, 68, 0.15)';
-                sdBadge.style.color = 'var(--neon-red)';
-                sdBadge.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-            }
+        // Actualizar Gauges
+        document.getElementById('g-temp-val').innerText = parseFloat(lastT).toFixed(1) + "°";
+        chartGaugeTemp.data.datasets[0].data = [lastT, Math.max(0, 50 - lastT)]; // Max 50C
+        chartGaugeTemp.update();
 
-            document.getElementById('msg-id-badge').innerText = "#" + lastIdMsg;
+        document.getElementById('g-hum-val').innerText = parseFloat(lastH).toFixed(0) + "%";
+        chartGaugeHum.data.datasets[0].data = [lastH, Math.max(0, 100 - lastH)]; // Max 100%
+        chartGaugeHum.update();
 
-            appState.lastTimestamp = lastEntryTime;
-            checkSystemHealth(); 
+        // Actualizar Gráficos Lineales
+        mainChart.data.labels = labels;
+        mainChart.data.datasets[0].data = dTemp;
+        mainChart.data.datasets[1].data = dHum;
+        mainChart.update();
+
+        sparkChart.data.labels = labels;
+        sparkChart.data.datasets[0].data = dTemp;
+        sparkChart.update();
+
+        // SD Status
+        const sdText = document.getElementById('sd-status-text');
+        if (lastSD === 1) {
+            sdText.innerText = "OPERATIVA";
+            sdText.style.color = "var(--accent-green)";
+        } else {
+            sdText.innerText = "FALLO DETECTADO";
+            sdText.style.color = "var(--accent-pink)";
         }
-
-        tbody.innerHTML = rows.join("");
-        if(appState.charts.temp) { 
-            appState.charts.temp.data.labels = labels; 
-            appState.charts.temp.data.datasets[0].data = dataTemp; 
-            appState.charts.temp.data.datasets[1].data = dataHum; 
-            appState.charts.temp.update(); 
-        }
-        updateAnalysisUI();
-    });
-
-    function saveConfig() {
-        appState.tempThreshold = parseFloat(document.getElementById('temp-threshold').value);
-        appState.humThreshold = parseFloat(document.getElementById('hum-threshold').value);
-        const btn = document.querySelector('.btn-neon');
-        btn.innerText = "¡Configuración Guardada!";
-        setTimeout(() => btn.innerText = "Guardar Cambios", 2000);
-    }
-
-    function downloadFullCSV() {
-        db.ref('/estacion1/historial').once('value').then(snap => {
-            let csv = "ID_Mensaje,Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm)\n";
-            snap.forEach(child => {
-                const d = child.val();
-                if(d.fecha) {
-                    const dateObj = new Date(d.fecha);
-                    const date = dateObj.toLocaleDateString("es-MX");
-                    const time = dateObj.toLocaleTimeString("es-MX");
-                    
-                    let idMsg = d.id_mensaje !== undefined ? d.id_mensaje : "N/A";
-                    let t = d.temperatura !== undefined ? d.temperatura : "";
-                    let h = d.humedad !== undefined ? d.humedad : "";
-                    let p1 = d.pluv1_mm !== undefined ? d.pluv1_mm : "";
-                    let p2 = d.pluv2_mm !== undefined ? d.pluv2_mm : "";
-                    
-                    csv += `${idMsg},${date},${time},${t},${h},${p1},${p2}\n`;
-                }
-            });
-            downloadFile(csv, "Reporte_INIFAP_LoRa.csv");
-        });
-    }
-
-    function downloadFile(content, fileName) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(new Blob([content], {type:'text/csv'}));
-        link.download = fileName;
-        link.click();
-    }
-
-    // --- INICIAMOS TODO AL CARGAR LA PÁGINA ---
-    document.addEventListener('DOMContentLoaded', () => {
-        initCharts();
-        calcularLluviaDiaria(); // Arrancamos el contador de lluvia
     });
 </script>
-
 </body>
 </html>
