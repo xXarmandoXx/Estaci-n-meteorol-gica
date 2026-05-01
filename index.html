@@ -1484,5 +1484,778 @@
             </div>
         </div>
     </section>
+<script>
+// ============================================================
+// 1. SISTEMA DE PARTÍCULAS ANIMADAS (FONDO)
+// ============================================================
+(function initParticles() {
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [];
 
+    function resize() {
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', () => { resize(); buildParticles(); });
+    resize();
+
+    function Particle() {
+        this.reset = function() {
+            this.x  = Math.random() * W;
+            this.y  = Math.random() * H;
+            this.vx = (Math.random() - 0.5) * 0.3;
+            this.vy = (Math.random() - 0.5) * 0.3;
+            this.r  = Math.random() * 1.5 + 0.5;
+            this.alpha = Math.random() * 0.4 + 0.1;
+            const colors = ['56,189,248', '167,139,250', '244,114,182', '52,211,153'];
+            this.color = colors[Math.floor(Math.random() * colors.length)];
+        };
+        this.reset();
+    }
+
+    function buildParticles() {
+        const count = Math.floor((W * H) / 18000);
+        particles = Array.from({length: count}, () => new Particle());
+    }
+    buildParticles();
+
+    function drawConnections() {
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 120) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(56,189,248,${0.06 * (1 - dist/120)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, W, H);
+        drawConnections();
+        particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            if (p.x < 0 || p.x > W) p.vx *= -1;
+            if (p.y < 0 || p.y > H) p.vy *= -1;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${p.color},${p.alpha})`;
+            ctx.fill();
+        });
+        requestAnimationFrame(animate);
+    }
+    animate();
+})();
+
+// ============================================================
+// 2. SISTEMA DE TOASTS (NOTIFICACIONES)
+// ============================================================
+function showToast(type, title, msg, duration = 4000) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    const icons = { success: 'fa-circle-check', info: 'fa-circle-info', warn: 'fa-triangle-exclamation', error: 'fa-circle-xmark' };
+    const colors = { success: 'var(--green)', info: 'var(--blue)', warn: 'var(--yellow)', error: 'var(--red)' };
+
+    toast.innerHTML = `
+        <i class="fa-solid ${icons[type] || 'fa-bell'} toast-icon" style="color:${colors[type]};"></i>
+        <div class="toast-body">
+            <div class="toast-title">${title}</div>
+            ${msg ? `<div class="toast-msg">${msg}</div>` : ''}
+        </div>
+        <button class="toast-close" onclick="this.closest('.toast').remove()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    `;
+
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'toastOut 0.4s cubic-bezier(0.4,0,0.2,1) forwards';
+        setTimeout(() => toast.remove(), 400);
+    }, duration);
+}
+
+// ============================================================
+// 3. RELOJ Y FECHA
+// ============================================================
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').innerText = now.toLocaleTimeString('es-MX', { hour12: false });
+    document.getElementById('date-display').innerText = now.toLocaleDateString('es-MX', {
+        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+    });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================================
+// 4. NAVEGACIÓN ENTRE VISTAS
+// ============================================================
+const VIEW_TITLES = {
+    dashboard: 'INIFAP Las Margaritas',
+    historial:  'Datos & Gráficos',
+    config:     'Diagnóstico de Hardware',
+    about:      'Acerca del Sistema'
+};
+
+function switchView(viewId, btn) {
+    document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+
+    btn.classList.add('active');
+    const el = document.getElementById('view-' + viewId);
+    if (el) el.classList.add('active');
+
+    document.getElementById('page-title').innerText = VIEW_TITLES[viewId] || viewId;
+    document.getElementById('exportMenu').classList.remove('show');
+
+    if (viewId === 'historial') refreshChart();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// 5. CHART.JS — CONFIGURACIÓN GLOBAL
+// ============================================================
+Chart.defaults.color = '#64748b';
+Chart.defaults.font.family = 'Outfit';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+Chart.defaults.plugins.legend.labels.padding = 20;
+
+const GAUGE_BASE_OPTIONS = {
+    circumference: 180,
+    rotation: -90,
+    cutout: '78%',
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    maintainAspectRatio: false,
+    responsive: true,
+    animation: { animateRotate: true, duration: 800 }
+};
+
+// --- GAUGE: Temperatura ---
+const ctxGT = document.getElementById('gaugeTemp').getContext('2d');
+const chartGaugeTemp = new Chart(ctxGT, {
+    type: 'doughnut',
+    data: { datasets: [{ data: [0, 50], backgroundColor: ['#f472b6', '#1a2035'], borderWidth: 0, borderRadius: 8 }] },
+    options: GAUGE_BASE_OPTIONS
+});
+
+// --- GAUGE: Humedad ---
+const ctxGH = document.getElementById('gaugeHum').getContext('2d');
+const chartGaugeHum = new Chart(ctxGH, {
+    type: 'doughnut',
+    data: { datasets: [{ data: [0, 100], backgroundColor: ['#38bdf8', '#1a2035'], borderWidth: 0, borderRadius: 8 }] },
+    options: GAUGE_BASE_OPTIONS
+});
+
+// --- GAUGE: Presión (inactivo) ---
+const ctxGP = document.getElementById('gaugePres').getContext('2d');
+new Chart(ctxGP, {
+    type: 'doughnut',
+    data: { datasets: [{ data: [1, 1], backgroundColor: ['#334155', '#0d1117'], borderWidth: 0 }] },
+    options: GAUGE_BASE_OPTIONS
+});
+
+// --- RING DE TEMPERATURA (hero en widget principal) ---
+// Usamos canvas manual para dibujar un arco animado más premium
+const ringCanvas = document.getElementById('ringTemp');
+const ringCtx = ringCanvas.getContext('2d');
+let ringCurrentVal = 0;
+let ringTargetVal = 0;
+let ringAnimId = null;
+
+function drawRing(value) {
+    const W = ringCanvas.width;
+    const H = ringCanvas.height;
+    const cx = W / 2, cy = H / 2;
+    const radius = Math.min(W, H) / 2 - 14;
+
+    ringCtx.clearRect(0, 0, W, H);
+
+    // Track (fondo)
+    ringCtx.beginPath();
+    ringCtx.arc(cx, cy, radius, Math.PI * 0.75, Math.PI * 2.25);
+    ringCtx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ringCtx.lineWidth = 10;
+    ringCtx.lineCap = 'round';
+    ringCtx.stroke();
+
+    // Fill (valor)
+    const pct = Math.max(0, Math.min(1, value / 50));
+    const startAngle = Math.PI * 0.75;
+    const endAngle   = startAngle + pct * Math.PI * 1.5;
+
+    const grad = ringCtx.createLinearGradient(cx - radius, 0, cx + radius, 0);
+    grad.addColorStop(0, '#38bdf8');
+    grad.addColorStop(0.5, '#c084fc');
+    grad.addColorStop(1, '#f472b6');
+
+    ringCtx.beginPath();
+    ringCtx.arc(cx, cy, radius, startAngle, endAngle);
+    ringCtx.strokeStyle = grad;
+    ringCtx.lineWidth = 10;
+    ringCtx.lineCap = 'round';
+    ringCtx.stroke();
+
+    // Glow outer
+    ringCtx.beginPath();
+    ringCtx.arc(cx, cy, radius, startAngle, endAngle);
+    ringCtx.strokeStyle = 'rgba(244,114,182,0.12)';
+    ringCtx.lineWidth = 18;
+    ringCtx.lineCap = 'round';
+    ringCtx.stroke();
+}
+
+function animateRing() {
+    const diff = ringTargetVal - ringCurrentVal;
+    if (Math.abs(diff) < 0.05) {
+        ringCurrentVal = ringTargetVal;
+        drawRing(ringCurrentVal);
+        return;
+    }
+    ringCurrentVal += diff * 0.08;
+    drawRing(ringCurrentVal);
+    ringAnimId = requestAnimationFrame(animateRing);
+}
+
+function setRingValue(val) {
+    ringTargetVal = parseFloat(val) || 0;
+    if (ringAnimId) cancelAnimationFrame(ringAnimId);
+    animateRing();
+}
+
+drawRing(0);
+
+// --- GRÁFICO PRINCIPAL ---
+const ctxMain = document.getElementById('mainChart').getContext('2d');
+const mainChart = new Chart(ctxMain, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [
+            {
+                label: 'Temperatura °C',
+                data: [],
+                borderColor: '#f472b6',
+                backgroundColor: (ctx) => {
+                    const chart = ctx.chart;
+                    const { ctx: c, chartArea } = chart;
+                    if (!chartArea) return 'transparent';
+                    const grad = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                    grad.addColorStop(0, 'rgba(244,114,182,0.2)');
+                    grad.addColorStop(1, 'rgba(244,114,182,0)');
+                    return grad;
+                },
+                tension: 0.4, borderWidth: 2.5, pointRadius: 0,
+                pointHoverRadius: 6, pointHoverBackgroundColor: '#f472b6',
+                fill: true
+            },
+            {
+                label: 'Humedad %',
+                data: [],
+                borderColor: '#38bdf8',
+                backgroundColor: (ctx) => {
+                    const chart = ctx.chart;
+                    const { ctx: c, chartArea } = chart;
+                    if (!chartArea) return 'transparent';
+                    const grad = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                    grad.addColorStop(0, 'rgba(56,189,248,0.15)');
+                    grad.addColorStop(1, 'rgba(56,189,248,0)');
+                    return grad;
+                },
+                tension: 0.4, borderWidth: 2.5, pointRadius: 0,
+                pointHoverRadius: 6, pointHoverBackgroundColor: '#38bdf8',
+                fill: true, yAxisID: 'yHum'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { position: 'top', align: 'end' },
+            tooltip: {
+                backgroundColor: 'rgba(10,15,25,0.95)',
+                borderColor: 'rgba(255,255,255,0.08)',
+                borderWidth: 1,
+                titleColor: '#f1f5f9',
+                bodyColor: '#94a3b8',
+                padding: 12,
+                cornerRadius: 10,
+                callbacks: {
+                    label: (ctx) => {
+                        const unit = ctx.datasetIndex === 0 ? '°C' : '%';
+                        return `  ${ctx.dataset.label}: ${ctx.raw}${unit}`;
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+                ticks: { maxTicksLimit: 8, color: '#475569' }
+            },
+            y: {
+                position: 'left',
+                grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+                ticks: { color: '#f472b6', callback: v => v + '°' }
+            },
+            yHum: {
+                position: 'right',
+                grid: { display: false },
+                ticks: { color: '#38bdf8', callback: v => v + '%' }
+            }
+        }
+    }
+});
+
+// --- SPARKLINES ---
+function createSpark(id, color) {
+    return new Chart(document.getElementById(id).getContext('2d'), {
+        type: 'line',
+        data: { labels: [], datasets: [{ data: [], borderColor: color, tension: 0.4, borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: `${color}18` }] },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: { x: { display: false }, y: { display: false } },
+            animation: { duration: 400 }
+        }
+    });
+}
+
+const sparkTemp = createSpark('sparkTemp', '#f472b6');
+const sparkHum  = createSpark('sparkHum',  '#38bdf8');
+
+// ============================================================
+// 6. RANGO DEL GRÁFICO PRINCIPAL (Tab buttons)
+// ============================================================
+let chartRange = 30;
+
+function setChartRange(n, btn) {
+    chartRange = n;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    refreshChart();
+    showToast('info', 'Gráfico actualizado', `Mostrando últimos ${n} registros`);
+}
+
+let allChartData = { labels: [], temp: [], hum: [] };
+
+function refreshChart() {
+    const slice = chartRange;
+    const l = allChartData.labels.slice(-slice);
+    const t = allChartData.temp.slice(-slice);
+    const h = allChartData.hum.slice(-slice);
+    mainChart.data.labels = l;
+    mainChart.data.datasets[0].data = t;
+    mainChart.data.datasets[1].data = h;
+    mainChart.update('active');
+}
+
+// ============================================================
+// 7. MAPA LEAFLET
+// ============================================================
+const map = L.map('station-map', {
+    zoomControl: false,
+    attributionControl: false
+}).setView([19.996, -97.306], 13);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd', maxZoom: 20
+}).addTo(map);
+
+// Zoom control custom position
+L.control.zoom({ position: 'topright' }).addTo(map);
+
+// Attribution minimal
+L.control.attribution({ position: 'bottomright', prefix: false })
+    .addAttribution('© CARTO')
+    .addTo(map);
+
+// Marcador estación principal
+const stationIcon = L.divIcon({
+    className: '',
+    html: `<div style="
+        width: 20px; height: 20px; border-radius: 50%;
+        background: radial-gradient(circle, #38bdf8, #2563eb);
+        box-shadow: 0 0 0 4px rgba(56,189,248,0.25), 0 0 20px rgba(56,189,248,0.6);
+        border: 2px solid white;
+        animation: ring-pulse 2.5s ease-in-out infinite;
+    "></div>
+    <style>
+        @keyframes ring-pulse {
+            0%,100% { box-shadow: 0 0 0 4px rgba(56,189,248,0.25), 0 0 20px rgba(56,189,248,0.6); }
+            50%      { box-shadow: 0 0 0 10px rgba(56,189,248,0.05), 0 0 30px rgba(56,189,248,0.3); }
+        }
+    </style>`,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10]
+});
+
+const marker = L.marker([19.996, -97.306], { icon: stationIcon }).addTo(map);
+marker.bindPopup(`
+    <div style="font-family:'Outfit',sans-serif; padding:4px;">
+        <div style="font-weight:700; font-size:0.95rem; color:#38bdf8; margin-bottom:6px;">
+            <i class="fa-solid fa-satellite-dish"></i> Estación INIFAP
+        </div>
+        <div style="font-size:0.8rem; color:#94a3b8; line-height:1.6;">
+            Las Margaritas, Chiapas<br>
+            19.996°N · 97.306°W<br>
+            <span style="color:#34d399;">● En línea · SHT41 vía LoRa</span>
+        </div>
+    </div>
+`).openPopup();
+
+// Resize mapa al cambiar layout
+setTimeout(() => map.invalidateSize(), 500);
+
+// ============================================================
+// 8. DROPDOWN EXPORTAR
+// ============================================================
+function toggleDropdown(e) {
+    e.preventDefault();
+    document.getElementById('exportMenu').classList.toggle('show');
+}
+
+window.addEventListener('click', (event) => {
+    if (!event.target.closest('.btn-export-wrap')) {
+        document.getElementById('exportMenu').classList.remove('show');
+    }
+});
+
+// ============================================================
+// 9. FUNCIONES DE EXPORTACIÓN
+// ============================================================
+function exportData(format, e) {
+    if (e) e.preventDefault();
+    document.getElementById('exportMenu').classList.remove('show');
+
+    const btn = document.getElementById('btnExport');
+    const origHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Descargando...';
+    btn.disabled = true;
+
+    db.ref('/estacion1/historial').once('value').then(snap => {
+        const allData = [];
+        snap.forEach(child => {
+            const v = child.val();
+            if (v.fecha) allData.push(v);
+        });
+
+        if (allData.length === 0) {
+            showToast('warn', 'Sin datos', 'No hay registros en la base de datos para exportar.');
+            btn.innerHTML = origHTML; btn.disabled = false;
+            return;
+        }
+
+        const dateStr = new Date().toISOString().split('T')[0];
+        const fileName = `INIFAP_Margaritas_${dateStr}`;
+
+        if (format === 'csv') {
+            let csv = 'Fecha,Hora,Temperatura(°C),Humedad(%),Pluv1(mm),Pluv2(mm)\n';
+            allData.forEach(row => {
+                const dt = new Date(row.fecha);
+                csv += `${dt.toLocaleDateString('es-MX')},${dt.toLocaleTimeString('es-MX')},${row.temperatura ?? 0},${row.humedad ?? 0},${row.pluv1_mm ?? 0},${row.pluv2_mm ?? 0}\n`;
+            });
+            downloadBlob(csv, `${fileName}.csv`, 'text/csv');
+            showToast('success', 'CSV exportado', `${allData.length} registros descargados.`);
+        }
+        else if (format === 'json') {
+            const json = JSON.stringify(allData, null, 2);
+            downloadBlob(json, `${fileName}.json`, 'application/json');
+            showToast('success', 'JSON exportado', `${allData.length} registros descargados.`);
+        }
+        else if (format === 'pdf') {
+            generarPDF(fileName, allData);
+        }
+
+        btn.innerHTML = origHTML;
+        btn.disabled = false;
+    }).catch(err => {
+        console.error(err);
+        showToast('error', 'Error de conexión', 'No se pudo contactar Firebase.');
+        btn.innerHTML = origHTML;
+        btn.disabled = false;
+    });
+}
+
+function downloadBlob(content, fileName, contentType) {
+    const a = document.createElement('a');
+    const file = new Blob([content], { type: contentType });
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function generarPDF(fileName, dataArray) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    // Header azul
+    doc.setFillColor(7, 11, 20);
+    doc.rect(0, 0, 210, 297, 'F');
+
+    doc.setFillColor(14, 165, 233);
+    doc.rect(0, 0, 210, 40, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text('AgroClima Pro', 14, 16);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Reporte Climatológico · INIFAP Las Margaritas, Chiapas', 14, 24);
+    doc.text(`Generado: ${new Date().toLocaleString('es-MX')} | Total registros: ${dataArray.length}`, 14, 31);
+    doc.text('Sensor: SHT41 (±0.2°C, ±1.8% HR) · Comunicación: LoRa 868 MHz', 14, 37);
+
+    const cols = ['Fecha', 'Hora', 'Temp (°C)', 'Hum (%)', 'Pluv 1 (mm)', 'Pluv 2 (mm)'];
+    const rows = dataArray.map(row => {
+        const dt = new Date(row.fecha);
+        return [
+            dt.toLocaleDateString('es-MX'),
+            dt.toLocaleTimeString('es-MX'),
+            (row.temperatura ?? 0).toString(),
+            (row.humedad ?? 0).toString(),
+            (row.pluv1_mm ?? 0).toString(),
+            (row.pluv2_mm ?? 0).toString()
+        ];
+    });
+
+    doc.autoTable({
+        head: [cols],
+        body: rows,
+        startY: 46,
+        theme: 'grid',
+        headStyles: { fillColor: [14, 165, 233], textColor: [0,0,0], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { textColor: [220,230,240], fillColor: [12,18,28], fontSize: 8 },
+        alternateRowStyles: { fillColor: [16,24,40] },
+        styles: { lineColor: [30,40,60], lineWidth: 0.3 }
+    });
+
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Pág. ${i} / ${pageCount} · AgroClima Pro · INIFAP`, 14, 290);
+    }
+
+    doc.save(`${fileName}.pdf`);
+    showToast('success', 'PDF generado', `Reporte con ${dataArray.length} registros listo.`);
+}
+
+// ============================================================
+// 10. FIREBASE RTDB
+// ============================================================
+const firebaseConfig = { databaseURL: 'https://estacion-texcoco-default-rtdb.firebaseio.com' };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// --- Lluvia acumulada (desde medianoche) ---
+const currentDayStamp = new Date().setHours(0, 0, 0, 0);
+
+db.ref('/estacion1/historial')
+    .orderByChild('fecha')
+    .startAt(currentDayStamp)
+    .on('value', snap => {
+        let sP1 = 0, sP2 = 0;
+        snap.forEach(child => {
+            const v = child.val();
+            if (v.pluv1_mm) sP1 += parseFloat(v.pluv1_mm);
+            if (v.pluv2_mm) sP2 += parseFloat(v.pluv2_mm);
+        });
+        document.getElementById('p1-sum-val').innerText = sP1.toFixed(1);
+        document.getElementById('p2-sum-val').innerText = sP2.toFixed(1);
+
+        if (sP1 > 5 || sP2 > 5) {
+            showToast('warn', 'Alerta de lluvia', `Precipitación acumulada: ${Math.max(sP1, sP2).toFixed(1)} mm hoy.`);
+        }
+    });
+
+// --- Historial en tiempo real (últimos N registros) ---
+let lastDataHash = '';
+let recordCount = 0;
+let firstLoad = true;
+
+function subscribeToData(limit) {
+    db.ref('/estacion1/historial').limitToLast(limit).on('value', snap => {
+        let labels = [], dTemp = [], dHum = [], tableHTML = '';
+        let lastT = '--', lastH = '--', lastId = '--', lastSD = 1;
+        let count = 0;
+
+        snap.forEach(child => {
+            const val = child.val();
+            if (!val.fecha) return;
+            count++;
+
+            const dt = new Date(val.fecha);
+            const timeStr = dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            const temp = val.temperatura !== undefined ? parseFloat(val.temperatura).toFixed(1) : 0;
+            const hum  = val.humedad     !== undefined ? parseFloat(val.humedad).toFixed(0)     : 0;
+            const p1   = val.pluv1_mm   !== undefined ? parseFloat(val.pluv1_mm).toFixed(1)    : '0.0';
+            const p2   = val.pluv2_mm   !== undefined ? parseFloat(val.pluv2_mm).toFixed(1)    : '0.0';
+            const sd   = val.estado_sd  !== undefined ? val.estado_sd : 1;
+
+            labels.push(timeStr);
+            dTemp.push(temp);
+            dHum.push(hum);
+            lastT = temp; lastH = hum;
+            lastId = val.id_mensaje || '--';
+            lastSD = sd;
+
+            const sdBadge = sd === 1
+                ? `<span style="color:var(--green);font-weight:600;"><i class="fa-solid fa-check"></i> OK</span>`
+                : `<span style="color:var(--red);font-weight:600;"><i class="fa-solid fa-xmark"></i> Falla</span>`;
+
+            // Tabla construida en orden inverso (más reciente primero)
+            tableHTML = `
+                <tr>
+                    <td style="font-family:'JetBrains Mono',monospace; color:var(--text-sub);">${timeStr}</td>
+                    <td><span style="color:var(--pink); font-weight:700;">${temp}</span> °C</td>
+                    <td><span style="color:var(--blue); font-weight:700;">${hum}</span> %</td>
+                    <td style="color:var(--orange);">${p1} mm</td>
+                    <td style="color:var(--purple);">${p2} mm</td>
+                    <td>${sdBadge}</td>
+                </tr>` + tableHTML;
+        });
+
+        recordCount = count;
+        document.getElementById('record-count').innerText = `${count} registros cargados`;
+
+        // Actualizar tabla
+        document.getElementById('history-table-body').innerHTML =
+            tableHTML || `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">No hay datos recientes.</td></tr>`;
+
+        // Actualizar widget principal de temperatura
+        updateMainDisplay(lastT, lastH, lastId);
+        updateGauges(lastT, lastH);
+        updateSD(lastSD);
+
+        // Actualizar datos del gráfico global
+        allChartData = { labels, temp: dTemp, hum: dHum };
+        refreshChart();
+
+        // Sparklines
+        sparkTemp.data.labels = labels;
+        sparkTemp.data.datasets[0].data = dTemp;
+        sparkTemp.update('none');
+
+        sparkHum.data.labels = labels;
+        sparkHum.data.datasets[0].data = dHum;
+        sparkHum.update('none');
+
+        // Toast al primer dato
+        if (firstLoad && count > 0) {
+            firstLoad = false;
+            showToast('success', 'Firebase conectado', `${count} registros cargados en tiempo real.`);
+        }
+
+        // Alerta de temperatura alta
+        const currentHash = `${lastT}-${lastH}`;
+        if (currentHash !== lastDataHash && lastDataHash !== '') {
+            if (parseFloat(lastT) > 40) {
+                showToast('warn', 'Temperatura elevada', `${lastT}°C detectados — verifica condiciones.`);
+            }
+            if (parseFloat(lastH) < 20) {
+                showToast('warn', 'Humedad muy baja', `${lastH}% HR — posible estrés hídrico.`);
+            }
+        }
+        lastDataHash = currentHash;
+    });
+}
+
+subscribeToData(120);
+
+// ============================================================
+// 11. ACTUALIZAR WIDGETS DE DISPLAY
+// ============================================================
+function updateMainDisplay(temp, hum, msgId) {
+    document.getElementById('temp-main').innerText = temp;
+    document.getElementById('hum-main').innerText  = hum;
+    document.getElementById('msg-id').innerText    = msgId;
+    setRingValue(temp);
+
+    // Floating badge animado en el valor de temperatura
+    const heroEl = document.querySelector('.temp-hero');
+    if (heroEl && temp !== '--' && lastDataHash) {
+        const badge = document.createElement('div');
+        badge.className = 'float-badge';
+        badge.style.cssText = `top:20px; left:50%; transform:translateX(-50%); color:var(--green);`;
+        badge.innerHTML = `<i class="fa-solid fa-arrow-up"></i> ${temp}°`;
+        heroEl.appendChild(badge);
+        setTimeout(() => badge.remove(), 2100);
+    }
+}
+
+function updateGauges(temp, hum) {
+    const tNum = parseFloat(temp) || 0;
+    const hNum = parseFloat(hum)  || 0;
+
+    document.getElementById('g-temp-val').innerText = temp;
+    document.getElementById('g-hum-val').innerText  = hum + '%';
+
+    chartGaugeTemp.data.datasets[0].data = [tNum, Math.max(0, 50 - tNum)];
+    chartGaugeTemp.update();
+
+    chartGaugeHum.data.datasets[0].data = [hNum, Math.max(0, 100 - hNum)];
+    chartGaugeHum.update();
+}
+
+function updateSD(sdState) {
+    const chip = document.getElementById('sd-status-chip');
+    const prog = document.getElementById('sd-progress');
+
+    if (sdState === 1) {
+        chip.className = 'status-chip chip-ok';
+        chip.innerHTML = '<i class="fa-solid fa-check"></i> Operativa';
+        if (prog) prog.style.width = '87%';
+    } else {
+        chip.className = 'status-chip chip-fail';
+        chip.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Falla';
+        if (prog) prog.style.width = '0%';
+        showToast('error', 'Falla en SD Card', 'El datalogger no responde. Verifica la tarjeta.');
+    }
+}
+
+// ============================================================
+// 12. ANIMACIÓN DE ENTRADA DEL SD PROGRESS BAR
+// ============================================================
+setTimeout(() => {
+    const prog = document.getElementById('sd-progress');
+    if (prog && prog.style.width === '0%') prog.style.width = '87%';
+}, 1500);
+
+// ============================================================
+// 13. INVALIDATE MAPA AL CAMBIAR A DASHBOARD
+// ============================================================
+const origSwitch = window.switchView;
+window.switchView = function(viewId, btn) {
+    origSwitch(viewId, btn);
+    if (viewId === 'dashboard') {
+        setTimeout(() => map.invalidateSize(), 350);
+    }
+};
+
+// ============================================================
+// 14. TOAST DE BIENVENIDA AL INICIAR
+// ============================================================
+setTimeout(() => {
+    showToast('info', 'AgroClima Pro v2.0', 'Sistema iniciado · Conectando a Firebase RTDB...');
+}, 800);
+
+</script>
+</body>
+</html>
 </main>
