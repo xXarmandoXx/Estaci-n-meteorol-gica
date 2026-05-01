@@ -122,27 +122,23 @@
         }
         .widget:hover { border-color: rgba(255,255,255,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
 
+        /* Tamaños de Grid Ajustados */
         .w-map { grid-column: span 8; grid-row: span 2; padding: 0; border: none; }
         .w-status { grid-column: span 4; grid-row: span 2; }
         .w-rain { grid-column: span 6; grid-row: span 1; }
         .w-summary { grid-column: span 3; grid-row: span 1; }
-        .w-gauge { grid-column: span 3; grid-row: span 1; align-items: center; justify-content: center; }
+        .w-gauge { grid-column: span 3; grid-row: span 1; align-items: center; justify-content: space-between; }
 
         .widget-inactive { opacity: 0.5; background: rgba(10, 10, 10, 0.4); border: 1px dashed var(--glass-border); filter: grayscale(100%); cursor: not-allowed; }
         .widget-inactive:hover { opacity: 0.7; transform: none; box-shadow: none; }
         .badge-na { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
 
         /* --- 4. COMPONENTES Y ANIMACIONES --- */
-        .widget-header { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px; }
+        .widget-header { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }
         
         #station-map { width: 100%; height: 100%; border-radius: 20px; z-index: 1; }
         
-        /* Contenedores Genéricos (Temp) */
-        .gauge-container { position: relative; width: 100%; height: 110px; display: flex; justify-content: center; }
-        .gauge-value-center { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center; }
-        .gauge-val { font-size: 2.2rem; font-weight: 700; line-height: 1; color: white; transition: color 0.5s ease; }
-        .gauge-unit { font-size: 0.85rem; color: var(--text-muted); }
-
+        /* Número Principal y Humedad */
         .big-value { font-size: 4rem; font-weight: 800; display: flex; align-items: baseline; justify-content: center; gap: 5px; color: white; transition: color 0.5s ease; }
         .big-value .unit { font-size: 1.5rem; color: var(--text-muted); font-weight: 400; }
 
@@ -278,7 +274,8 @@
                 <div class="widget w-status">
                     <div class="widget-header">
                         <span>Estado Actual</span>
-                        <i class="fa-solid fa-temperature-three-quarters" style="color: var(--text-muted);"></i>
+                        <!-- Ícono Termómetro en lugar de Rayo -->
+                        <i class="fa-solid fa-temperature-half" style="color: var(--text-muted);"></i>
                     </div>
                     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                         
@@ -306,7 +303,7 @@
                     </div>
                 </div>
 
-                <!-- Lluvia Acumulada Dual (Gotas Animadas Independientes y Números Blancos) -->
+                <!-- Lluvia Acumulada Dual -->
                 <div class="widget w-rain">
                     <div class="widget-header">
                         <span>Precipitación Acumulada</span>
@@ -345,7 +342,7 @@
                     </div>
                 </div>
 
-                <!-- NUEVO WIDGET: Resumen del Día Temperatura -->
+                <!-- Resumen del Día Temperatura -->
                 <div class="widget w-summary">
                     <div class="widget-header">Resumen Temperatura</div>
                     <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
@@ -370,7 +367,7 @@
                     </div>
                 </div>
 
-                <!-- NUEVO WIDGET: Resumen del Día Humedad -->
+                <!-- Resumen del Día Humedad -->
                 <div class="widget w-summary">
                     <div class="widget-header">Resumen Humedad</div>
                     <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
@@ -395,53 +392,98 @@
                     </div>
                 </div>
 
-                <!-- Gauge Temperatura Dinámico (Número Blanco) -->
+                <!-- NUEVO: Termómetro de Cristal SVG -->
                 <div class="widget w-gauge">
                     <div class="widget-header">Índice Térmico</div>
-                    <div class="gauge-container">
-                        <canvas id="gaugeTemp"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" id="g-temp-val">--</div>
+                    <div style="display: flex; align-items: center; justify-content: center; height: 130px; width: 100%; gap: 15px; margin-top: 5px;">
+                        
+                        <!-- SVG Termómetro -->
+                        <svg viewBox="0 0 100 150" style="height: 120px; overflow: visible; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
+                            <defs>
+                                <linearGradient id="thermoGrad" x1="0" y1="1" x2="0" y2="0">
+                                    <stop offset="0%" stop-color="#38bdf8" />
+                                    <stop offset="30%" stop-color="#34d399" />
+                                    <stop offset="60%" stop-color="#fbbf24" />
+                                    <stop offset="80%" stop-color="#fb923c" />
+                                    <stop offset="100%" stop-color="#f87171" />
+                                </linearGradient>
+                                <clipPath id="thermoClip">
+                                    <path d="M 42,20 v 85 a 15,15 0 1,0 16,0 v -85 a 8,8 0 0,0 -16,0 z" />
+                                </clipPath>
+                            </defs>
+                            
+                            <!-- Marcas (Ticks) -->
+                            <line x1="62" y1="20" x2="70" y2="20" stroke="white" stroke-width="1.5"/>
+                            <text x="75" y="23" fill="white" font-size="8">50</text>
+                            <line x1="62" y1="38" x2="67" y2="38" stroke="white" stroke-width="1"/>
+                            <text x="70" y="41" fill="#94a3b8" font-size="7">40</text>
+                            <line x1="62" y1="56" x2="70" y2="56" stroke="white" stroke-width="1.5"/>
+                            <text x="75" y="59" fill="white" font-size="8">30</text>
+                            <line x1="62" y1="74" x2="67" y2="74" stroke="white" stroke-width="1"/>
+                            <text x="70" y="77" fill="#94a3b8" font-size="7">20</text>
+                            <line x1="62" y1="92" x2="70" y2="92" stroke="white" stroke-width="1.5"/>
+                            <text x="75" y="95" fill="white" font-size="8">10</text>
+                            <line x1="62" y1="110" x2="67" y2="110" stroke="white" stroke-width="1"/>
+                            <text x="70" y="113" fill="#94a3b8" font-size="7">0</text>
+
+                            <!-- Cristal Exterior -->
+                            <path d="M 38,20 v 85 a 18,18 0 1,0 24,0 v -85 a 12,12 0 0,0 -24,0 z" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+                            
+                            <!-- Líquido Gradiente -->
+                            <g clip-path="url(#thermoClip)">
+                                <rect x="30" y="0" width="40" height="150" fill="rgba(0,0,0,0.2)" />
+                                <!-- El atributo 'y' y 'height' se actualizan vía JS -->
+                                <rect id="thermo-liquid" x="30" y="110" width="40" height="40" fill="url(#thermoGrad)" style="transition: y 1s ease, height 1s ease;" />
+                            </g>
+                            
+                            <!-- Brillo bulbo -->
+                            <circle cx="50" cy="118" r="5" fill="rgba(255,255,255,0.3)" />
+                        </svg>
+
+                        <div style="display: flex; flex-direction: column; justify-content: center;">
+                            <div id="thermo-val-text" style="font-size: 2.2rem; font-weight: 800; color: white; line-height: 1;">--°</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">Celsius</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- GAUGE HUMEDAD ESTILO AGUJA (SVG) -->
+                <!-- NUEVO: Humedad Estilo Aguja (SVG) -->
                 <div class="widget w-gauge">
                     <div class="widget-header">Humedad Relativa</div>
-                    <div style="position: relative; width: 100%; height: 140px; display: flex; justify-content: center; align-items: flex-end;">
-                        <svg viewBox="0 0 200 115" style="width: 100%; max-width: 180px; overflow: visible;">
-                            <!-- Tramos del arco -->
+                    <div style="position: relative; width: 100%; height: 130px; display: flex; justify-content: center; align-items: flex-end; margin-top: 5px;">
+                        
+                        <!-- SVG Arco y Aguja -->
+                        <svg viewBox="0 0 200 120" style="width: 100%; max-width: 180px; overflow: visible;">
                             <path d="M 20 100 A 80 80 0 0 1 43.43 43.43" fill="none" stroke="#bae6fd" stroke-width="18" stroke-linecap="round"/>
                             <path d="M 43.43 43.43 A 80 80 0 0 1 100 20" fill="none" stroke="#7dd3fc" stroke-width="18"/>
                             <path d="M 100 20 A 80 80 0 0 1 156.57 43.43" fill="none" stroke="#38bdf8" stroke-width="18"/>
                             <path d="M 156.57 43.43 A 80 80 0 0 1 180 100" fill="none" stroke="#0284c7" stroke-width="18" stroke-linecap="round"/>
                             
-                            <!-- Aguja -->
+                            <!-- Aguja Gris Clara Resaltada -->
                             <g id="hum-needle" style="transform-origin: 100px 100px; transform: rotate(-90deg); transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);">
-                                <polygon points="95,100 105,100 100,28" fill="#475569" />
-                                <circle cx="100" cy="100" r="8" fill="#475569" />
+                                <polygon points="97,100 103,100 100,28" fill="#e2e8f0" style="filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.5));" />
+                                <circle cx="100" cy="100" r="6" fill="#e2e8f0" />
                             </g>
                         </svg>
                         
-                        <!-- Centro: Gota y porcentaje -->
-                        <div style="position: absolute; bottom: 5px; display: flex; flex-direction: column; align-items: center;">
-                            <div style="position: relative; color: #38bdf8; font-size: 3.5rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); line-height: 1;">
+                        <!-- Gota y Texto abajo -->
+                        <div style="position: absolute; bottom: -5px; display: flex; flex-direction: column; align-items: center; width: 100%;">
+                            <div style="color: #38bdf8; font-size: 2.5rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); line-height: 1; z-index: 10;">
                                 <i class="fa-solid fa-droplet"></i>
-                                <span style="position: absolute; top: 58%; left: 50%; transform: translate(-50%, -50%); color: var(--bg-card); font-size: 1.1rem; font-weight: 900; font-family: 'Outfit'; letter-spacing: -1px;">%</span>
                             </div>
-                            <div id="hum-custom-val" style="font-size: 1.6rem; font-weight: 800; color: white; line-height: 1; margin-top: 0px; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">--%</div>
+                            <div id="hum-custom-val" style="font-size: 1.6rem; font-weight: 800; color: white; line-height: 1; margin-top: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">--%</div>
                         </div>
+
                     </div>
                 </div>
 
                 <!-- MÓDULO INACTIVO: Presión -->
                 <div class="widget w-gauge widget-inactive">
                     <div class="widget-header">Presión Atm <span class="badge-na">No Disp.</span></div>
-                    <div class="gauge-container">
-                        <canvas id="gaugePres"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-disabled);">N/A</div>
+                    <div class="gauge-container" style="align-items: center;">
+                        <i class="fa-solid fa-gauge-high" style="font-size: 3.5rem; color: var(--accent-disabled);"></i>
+                        <div class="gauge-value-center" style="bottom: 10px;">
+                            <div class="gauge-val" style="color: var(--accent-disabled); font-size: 1.5rem;">N/A</div>
                         </div>
                     </div>
                 </div>
@@ -449,7 +491,7 @@
                 <!-- MÓDULO INACTIVO: Radiación Solar -->
                 <div class="widget w-gauge widget-inactive" style="text-align: center;">
                     <div class="widget-header">Radiación Solar <span class="badge-na">No Disp.</span></div>
-                    <i class="fa-solid fa-sun" style="font-size: 3rem; color: var(--accent-disabled); margin-top: 15px;"></i>
+                    <i class="fa-solid fa-sun" style="font-size: 3.5rem; color: var(--accent-disabled); margin-top: 15px;"></i>
                     <div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-disabled); margin-top: 15px;">N/A W/m²</div>
                 </div>
                 
@@ -545,22 +587,7 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // --- LÓGICA DE COLORES DINÁMICOS ---
-    function getTempColor(t) {
-        if(t < 20) return '#38bdf8'; // Azul (Fresco)
-        if(t < 26) return '#34d399'; // Verde (Templado)
-        if(t < 32) return '#fbbf24'; // Amarillo (Cálido)
-        if(t < 36) return '#fb923c'; // Naranja (Caliente)
-        return '#f87171'; // Rojo (Muy Caliente)
-    }
-
-    function getHumColor(h) {
-        if(h < 40) return '#fbbf24'; // Amarillo (Seco)
-        if(h < 70) return '#34d399'; // Verde (Confortable)
-        return '#38bdf8'; // Azul (Húmedo)
-    }
-
-    // --- NAVEGACIÓN ---
+    // --- NAVEGACIÓN Y EXPORTACIÓN ---
     function switchView(viewId, btn) {
         document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
@@ -585,11 +612,9 @@
         }
     }
 
-    // --- EXPORTACIÓN ---
     function exportData(format, e) {
         e.preventDefault();
         document.getElementById('exportMenu').classList.remove('show');
-        
         const btn = document.getElementById('btnExport');
         const originalHTML = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Descargando...';
@@ -598,11 +623,7 @@
         db.ref('/estacion1/historial').once('value').then(snap => {
             const allData = [];
             snap.forEach(child => { if(child.val().fecha) allData.push(child.val()); });
-
-            if (allData.length === 0) {
-                alert("No hay datos en la base de datos.");
-                btn.innerHTML = originalHTML; btn.disabled = false; return;
-            }
+            if (allData.length === 0) { alert("No hay datos."); btn.innerHTML = originalHTML; btn.disabled = false; return; }
 
             const dateStr = new Date().toISOString().split('T')[0];
             const fileName = `INIFAP_Margaritas_${dateStr}`;
@@ -651,22 +672,15 @@
     }
 
     // --- MAPA LEAFLET ---
+    // Zoom ajustado a nivel 6
     const map = L.map('station-map', { zoomControl: false }).setView([20.5, -99.0], 6);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20 }).addTo(map);
     const stationIcon = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:var(--accent-blue); width:16px; height:16px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>", iconSize: [16, 16], iconAnchor: [8, 8] });
     L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map).bindPopup('<b style="color:black;">Estación LoRa Mando</b><br>INIFAP Las Margaritas').openPopup();
 
-    // --- GRÁFICOS ---
+    // --- GRÁFICOS CHART.JS (Solo Líneas Historial) ---
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = 'Outfit';
-
-    const gaugeOptions = { circumference: 180, rotation: -90, cutout: '80%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, maintainAspectRatio: false, responsive: true };
-
-    const ctxGaugeTemp = document.getElementById('gaugeTemp').getContext('2d');
-    const chartGaugeTemp = new Chart(ctxGaugeTemp, { type: 'doughnut', data: { datasets: [{ data: [0, 50], backgroundColor: ['#f472b6', '#1e293b'], borderWidth: 0, borderRadius: 10 }] }, options: gaugeOptions });
-
-    const ctxGaugePres = document.getElementById('gaugePres').getContext('2d');
-    new Chart(ctxGaugePres, { type: 'doughnut', data: { datasets: [{ data: [1, 1], backgroundColor: ['#475569', '#1e293b'], borderWidth: 0, borderRadius: 10 }] }, options: gaugeOptions });
 
     const ctxMain = document.getElementById('mainChart').getContext('2d');
     const mainChart = new Chart(ctxMain, {
@@ -685,7 +699,7 @@
 
     let currentDayStamp = new Date().setHours(0,0,0,0);
     
-    // Función centralizada para Lluvia Diaria y Máximas/Mínimas de Temp/Hum
+    // Calcular Datos Diarios (Lluvia, Max/Min Temp/Hum)
     function calcularDatosDiarios() {
         db.ref('/estacion1/historial').orderByChild('fecha').startAt(currentDayStamp).on('value', snap => {
             let sP1 = 0, sP2 = 0;
@@ -697,45 +711,36 @@
 
             snap.forEach(child => {
                 const v = child.val();
-                
-                // Lluvia
                 if(v.pluv1_mm) sP1 += parseFloat(v.pluv1_mm);
                 if(v.pluv2_mm) sP2 += parseFloat(v.pluv2_mm);
 
-                // Estadísticas Temp/Hum
                 if(v.temperatura !== undefined && v.fecha) {
                     const t = parseFloat(v.temperatura);
                     const h = parseFloat(v.humedad || 0);
                     const timeStr = new Date(v.fecha).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
                     
-                    temps.push(t);
-                    hums.push(h);
+                    temps.push(t); hums.push(h);
 
                     if(t > maxT) { maxT = t; maxTTime = timeStr; }
                     if(t < minT) { minT = t; minTTime = timeStr; }
-                    
                     if(h > maxH) { maxH = h; maxHTime = timeStr; }
                     if(h < minH) { minH = h; minHTime = timeStr; }
                 }
             });
 
-            // Actualizar Pluviómetros
             document.getElementById('p1-sum-val').innerText = sP1.toFixed(1);
             document.getElementById('p2-sum-val').innerText = sP2.toFixed(1);
 
-            // Actualizar Widgets de Resumen del Día
             if(temps.length > 0) {
                 const avgT = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
                 const avgH = (hums.reduce((a, b) => a + b, 0) / hums.length).toFixed(0);
 
-                // Temperaturas
                 document.getElementById('dash-max-t').innerText = maxT.toFixed(1) + "°C";
                 document.getElementById('dash-max-t-time').innerText = maxTTime;
                 document.getElementById('dash-min-t').innerText = minT.toFixed(1) + "°C";
                 document.getElementById('dash-min-t-time').innerText = minTTime;
                 document.getElementById('dash-avg-t').innerText = avgT;
                 
-                // Humedad
                 document.getElementById('dash-max-h').innerText = maxH.toFixed(0) + "%";
                 document.getElementById('dash-max-h-time').innerText = maxHTime;
                 document.getElementById('dash-min-h').innerText = minH.toFixed(0) + "%";
@@ -744,18 +749,13 @@
             }
         });
     }
-    
-    // Iniciar y verificar reinicio de día
     calcularDatosDiarios();
     setInterval(() => {
         const todayStamp = new Date().setHours(0,0,0,0);
-        if(currentDayStamp !== todayStamp) {
-            currentDayStamp = todayStamp;
-            calcularDatosDiarios();
-        }
+        if(currentDayStamp !== todayStamp) { currentDayStamp = todayStamp; calcularDatosDiarios(); }
     }, 60000);
 
-    // Listener Principal 30 registros
+    // Listener Principal en Tiempo Real
     db.ref('/estacion1/historial').limitToLast(30).on('value', snap => {
         let labels = [], dTemp = [], dHum = [];
         let tableRowsHTML = "";
@@ -792,23 +792,19 @@
         if(tableRowsHTML === "") tableRowsHTML = "<tr><td colspan='6' style='text-align:center;'>No hay datos recientes.</td></tr>";
         document.getElementById('history-table-body').innerHTML = tableRowsHTML;
 
-        // --- ACTUALIZACIONES DINÁMICAS ---
-        const colorT = getTempColor(lastT);
-        const colorH = getHumColor(lastH);
-
-        // Textos Principales (Textos en Blanco fijos en CSS, solo actualizamos valor)
+        // --- ACTUALIZACIONES UI DINÁMICA ---
+        
+        // Número Fijo Principal
         document.getElementById('temp-main').innerText = lastT;
         document.getElementById('hum-main').innerText = lastH;
         document.getElementById('hum-bar').style.width = lastH + '%';
         document.getElementById('msg-id').innerText = lastId;
 
-        // Ícono Dinámico de Estado Actual (Bicolor / Capas)
+        // Ícono Dinámico de Estado Actual (Sol Amarillo / Nube Blanca)
         const iconContainer = document.getElementById('weather-icon-container');
         if(lastT < 25) {
-            // Nube Blanca Fresca
             iconContainer.innerHTML = `<i class="fa-solid fa-cloud" style="color: white; font-size: 3.5rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));"></i>`;
         } else if(lastT < 32) {
-            // Sol Amarillo Atrás + Nube Blanca Adelante
             iconContainer.innerHTML = `
                 <span class="fa-stack" style="font-size: 1.8rem; width: 4rem; height: 3.5rem;">
                     <i class="fa-solid fa-sun fa-stack-1x" style="color: #fbbf24; transform: translate(12px, -12px) scale(1.3);"></i>
@@ -816,22 +812,23 @@
                 </span>
             `;
         } else {
-            // Sol Amarillo Fuerte
             iconContainer.innerHTML = `<i class="fa-solid fa-sun" style="color: #fbbf24; font-size: 3.5rem; animation: pulse-sun 2s infinite;"></i>`;
         }
 
-        // Gauges Dinámicos (Número Blanco fijo en CSS, solo actualizamos barra color)
-        document.getElementById('g-temp-val').innerText = lastT + "°";
-        chartGaugeTemp.data.datasets[0].data = [lastT, Math.max(0, 50 - lastT)];
-        chartGaugeTemp.data.datasets[0].backgroundColor[0] = colorT;
-        chartGaugeTemp.update();
+        // SVG Termómetro Custom (0 a 50°C escala)
+        document.getElementById('thermo-val-text').innerText = lastT + "°";
+        const tempPct = Math.min(Math.max(lastT, 0), 50) / 50; // porcentaje 0-1
+        const tempY = 110 - (tempPct * 90); // 110 bottom, 20 top = 90px range
+        document.getElementById('thermo-liquid').style.y = tempY + 'px';
+        document.getElementById('thermo-liquid').style.height = (150 - tempY) + 'px';
 
-        // Actualizar Nuevo Gauge SVG de Humedad
+        // SVG Aguja Humedad (0 a 100%)
         document.getElementById('hum-custom-val').innerText = lastH + "%";
-        const needleAngle = (Math.min(Math.max(lastH, 0), 100) / 100) * 180 - 90; // Rango -90 a 90
+        const humPct = Math.min(Math.max(lastH, 0), 100) / 100;
+        const needleAngle = (humPct * 180) - 90; // Rotación de -90 a 90 grados
         document.getElementById('hum-needle').style.transform = `rotate(${needleAngle}deg)`;
 
-        // Gráficos de Líneas
+        // Gráficos de Líneas Historial
         mainChart.data.labels = labels;
         mainChart.data.datasets[0].data = dTemp;
         mainChart.data.datasets[1].data = dHum;
