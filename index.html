@@ -86,7 +86,6 @@
 
         /* --- 3. MAIN CONTENT Y GRID --- */
         .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 30px; scroll-behavior: smooth; }
-        
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .header-info h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(90deg, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
@@ -123,11 +122,12 @@
         }
         .widget:hover { border-color: rgba(255,255,255,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
 
+        /* Tamaños de Grid Ajustados */
         .w-map { grid-column: span 8; grid-row: span 2; padding: 0; border: none; }
         .w-status { grid-column: span 4; grid-row: span 2; }
-        .w-gauge { grid-column: span 3; grid-row: span 1; align-items: center; justify-content: center; }
         .w-rain { grid-column: span 6; grid-row: span 1; }
-        .w-mini { grid-column: span 3; grid-row: span 1; }
+        .w-summary { grid-column: span 3; grid-row: span 1; }
+        .w-gauge { grid-column: span 3; grid-row: span 1; align-items: center; justify-content: center; }
 
         .widget-inactive { opacity: 0.5; background: rgba(10, 10, 10, 0.4); border: 1px dashed var(--glass-border); filter: grayscale(100%); cursor: not-allowed; }
         .widget-inactive:hover { opacity: 0.7; transform: none; box-shadow: none; }
@@ -140,19 +140,11 @@
         
         .gauge-container { position: relative; width: 100%; height: 110px; display: flex; justify-content: center; }
         .gauge-value-center { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center; }
-        
-        /* GAUGE NÚMEROS A BLANCO */
-        .gauge-val { font-size: 2rem; font-weight: 700; line-height: 1; text-shadow: 0 0 15px rgba(0,0,0,0.5); color: white; }
+        .gauge-val { font-size: 2.2rem; font-weight: 700; line-height: 1; color: white; transition: color 0.5s ease; }
         .gauge-unit { font-size: 0.85rem; color: var(--text-muted); }
 
-        /* NÚMERO PRINCIPAL A BLANCO */
-        .big-value { font-size: 4rem; font-weight: 800; display: flex; align-items: baseline; gap: 5px; color: white; }
+        .big-value { font-size: 4rem; font-weight: 800; display: flex; align-items: baseline; justify-content: center; gap: 5px; color: white; transition: color 0.5s ease; }
         .big-value .unit { font-size: 1.5rem; color: var(--text-muted); font-weight: 400; }
-
-        .temp-trend { font-size: 0.8rem; font-weight: 600; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; }
-        .trend-up { color: var(--accent-red); background: rgba(248, 113, 113, 0.1); }
-        .trend-down { color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); }
-        .trend-stable { color: var(--accent-green); background: rgba(52, 211, 153, 0.1); }
 
         .hum-bar-wrap { width: 80%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 6px; margin-top: 5px; overflow: hidden; }
         .hum-bar { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--accent-blue-dark), var(--accent-blue)); transition: width 1s ease; }
@@ -161,7 +153,7 @@
         .fa-stack { width: 3em; height: 3em; line-height: 3em; }
         @keyframes pulse-sun { 0%, 100% { filter: drop-shadow(0 0 15px #fbbf24); transform: scale(1); } 50% { filter: drop-shadow(0 0 30px #fbbf24); transform: scale(1.05); } }
 
-        /* Lluvia Animada Individual */
+        /* Lluvia Animada */
         .anim-rain-container { position: relative; width: 60px; height: 45px; display: flex; justify-content: center; margin: 0 auto 5px auto; }
         .anim-cloud { font-size: 2.2rem; color: white; animation: float-cloud 3s ease-in-out infinite; position: relative; z-index: 2; filter: drop-shadow(0 0 8px rgba(255,255,255,0.2)); }
         .anim-drop { position: absolute; font-size: 0.7rem; opacity: 0; animation: fall-drop 1.2s linear infinite; }
@@ -212,7 +204,7 @@
             .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
             .w-map { grid-column: span 6; height: 300px; }
             .w-status, .w-rain { grid-column: span 6; }
-            .w-gauge, .w-mini { grid-column: span 3; }
+            .w-summary, .w-gauge { grid-column: span 3; }
         }
         
         @media (max-width: 600px) {
@@ -224,12 +216,14 @@
             .sidebar:hover .menu-btn span { display: none; }
             .main-content { padding-bottom: 90px; padding-left: 15px; padding-right: 15px; }
             
+            /* ORDEN MÁGICO PARA CELULARES (Mapa Arriba) */
             .dashboard-grid { display: flex; flex-direction: column; gap: 15px; }
-            .w-status { order: 1; }
-            .w-rain { order: 2; }
-            .w-gauge { order: 3; }
-            .w-mini { order: 4; }
-            .w-map { order: 5; height: 250px; }
+            .w-map { order: 1; height: 250px; }
+            .w-status { order: 2; }
+            .w-rain { order: 3; }
+            .w-summary { order: 4; }
+            .w-gauge { order: 5; }
+            
             .widget-inactive { order: 99 !important; }
             .big-value { font-size: 3.5rem; }
         }
@@ -284,7 +278,7 @@
                 <div class="widget w-status">
                     <div class="widget-header">
                         <span>Estado Actual</span>
-                        <i class="fa-solid fa-bolt" style="color: var(--accent-blue);"></i>
+                        <i class="fa-solid fa-temperature-three-quarters" style="color: var(--text-muted);"></i>
                     </div>
                     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                         
@@ -293,15 +287,12 @@
                             <!-- Insertado vía JS -->
                         </div>
 
-                        <!-- Número en Blanco -->
+                        <!-- Número en Blanco Fijo -->
                         <div class="big-value">
-                            <span id="temp-main">--</span><span class="unit" style="font-size: 1.5rem;">°C</span>
-                        </div>
-                        
-                        <div class="temp-trend trend-stable" id="temp-trend-pill">
-                            <i class="fa-solid fa-minus"></i> Estable
+                            <span id="temp-main">--</span><span class="unit">°C</span>
                         </div>
 
+                        <!-- Humedad -->
                         <div style="width: 100%; text-align: center; margin-top: 20px;">
                             <div style="color: var(--accent-blue); font-weight: 500; font-size: 1rem; margin-bottom: 5px;">
                                 <i class="fa-solid fa-droplet"></i> Humedad: <span id="hum-main">--</span>%
@@ -315,7 +306,7 @@
                     </div>
                 </div>
 
-                <!-- Lluvia Acumulada Dual (Gotas Animadas Independientes) -->
+                <!-- Lluvia Acumulada Dual (Gotas Animadas Independientes y Números Blancos) -->
                 <div class="widget w-rain">
                     <div class="widget-header">
                         <span>Precipitación Acumulada</span>
@@ -330,7 +321,7 @@
                                 <i class="fa-solid fa-droplet anim-drop drop-3" style="color: var(--accent-orange);"></i>
                             </div>
                             <!-- Número en Blanco -->
-                            <div class="big-value" style="justify-content: center; font-size: 3rem;">
+                            <div class="big-value" style="font-size: 3rem;">
                                 <span id="p1-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
                             <div style="font-size: 0.85rem; color: var(--accent-orange); font-weight: 600; margin-top: 5px;">PLUV 1</div>
@@ -346,10 +337,60 @@
                                 <i class="fa-solid fa-droplet anim-drop drop-3" style="color: var(--accent-purple);"></i>
                             </div>
                             <!-- Número en Blanco -->
-                            <div class="big-value" style="justify-content: center; font-size: 3rem;">
+                            <div class="big-value" style="font-size: 3rem;">
                                 <span id="p2-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
                             <div style="font-size: 0.85rem; color: var(--accent-purple); font-weight: 600; margin-top: 5px;">PLUV 2</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NUEVO WIDGET: Resumen del Día Temperatura -->
+                <div class="widget w-summary">
+                    <div class="widget-header">Resumen Temperatura</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
+                            <span style="color: var(--accent-red); font-size: 0.85rem;"><i class="fa-solid fa-arrow-up"></i> Máx</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: white; font-size: 1.2rem;" id="dash-max-t">--°C</div>
+                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="dash-max-t-time">--:--</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
+                            <span style="color: var(--accent-blue); font-size: 0.85rem;"><i class="fa-solid fa-arrow-down"></i> Mín</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: white; font-size: 1.2rem;" id="dash-min-t">--°C</div>
+                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="dash-min-t-time">--:--</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
+                            <span style="color: var(--accent-green); font-size: 0.85rem;"><i class="fa-solid fa-equals"></i> Prom.</span>
+                            <div style="font-weight: 700; color: white; font-size: 1.2rem;"><span id="dash-avg-t">--</span>°C</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NUEVO WIDGET: Resumen del Día Humedad -->
+                <div class="widget w-summary">
+                    <div class="widget-header">Resumen Humedad</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
+                            <span style="color: var(--accent-blue-dark); font-size: 0.85rem;"><i class="fa-solid fa-arrow-up"></i> Máx</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: white; font-size: 1.2rem;" id="dash-max-h">--%</div>
+                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="dash-max-h-time">--:--</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
+                            <span style="color: var(--accent-yellow); font-size: 0.85rem;"><i class="fa-solid fa-arrow-down"></i> Mín</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: white; font-size: 1.2rem;" id="dash-min-h">--%</div>
+                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="dash-min-h-time">--:--</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
+                            <span style="color: var(--accent-green); font-size: 0.85rem;"><i class="fa-solid fa-equals"></i> Prom.</span>
+                            <div style="font-weight: 700; color: white; font-size: 1.2rem;"><span id="dash-avg-h">--</span>%</div>
                         </div>
                     </div>
                 </div>
@@ -373,37 +414,6 @@
                         <div class="gauge-value-center">
                             <div class="gauge-val" id="g-hum-val">--</div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- NUEVO WIDGET: Registros del Día -->
-                <div class="widget w-mini">
-                    <div class="widget-header">Resumen del Día</div>
-                    <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
-                            <span style="color: var(--accent-red); font-size: 0.85rem;"><i class="fa-solid fa-arrow-up"></i> Máx</span>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 700; color: white; font-size: 1.1rem;" id="dash-max-t">--°C</div>
-                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="dash-max-time">--:--</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
-                            <span style="color: var(--accent-blue); font-size: 0.85rem;"><i class="fa-solid fa-arrow-down"></i> Mín</span>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 700; color: white; font-size: 1.1rem;" id="dash-min-t">--°C</div>
-                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="dash-min-time">--:--</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
-                            <span style="color: var(--accent-green); font-size: 0.85rem;"><i class="fa-solid fa-equals"></i> Prom.</span>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 700; color: white; font-size: 1.1rem;"><span id="dash-avg-t">--</span>° <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: normal;">|</span> <span id="dash-avg-h">--</span>%</div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
@@ -623,7 +633,8 @@
     }
 
     // --- MAPA LEAFLET ---
-    const map = L.map('station-map', { zoomControl: false }).setView([19.996, -97.306], 12);
+    // Nivel de zoom ajustado a 6 para mostrar panorama amplio de México
+    const map = L.map('station-map', { zoomControl: false }).setView([20.5, -99.0], 6);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20 }).addTo(map);
     const stationIcon = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:var(--accent-blue); width:16px; height:16px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>", iconSize: [16, 16], iconAnchor: [8, 8] });
     L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map).bindPopup('<b style="color:black;">Estación LoRa Mando</b><br>INIFAP Las Margaritas').openPopup();
@@ -659,15 +670,16 @@
     const db = firebase.database();
 
     let currentDayStamp = new Date().setHours(0,0,0,0);
-    let prevTemp = null;
     
-    // Función centralizada para Lluvia Diaria y Máximas/Mínimas
+    // Función centralizada para Lluvia Diaria y Máximas/Mínimas de Temp/Hum
     function calcularDatosDiarios() {
         db.ref('/estacion1/historial').orderByChild('fecha').startAt(currentDayStamp).on('value', snap => {
             let sP1 = 0, sP2 = 0;
             let temps = [], hums = [];
             let maxT = -Infinity, minT = Infinity;
-            let maxTime = '--:--', minTime = '--:--';
+            let maxH = -Infinity, minH = Infinity;
+            let maxTTime = '--:--', minTTime = '--:--';
+            let maxHTime = '--:--', minHTime = '--:--';
 
             snap.forEach(child => {
                 const v = child.val();
@@ -685,8 +697,11 @@
                     temps.push(t);
                     hums.push(h);
 
-                    if(t > maxT) { maxT = t; maxTime = timeStr; }
-                    if(t < minT) { minT = t; minTime = timeStr; }
+                    if(t > maxT) { maxT = t; maxTTime = timeStr; }
+                    if(t < minT) { minT = t; minTTime = timeStr; }
+                    
+                    if(h > maxH) { maxH = h; maxHTime = timeStr; }
+                    if(h < minH) { minH = h; minHTime = timeStr; }
                 }
             });
 
@@ -694,16 +709,23 @@
             document.getElementById('p1-sum-val').innerText = sP1.toFixed(1);
             document.getElementById('p2-sum-val').innerText = sP2.toFixed(1);
 
-            // Actualizar Widget de Resumen del Día
+            // Actualizar Widgets de Resumen del Día
             if(temps.length > 0) {
                 const avgT = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
                 const avgH = (hums.reduce((a, b) => a + b, 0) / hums.length).toFixed(0);
 
+                // Temperaturas
                 document.getElementById('dash-max-t').innerText = maxT.toFixed(1) + "°C";
-                document.getElementById('dash-max-time').innerText = maxTime;
+                document.getElementById('dash-max-t-time').innerText = maxTTime;
                 document.getElementById('dash-min-t').innerText = minT.toFixed(1) + "°C";
-                document.getElementById('dash-min-time').innerText = minTime;
+                document.getElementById('dash-min-t-time').innerText = minTTime;
                 document.getElementById('dash-avg-t').innerText = avgT;
+                
+                // Humedad
+                document.getElementById('dash-max-h').innerText = maxH.toFixed(0) + "%";
+                document.getElementById('dash-max-h-time').innerText = maxHTime;
+                document.getElementById('dash-min-h').innerText = minH.toFixed(0) + "%";
+                document.getElementById('dash-min-h-time').innerText = minHTime;
                 document.getElementById('dash-avg-h').innerText = avgH;
             }
         });
@@ -760,16 +782,16 @@
         const colorT = getTempColor(lastT);
         const colorH = getHumColor(lastH);
 
-        // Textos Principales (Textos en Blanco, solo actualizamos valor)
+        // Textos Principales (Textos en Blanco fijos en CSS, solo actualizamos valor)
         document.getElementById('temp-main').innerText = lastT;
         document.getElementById('hum-main').innerText = lastH;
         document.getElementById('hum-bar').style.width = lastH + '%';
         document.getElementById('msg-id').innerText = lastId;
 
-        // Ícono Dinámico de Estado Actual (Sol Amarillo / Nube Blanca)
+        // Ícono Dinámico de Estado Actual (Bicolor / Capas)
         const iconContainer = document.getElementById('weather-icon-container');
         if(lastT < 25) {
-            // Nube Blanca
+            // Nube Blanca Fresca
             iconContainer.innerHTML = `<i class="fa-solid fa-cloud" style="color: white; font-size: 3.5rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));"></i>`;
         } else if(lastT < 32) {
             // Sol Amarillo Atrás + Nube Blanca Adelante
@@ -783,23 +805,6 @@
             // Sol Amarillo Fuerte
             iconContainer.innerHTML = `<i class="fa-solid fa-sun" style="color: #fbbf24; font-size: 3.5rem; animation: pulse-sun 2s infinite;"></i>`;
         }
-
-        // Tendencia Temp y Flecha
-        const trendEl = document.getElementById('temp-trend-pill');
-        if (prevTemp !== null) {
-            const diff = (lastT - prevTemp).toFixed(1);
-            if (diff > 0.2) {
-                trendEl.className = 'temp-trend trend-up';
-                trendEl.innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> +${diff}°`;
-            } else if (diff < -0.2) {
-                trendEl.className = 'temp-trend trend-down';
-                trendEl.innerHTML = `<i class="fa-solid fa-arrow-trend-down"></i> ${diff}°`;
-            } else {
-                trendEl.className = 'temp-trend trend-stable';
-                trendEl.innerHTML = `<i class="fa-solid fa-minus"></i> 0.0°`;
-            }
-        }
-        prevTemp = lastT;
 
         // Gauges Dinámicos (Número Blanco fijo en CSS, solo actualizamos barra color)
         document.getElementById('g-temp-val').innerText = lastT + "°";
