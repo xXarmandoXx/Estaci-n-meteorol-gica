@@ -9,20 +9,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Clima Mando">
     
-    <!-- Fuentes e Iconos -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Mapa Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- Chart.js y Firebase -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-    <!-- Librerías para exportar a PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
@@ -37,13 +33,10 @@
             --glass-border: rgba(255, 255, 255, 0.08);
             
             --accent-blue: #38bdf8;
-            --accent-blue-dark: #0ea5e9;
             --accent-pink: #f472b6;   
             --accent-orange: #fb923c; 
             --accent-green: #34d399;
             --accent-purple: #c084fc; 
-            --accent-red: #f87171;
-            --accent-yellow: #fbbf24;
             --accent-disabled: #475569; 
             
             --text-main: #f8fafc;
@@ -63,12 +56,6 @@
                 radial-gradient(circle at 85% 30%, rgba(244, 114, 182, 0.03) 0%, transparent 25%);
         }
 
-        /* --- SCROLLBAR PERSONALIZADO (Aporte tuyo) --- */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
-
         /* --- 2. SIDEBAR INTERACTIVO --- */
         .sidebar { width: 80px; background: var(--bg-sidebar); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; z-index: 100; transition: width 0.3s; }
         .sidebar:hover { width: 220px; align-items: flex-start; padding: 20px; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
@@ -87,19 +74,9 @@
 
         /* --- 3. MAIN CONTENT Y GRID --- */
         .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 30px; scroll-behavior: smooth; }
-        
-        /* HEADER MEJORADO CON SEÑAL LORA */
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .header-info h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(90deg, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .lora-signal { display: flex; align-items: flex-end; gap: 3px; height: 14px; margin-left: 10px; }
-        .lora-bar { width: 3px; background: var(--accent-blue); border-radius: 2px; animation: signal-pulse 1.5s infinite; }
-        .lora-bar:nth-child(1) { height: 4px; animation-delay: 0s; }
-        .lora-bar:nth-child(2) { height: 7px; animation-delay: 0.2s; }
-        .lora-bar:nth-child(3) { height: 10px; animation-delay: 0.4s; }
-        .lora-bar:nth-child(4) { height: 14px; animation-delay: 0.6s; }
-        @keyframes signal-pulse { 0%,100% { opacity:1; box-shadow: 0 0 5px var(--accent-blue);} 50% { opacity:0.3; box-shadow: none;} }
-
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
@@ -144,33 +121,20 @@
         
         .gauge-container { position: relative; width: 100%; height: 110px; display: flex; justify-content: center; }
         .gauge-value-center { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center; }
-        .gauge-val { font-size: 2rem; font-weight: 700; line-height: 1; text-shadow: 0 0 15px rgba(0,0,0,0.5); transition: color 0.5s ease; }
+        .gauge-val { font-size: 2rem; font-weight: 700; line-height: 1; text-shadow: 0 0 15px rgba(0,0,0,0.5); }
         .gauge-unit { font-size: 0.85rem; color: var(--text-muted); }
 
-        .big-value { font-size: 4rem; font-weight: 800; display: flex; align-items: baseline; gap: 5px; transition: color 0.5s ease; }
-        .big-value .unit { font-size: 1.5rem; color: var(--text-muted); font-weight: 400; }
+        .big-value { font-size: 3rem; font-weight: 700; display: flex; align-items: baseline; gap: 5px; }
+        .big-value .unit { font-size: 1.2rem; color: var(--text-muted); font-weight: 400; }
 
-        /* Tendencia y Barra de Humedad (Aporte tuyo) */
-        .temp-trend { font-size: 0.8rem; font-weight: 600; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; }
-        .trend-up { color: var(--accent-red); background: rgba(248, 113, 113, 0.1); }
-        .trend-down { color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); }
-        .trend-stable { color: var(--accent-green); background: rgba(52, 211, 153, 0.1); }
-
-        .hum-bar-wrap { width: 80%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 6px; margin-top: 5px; overflow: hidden; }
-        .hum-bar { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--accent-blue-dark), var(--accent-blue)); transition: width 1s ease; }
-
-        /* Lluvia Animada */
         .rain-flex { display: flex; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
         .rain-box { text-align: center; }
         .rain-divider { width: 1px; height: 60%; background: var(--glass-border); }
-        
-        .drop-anim { animation: drop-fall 2s infinite; display: inline-block; }
-        @keyframes drop-fall { 0% { transform: translateY(-3px); opacity: 0.7; } 50% { transform: translateY(3px); opacity: 1; } 100% { transform: translateY(-3px); opacity: 0.7; } }
 
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } 50% { opacity: 0.4; box-shadow: 0 0 2px var(--accent-green); } 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } }
 
-        /* --- 5. TABLA, BOTONES Y SKELETON --- */
+        /* --- 5. TABLA Y BOTONES --- */
         .view-section { display: none; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -179,9 +143,6 @@
         th { text-align: left; padding: 15px; color: var(--text-muted); border-bottom: 2px solid var(--glass-border); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
         td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-main); transition: var(--transition); }
         tr:hover td { background: rgba(255,255,255,0.02); }
-
-        .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; border-radius: 8px; height: 20px; width: 80%; margin: 0 auto; }
-        @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
         .dropdown-wrapper { position: relative; display: inline-block; }
         .btn-action { background: linear-gradient(135deg, var(--accent-blue), #2563eb); border: none; padding: 10px 20px; border-radius: 10px; color: white; font-family: 'Outfit'; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: var(--transition); box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); }
@@ -198,7 +159,7 @@
         .item-json i { color: var(--accent-orange); }
         .item-pdf i { color: var(--accent-pink); }
 
-        /* --- MÓVIL Y TABLET (El orden Flexbox Mágico) --- */
+        /* --- MÓVIL Y TABLET (Ajustes UX y Orden) --- */
         @media (max-width: 1024px) {
             .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
             .w-map { grid-column: span 6; height: 300px; }
@@ -215,19 +176,19 @@
             .sidebar:hover .menu-btn span { display: none; }
             .main-content { padding-bottom: 90px; padding-left: 15px; padding-right: 15px; }
             
-            /* TRUCO UX: Flexbox para ordenar elementos en móvil */
+            /* TRUCO UX: Cambiamos de Grid a Flexbox en móviles para garantizar el orden de los elementos */
             .dashboard-grid { display: flex; flex-direction: column; gap: 15px; }
             
             /* ORDEN ESPECÍFICO EN CELULAR */
             .w-map { order: 1; height: 250px; }
             .w-status { order: 2; }
             .w-rain { order: 3; }
-            .widget { order: 4; } 
+            .widget { order: 4; } /* Los demás widgets activos (Gauges de temp/hum) */
             
-            /* Módulos inactivos al fondo */
+            /* Forzamos los widgets inactivos al final de la página */
             .widget-inactive { order: 99 !important; }
             
-            .big-value { font-size: 3.5rem; }
+            .big-value { font-size: 2.5rem; }
         }
     </style>
 </head>
@@ -254,12 +215,7 @@
                 <h1 id="page-title">INIFAP Las Margaritas</h1>
                 <p style="color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; margin-top: 5px;">
                     <span class="status-dot" id="header-dot"></span> 
-                    <span>Sensor SHT41 vía LoRa</span>
-                    <!-- Señal LoRa Animada -->
-                    <span class="lora-signal">
-                        <span class="lora-bar"></span><span class="lora-bar"></span>
-                        <span class="lora-bar"></span><span class="lora-bar"></span>
-                    </span>
+                    <span id="header-status">Sensor SHT41 vía LoRa</span>
                 </p>
             </div>
             <div style="text-align: right; background: var(--glass-bg); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border);">
@@ -268,70 +224,54 @@
             </div>
         </div>
 
-        <!-- VISTA DASHBOARD -->
         <section id="dashboard" class="view-section active">
             <div class="dashboard-grid">
                 
-                <!-- Mapa Principal -->
                 <div class="widget w-map">
                     <div id="station-map"></div>
                 </div>
 
-                <!-- Resumen de Estado (Color y Humedad Dinámica) -->
                 <div class="widget w-status">
                     <div class="widget-header">
                         <span>Estado Actual</span>
                         <i class="fa-solid fa-bolt" style="color: var(--accent-blue);"></i>
                     </div>
                     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                        
-                        <div class="big-value" id="temp-main-wrap" style="color: white;">
-                            <span id="temp-main">--</span><span class="unit">°C</span>
+                        <i class="fa-solid fa-cloud" style="font-size: 2.5rem; color: rgba(255,255,255,0.2); margin-bottom: 10px;"></i>
+                        <div class="big-value" style="color: white; font-size: 4rem;">
+                            <span id="temp-main">--</span><span class="unit" style="font-size: 1.5rem;">°C</span>
                         </div>
-                        
-                        <!-- Tendencia Temp -->
-                        <div class="temp-trend trend-stable" id="temp-trend-pill">
-                            <i class="fa-solid fa-minus"></i> Estable
+                        <div style="color: var(--accent-blue); font-weight: 500; font-size: 1.1rem; margin-top: 5px;">
+                            <i class="fa-solid fa-droplet"></i> Humedad: <span id="hum-main">--</span>%
                         </div>
-
-                        <div style="width: 100%; text-align: center; margin-top: 20px;">
-                            <div style="color: var(--accent-blue); font-weight: 500; font-size: 1rem; margin-bottom: 5px;">
-                                <i class="fa-solid fa-droplet"></i> Humedad: <span id="hum-main">--</span>%
-                            </div>
-                            <!-- Barra de progreso humedad -->
-                            <center><div class="hum-bar-wrap"><div class="hum-bar" id="hum-bar" style="width: 0%;"></div></div></center>
-                        </div>
-                        
                         <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 25px; border-top: 1px solid var(--glass-border); padding-top: 10px; width: 100%; text-align: center;">
                             Paquete LoRa Ref: <span id="msg-id" style="color: white; font-weight: bold;">--</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Lluvia Acumulada Dual (Con gotas animadas) -->
                 <div class="widget w-rain">
                     <div class="widget-header">
                         <span>Precipitación Acumulada (Desde medianoche)</span>
-                        <i class="fa-solid fa-cloud-showers-heavy drop-anim" style="color: var(--accent-purple);"></i>
+                        <i class="fa-solid fa-cloud-showers-heavy" style="color: var(--accent-purple);"></i>
                     </div>
                     <div class="rain-flex">
                         <div class="rain-box">
-                            <div class="big-value" style="color: var(--accent-orange); justify-content: center; font-size: 3rem;">
-                                <span id="p1-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
+                            <div class="big-value" style="color: var(--accent-orange); justify-content: center;">
+                                <span id="p1-sum-val">0.0</span><span class="unit">mm</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUV 1</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUVIÓMETRO 1</div>
                         </div>
                         <div class="rain-divider"></div>
                         <div class="rain-box">
-                            <div class="big-value" style="color: var(--accent-purple); justify-content: center; font-size: 3rem;">
-                                <span id="p2-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
+                            <div class="big-value" style="color: var(--accent-purple); justify-content: center;">
+                                <span id="p2-sum-val">0.0</span><span class="unit">mm</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUV 2</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUVIÓMETRO 2</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Gauge Temperatura -->
                 <div class="widget w-gauge">
                     <div class="widget-header">Índice Térmico</div>
                     <div class="gauge-container">
@@ -342,7 +282,6 @@
                     </div>
                 </div>
 
-                <!-- Gauge Humedad -->
                 <div class="widget w-gauge">
                     <div class="widget-header">Humedad Relativa</div>
                     <div class="gauge-container">
@@ -353,13 +292,11 @@
                     </div>
                 </div>
 
-                <!-- Sparklines -->
                 <div class="widget w-mini">
                     <div class="widget-header">Tendencia Temp</div>
                     <div style="height: 60px; width: 100%;"><canvas id="sparkTemp"></canvas></div>
                 </div>
 
-                <!-- MÓDULO INACTIVO: Presión -->
                 <div class="widget w-gauge widget-inactive">
                     <div class="widget-header">Presión Atm <span class="badge-na">No Disp.</span></div>
                     <div class="gauge-container">
@@ -370,14 +307,12 @@
                     </div>
                 </div>
 
-                <!-- MÓDULO INACTIVO: Radiación Solar -->
                 <div class="widget w-gauge widget-inactive" style="text-align: center;">
                     <div class="widget-header">Radiación Solar <span class="badge-na">No Disp.</span></div>
                     <i class="fa-solid fa-sun" style="font-size: 3rem; color: var(--accent-disabled); margin-top: 15px;"></i>
                     <div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-disabled); margin-top: 15px;">N/A W/m²</div>
                 </div>
                 
-                <!-- MÓDULO INACTIVO: Viento -->
                 <div class="widget w-mini widget-inactive">
                     <div class="widget-header">Anemómetro <span class="badge-na">No Disp.</span></div>
                     <div style="display: flex; align-items: center; justify-content: center; height: 100%; gap: 15px;">
@@ -389,13 +324,11 @@
             </div>
         </section>
 
-        <!-- VISTA HISTORIAL -->
         <section id="historial" class="view-section">
             <div class="widget" style="margin-bottom: 20px;">
                 <div class="widget-header" style="font-size: 1rem;">
                     <span><i class="fa-solid fa-chart-area"></i> Gráfico General (Últimas lecturas)</span>
                     
-                    <!-- Menú Desplegable de Descarga -->
                     <div class="dropdown-wrapper">
                         <button class="btn-action" id="btnExport" onclick="toggleDropdown(event)">
                             <i class="fa-solid fa-download"></i> Exportar Historial Completo <i class="fa-solid fa-caret-down"></i>
@@ -418,7 +351,6 @@
                 </div>
             </div>
 
-            <!-- TABLA DE DATOS CON SKELETON -->
             <div class="widget" style="overflow-x: auto;">
                 <div class="widget-header">Registro Detallado (Últimos recibidos)</div>
                 <table>
@@ -433,13 +365,12 @@
                         </tr>
                     </thead>
                     <tbody id="history-table-body">
-                        <tr><td colspan="6" style="padding: 25px;"><div class="skeleton"></div></td></tr>
+                        <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando base de datos...</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- VISTA CONFIG -->
         <section id="config" class="view-section">
             <div class="widget" style="max-width: 600px;">
                 <div class="widget-header">Diagnóstico de Hardware</div>
@@ -470,15 +401,6 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // --- COLORES DINÁMICOS TEMP (Aporte tuyo) ---
-    function getTempColor(temp) {
-        if (temp < 15) return '#38bdf8'; // Frio - Azul
-        if (temp < 25) return '#34d399'; // Templado - Verde
-        if (temp < 32) return '#fbbf24'; // Cálido - Amarillo
-        if (temp < 38) return '#fb923c'; // Caliente - Naranja
-        return '#f87171'; // Muy caliente - Rojo
-    }
-
     // --- NAVEGACIÓN ---
     function switchView(viewId, btn) {
         document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
@@ -488,6 +410,7 @@
         document.getElementById('exportMenu').classList.remove('show');
     }
 
+    // --- LÓGICA DEL DROPDOWN Y EXPORTACIÓN CORREGIDA ---
     function toggleDropdown(e) {
         e.preventDefault();
         document.getElementById('exportMenu').classList.toggle('show');
@@ -504,27 +427,34 @@
         }
     }
 
-    // Exportación
+    // Exportación completa a Firebase
     function exportData(format, e) {
         e.preventDefault();
         document.getElementById('exportMenu').classList.remove('show');
         
         const btn = document.getElementById('btnExport');
         const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Descargando...';
+        
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Descargando miles de datos...';
         btn.disabled = true;
 
         db.ref('/estacion1/historial').once('value').then(snap => {
             const allData = [];
-            snap.forEach(child => { if(child.val().fecha) allData.push(child.val()); });
+            snap.forEach(child => {
+                if(child.val().fecha) {
+                    allData.push(child.val());
+                }
+            });
 
             if (allData.length === 0) {
-                alert("No hay datos en la base de datos.");
-                btn.innerHTML = originalHTML; btn.disabled = false; return;
+                alert("No hay datos en la base de datos para exportar.");
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                return;
             }
 
             const dateStr = new Date().toISOString().split('T')[0];
-            const fileName = `INIFAP_Margaritas_${dateStr}`;
+            const fileName = `INIFAP_Margaritas_Historial_${dateStr}`;
 
             if (format === 'csv') {
                 let csvContent = "Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm)\n";
@@ -534,61 +464,118 @@
                 });
                 downloadBlob(csvContent, `${fileName}.csv`, 'text/csv');
             } 
-            else if (format === 'json') { downloadBlob(JSON.stringify(allData, null, 2), `${fileName}.json`, 'application/json'); }
-            else if (format === 'pdf') { generarPDF(fileName, allData); }
+            else if (format === 'json') {
+                const jsonContent = JSON.stringify(allData, null, 2);
+                downloadBlob(jsonContent, `${fileName}.json`, 'application/json');
+            }
+            else if (format === 'pdf') {
+                generarPDF(fileName, allData);
+            }
 
-            btn.innerHTML = originalHTML; btn.disabled = false;
-        }).catch(err => { alert("Error de conexión."); btn.innerHTML = originalHTML; btn.disabled = false; });
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+            
+        }).catch(error => {
+            console.error(error);
+            alert("Hubo un error contactando a la base de datos.");
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        });
     }
 
     function downloadBlob(content, fileName, contentType) {
         const a = document.createElement("a");
         const file = new Blob([content], { type: contentType });
         a.href = URL.createObjectURL(file);
-        a.download = fileName; a.click();
+        a.download = fileName;
+        a.click();
     }
 
     function generarPDF(fileName, dataArray) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFont("helvetica", "bold"); doc.setFontSize(16);
-        doc.text("Reporte Climatológico Completo - INIFAP", 14, 20);
-        doc.setFontSize(10); doc.setFont("helvetica", "normal");
-        doc.text(`Fecha: ${new Date().toLocaleString('es-MX')} | Total: ${dataArray.length} registros`, 14, 28);
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.text("Reporte Climatológico Completo - INIFAP Las Margaritas", 14, 20);
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Fecha de generación: ${new Date().toLocaleString('es-MX')}`, 14, 28);
+        doc.text(`Sensor: SHT41 | Total de registros: ${dataArray.length}`, 14, 33);
 
-        const tableRows = dataArray.map(r => {
-            const dt = new Date(r.fecha);
-            return [dt.toLocaleDateString('es-MX'), dt.toLocaleTimeString('es-MX'), (r.temperatura||0).toString(), (r.humedad||0).toString(), (r.pluv1_mm||0).toString(), (r.pluv2_mm||0).toString()];
+        const tableColumn = ["Fecha", "Hora", "Temp (°C)", "Hum (%)", "Pluv 1 (mm)", "Pluv 2 (mm)"];
+        const tableRows = [];
+
+        dataArray.forEach(row => {
+            const dt = new Date(row.fecha);
+            tableRows.push([
+                dt.toLocaleDateString('es-MX'),
+                dt.toLocaleTimeString('es-MX'),
+                (row.temperatura || 0).toString(),
+                (row.humedad || 0).toString(),
+                (row.pluv1_mm || 0).toString(),
+                (row.pluv2_mm || 0).toString()
+            ]);
         });
 
         doc.autoTable({
-            head: [["Fecha", "Hora", "Temp (°C)", "Hum (%)", "Pluv 1 (mm)", "Pluv 2 (mm)"]],
-            body: tableRows, startY: 35, theme: 'striped',
-            headStyles: { fillColor: [56, 189, 248] }, styles: { fontSize: 9 }
+            head: [tableColumn],
+            body: tableRows,
+            startY: 40,
+            theme: 'striped',
+            headStyles: { fillColor: [56, 189, 248] }, 
+            styles: { fontSize: 9 }
         });
+
         doc.save(`${fileName}.pdf`);
     }
 
     // --- MAPA LEAFLET ---
     const map = L.map('station-map', { zoomControl: false }).setView([19.996, -97.306], 12);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20 }).addTo(map);
-    const stationIcon = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:var(--accent-blue); width:16px; height:16px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>", iconSize: [16, 16], iconAnchor: [8, 8] });
-    L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map).bindPopup('<b style="color:black;">Estación LoRa Mando</b><br>INIFAP Las Margaritas').openPopup();
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20
+    }).addTo(map);
+    
+    const stationIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: "<div style='background-color:var(--accent-blue); width:16px; height:16px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>",
+        iconSize: [16, 16], iconAnchor: [8, 8]
+    });
+    L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map)
+        .bindPopup('<b style="color:black;">Estación LoRa Mando</b><br>Las Margaritas, INIFAP')
+        .openPopup();
 
-    // --- GRÁFICOS ---
+    // --- GRÁFICOS (CHART.JS) ---
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = 'Outfit';
 
-    const gaugeOptions = { circumference: 180, rotation: -90, cutout: '80%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, maintainAspectRatio: false, responsive: true };
+    const gaugeOptions = {
+        circumference: 180, rotation: -90, cutout: '80%',
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        maintainAspectRatio: false, responsive: true
+    };
 
     const ctxGaugeTemp = document.getElementById('gaugeTemp').getContext('2d');
-    const chartGaugeTemp = new Chart(ctxGaugeTemp, { type: 'doughnut', data: { datasets: [{ data: [0, 50], backgroundColor: ['#f472b6', '#1e293b'], borderWidth: 0, borderRadius: 10 }] }, options: gaugeOptions });
+    const chartGaugeTemp = new Chart(ctxGaugeTemp, {
+        type: 'doughnut',
+        data: { datasets: [{ data: [0, 50], backgroundColor: ['#f472b6', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
+        options: gaugeOptions
+    });
 
     const ctxGaugeHum = document.getElementById('gaugeHum').getContext('2d');
-    const chartGaugeHum = new Chart(ctxGaugeHum, { type: 'doughnut', data: { datasets: [{ data: [0, 100], backgroundColor: ['#38bdf8', '#1e293b'], borderWidth: 0, borderRadius: 10 }] }, options: gaugeOptions });
+    const chartGaugeHum = new Chart(ctxGaugeHum, {
+        type: 'doughnut',
+        data: { datasets: [{ data: [0, 100], backgroundColor: ['#38bdf8', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
+        options: gaugeOptions
+    });
 
     const ctxGaugePres = document.getElementById('gaugePres').getContext('2d');
-    new Chart(ctxGaugePres, { type: 'doughnut', data: { datasets: [{ data: [1, 1], backgroundColor: ['#475569', '#1e293b'], borderWidth: 0, borderRadius: 10 }] }, options: gaugeOptions });
+    new Chart(ctxGaugePres, {
+        type: 'doughnut',
+        data: { datasets: [{ data: [1, 1], backgroundColor: ['#475569', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
+        options: gaugeOptions
+    });
 
     const ctxMain = document.getElementById('mainChart').getContext('2d');
     const mainChart = new Chart(ctxMain, {
@@ -613,7 +600,6 @@
     const db = firebase.database();
 
     let currentDayStamp = new Date().setHours(0,0,0,0);
-    let prevTemp = null;
     
     function calcularLluvia() {
         db.ref('/estacion1/historial').orderByChild('fecha').startAt(currentDayStamp).on('value', snap => {
@@ -646,7 +632,9 @@
                 const p2 = val.pluv2_mm !== undefined ? parseFloat(val.pluv2_mm).toFixed(1) : 0;
                 const sd = val.estado_sd !== undefined ? val.estado_sd : 1;
 
-                dTemp.push(temp); dHum.push(hum);
+                dTemp.push(temp);
+                dHum.push(hum);
+                
                 lastT = temp; lastH = hum; lastId = val.id_mensaje || "--"; lastSD = sd;
 
                 let sdBadge = sd === 1 ? `<span style="color:var(--accent-green);"><i class="fa-solid fa-check"></i> OK</span>` : `<span style="color:var(--accent-pink);"><i class="fa-solid fa-xmark"></i> Falla</span>`;
@@ -665,46 +653,18 @@
         if(tableRowsHTML === "") tableRowsHTML = "<tr><td colspan='6' style='text-align:center;'>No hay datos recientes.</td></tr>";
         document.getElementById('history-table-body').innerHTML = tableRowsHTML;
 
-        // Actualizar UI General
-        const dynamicColor = getTempColor(lastT);
-        
         document.getElementById('temp-main').innerText = lastT;
-        document.getElementById('temp-main-wrap').style.color = dynamicColor;
-        
         document.getElementById('hum-main').innerText = lastH;
-        document.getElementById('hum-bar').style.width = lastH + '%';
-        
         document.getElementById('msg-id').innerText = lastId;
 
-        // Tendencia Temp
-        const trendPill = document.getElementById('temp-trend-pill');
-        if (prevTemp !== null) {
-            const diff = (lastT - prevTemp).toFixed(1);
-            if (diff > 0.2) {
-                trendPill.className = 'temp-trend trend-up';
-                trendPill.innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> +${diff}°C`;
-            } else if (diff < -0.2) {
-                trendPill.className = 'temp-trend trend-down';
-                trendPill.innerHTML = `<i class="fa-solid fa-arrow-trend-down"></i> ${diff}°C`;
-            } else {
-                trendPill.className = 'temp-trend trend-stable';
-                trendPill.innerHTML = `<i class="fa-solid fa-minus"></i> Estable`;
-            }
-        }
-        prevTemp = lastT;
-
-        // Gauges actualizados con color dinámico
         document.getElementById('g-temp-val').innerText = lastT + "°";
-        document.getElementById('g-temp-val').style.color = dynamicColor;
         chartGaugeTemp.data.datasets[0].data = [lastT, Math.max(0, 50 - lastT)];
-        chartGaugeTemp.data.datasets[0].backgroundColor[0] = dynamicColor;
         chartGaugeTemp.update();
 
         document.getElementById('g-hum-val').innerText = lastH + "%";
         chartGaugeHum.data.datasets[0].data = [lastH, Math.max(0, 100 - lastH)];
         chartGaugeHum.update();
 
-        // Gráficos de Líneas
         mainChart.data.labels = labels;
         mainChart.data.datasets[0].data = dTemp;
         mainChart.data.datasets[1].data = dHum;
@@ -714,7 +674,6 @@
         sparkChart.data.datasets[0].data = dTemp;
         sparkChart.update();
 
-        // Estado SD
         const sdText = document.getElementById('sd-status-text');
         if (lastSD === 1) {
             sdText.innerHTML = '<i class="fa-solid fa-circle-check"></i> OPERATIVA';
