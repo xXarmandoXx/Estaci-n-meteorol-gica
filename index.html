@@ -122,7 +122,6 @@
         }
         .widget:hover { border-color: rgba(255,255,255,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
 
-        /* Tamaños de Grid Ajustados */
         .w-map { grid-column: span 8; grid-row: span 2; padding: 0; border: none; }
         .w-status { grid-column: span 4; grid-row: span 2; }
         .w-rain { grid-column: span 6; grid-row: span 1; }
@@ -138,6 +137,7 @@
         
         #station-map { width: 100%; height: 100%; border-radius: 20px; z-index: 1; }
         
+        /* Contenedores Genéricos (Temp) */
         .gauge-container { position: relative; width: 100%; height: 110px; display: flex; justify-content: center; }
         .gauge-value-center { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center; }
         .gauge-val { font-size: 2.2rem; font-weight: 700; line-height: 1; color: white; transition: color 0.5s ease; }
@@ -406,13 +406,31 @@
                     </div>
                 </div>
 
-                <!-- Gauge Humedad Dinámico (Número Blanco) -->
+                <!-- GAUGE HUMEDAD ESTILO AGUJA (SVG) -->
                 <div class="widget w-gauge">
                     <div class="widget-header">Humedad Relativa</div>
-                    <div class="gauge-container">
-                        <canvas id="gaugeHum"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" id="g-hum-val">--</div>
+                    <div style="position: relative; width: 100%; height: 140px; display: flex; justify-content: center; align-items: flex-end;">
+                        <svg viewBox="0 0 200 115" style="width: 100%; max-width: 180px; overflow: visible;">
+                            <!-- Tramos del arco -->
+                            <path d="M 20 100 A 80 80 0 0 1 43.43 43.43" fill="none" stroke="#bae6fd" stroke-width="18" stroke-linecap="round"/>
+                            <path d="M 43.43 43.43 A 80 80 0 0 1 100 20" fill="none" stroke="#7dd3fc" stroke-width="18"/>
+                            <path d="M 100 20 A 80 80 0 0 1 156.57 43.43" fill="none" stroke="#38bdf8" stroke-width="18"/>
+                            <path d="M 156.57 43.43 A 80 80 0 0 1 180 100" fill="none" stroke="#0284c7" stroke-width="18" stroke-linecap="round"/>
+                            
+                            <!-- Aguja -->
+                            <g id="hum-needle" style="transform-origin: 100px 100px; transform: rotate(-90deg); transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);">
+                                <polygon points="95,100 105,100 100,28" fill="#475569" />
+                                <circle cx="100" cy="100" r="8" fill="#475569" />
+                            </g>
+                        </svg>
+                        
+                        <!-- Centro: Gota y porcentaje -->
+                        <div style="position: absolute; bottom: 5px; display: flex; flex-direction: column; align-items: center;">
+                            <div style="position: relative; color: #38bdf8; font-size: 3.5rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); line-height: 1;">
+                                <i class="fa-solid fa-droplet"></i>
+                                <span style="position: absolute; top: 58%; left: 50%; transform: translate(-50%, -50%); color: var(--bg-card); font-size: 1.1rem; font-weight: 900; font-family: 'Outfit'; letter-spacing: -1px;">%</span>
+                            </div>
+                            <div id="hum-custom-val" style="font-size: 1.6rem; font-weight: 800; color: white; line-height: 1; margin-top: 0px; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">--%</div>
                         </div>
                     </div>
                 </div>
@@ -633,7 +651,6 @@
     }
 
     // --- MAPA LEAFLET ---
-    // Nivel de zoom ajustado a 6 para mostrar panorama amplio de México
     const map = L.map('station-map', { zoomControl: false }).setView([20.5, -99.0], 6);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20 }).addTo(map);
     const stationIcon = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:var(--accent-blue); width:16px; height:16px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>", iconSize: [16, 16], iconAnchor: [8, 8] });
@@ -647,9 +664,6 @@
 
     const ctxGaugeTemp = document.getElementById('gaugeTemp').getContext('2d');
     const chartGaugeTemp = new Chart(ctxGaugeTemp, { type: 'doughnut', data: { datasets: [{ data: [0, 50], backgroundColor: ['#f472b6', '#1e293b'], borderWidth: 0, borderRadius: 10 }] }, options: gaugeOptions });
-
-    const ctxGaugeHum = document.getElementById('gaugeHum').getContext('2d');
-    const chartGaugeHum = new Chart(ctxGaugeHum, { type: 'doughnut', data: { datasets: [{ data: [0, 100], backgroundColor: ['#38bdf8', '#1e293b'], borderWidth: 0, borderRadius: 10 }] }, options: gaugeOptions });
 
     const ctxGaugePres = document.getElementById('gaugePres').getContext('2d');
     new Chart(ctxGaugePres, { type: 'doughnut', data: { datasets: [{ data: [1, 1], backgroundColor: ['#475569', '#1e293b'], borderWidth: 0, borderRadius: 10 }] }, options: gaugeOptions });
@@ -812,10 +826,10 @@
         chartGaugeTemp.data.datasets[0].backgroundColor[0] = colorT;
         chartGaugeTemp.update();
 
-        document.getElementById('g-hum-val').innerText = lastH + "%";
-        chartGaugeHum.data.datasets[0].data = [lastH, Math.max(0, 100 - lastH)];
-        chartGaugeHum.data.datasets[0].backgroundColor[0] = colorH;
-        chartGaugeHum.update();
+        // Actualizar Nuevo Gauge SVG de Humedad
+        document.getElementById('hum-custom-val').innerText = lastH + "%";
+        const needleAngle = (Math.min(Math.max(lastH, 0), 100) / 100) * 180 - 90; // Rango -90 a 90
+        document.getElementById('hum-needle').style.transform = `rotate(${needleAngle}deg)`;
 
         // Gráficos de Líneas
         mainChart.data.labels = labels;
