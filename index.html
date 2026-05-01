@@ -122,6 +122,7 @@
         }
         .widget:hover { border-color: rgba(255,255,255,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
 
+        /* Tamaños de Grid Ajustados */
         .w-map { grid-column: span 8; grid-row: span 2; padding: 0; border: none; }
         .w-status { grid-column: span 4; grid-row: span 2; }
         .w-rain { grid-column: span 6; grid-row: span 1; }
@@ -136,9 +137,6 @@
         .widget-header { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }
         
         #station-map { width: 100%; height: 100%; border-radius: 20px; z-index: 1; }
-        
-        .gauge-container { position: relative; width: 100%; height: 110px; display: flex; justify-content: center; }
-        .gauge-value-center { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center; }
         
         .big-value { font-size: 4rem; font-weight: 800; display: flex; align-items: baseline; justify-content: center; gap: 5px; color: white; transition: color 0.5s ease; }
         .big-value .unit { font-size: 1.5rem; color: var(--text-muted); font-weight: 400; }
@@ -303,7 +301,7 @@
                     </div>
                 </div>
 
-                <!-- Lluvia Acumulada Dual (Gotas Animadas Independientes y Números Blancos) -->
+                <!-- Lluvia Acumulada Dual -->
                 <div class="widget w-rain">
                     <div class="widget-header">
                         <span>Precipitación Acumulada</span>
@@ -317,7 +315,6 @@
                                 <i class="fa-solid fa-droplet anim-drop drop-2" style="color: var(--accent-orange);"></i>
                                 <i class="fa-solid fa-droplet anim-drop drop-3" style="color: var(--accent-orange);"></i>
                             </div>
-                            <!-- Número en Blanco -->
                             <div class="big-value" style="font-size: 3rem;">
                                 <span id="p1-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
@@ -333,7 +330,6 @@
                                 <i class="fa-solid fa-droplet anim-drop drop-2" style="color: var(--accent-purple);"></i>
                                 <i class="fa-solid fa-droplet anim-drop drop-3" style="color: var(--accent-purple);"></i>
                             </div>
-                            <!-- Número en Blanco -->
                             <div class="big-value" style="font-size: 3rem;">
                                 <span id="p2-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
@@ -444,14 +440,13 @@
                 <!-- NUEVO WIDGET: Humedad Vectorial 4 Bloques y Flecha Clásica -->
                 <div class="widget w-gauge">
                     <div class="widget-header">Humedad Relativa</div>
-                    <div style="position: relative; width: 100%; height: 130px; display: flex; justify-content: center; align-items: flex-end; margin-top: 5px;">
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; padding-top: 10px;">
                         
-                        <svg viewBox="0 0 200 120" style="width: 100%; max-width: 180px; overflow: visible;">
-                            <!-- Máscara para crear los pequeños espacios en blanco entre bloques -->
+                        <svg viewBox="0 0 200 110" style="width: 100%; max-width: 170px; overflow: visible;">
                             <defs>
                                 <mask id="arcMask">
                                     <rect x="0" y="0" width="200" height="120" fill="white" />
-                                    <!-- Líneas de corte -->
+                                    <!-- Líneas de corte para los gaps -->
                                     <line x1="100" y1="100" x2="20" y2="20" stroke="black" stroke-width="4" />
                                     <line x1="100" y1="100" x2="100" y2="0" stroke="black" stroke-width="4" />
                                     <line x1="100" y1="100" x2="180" y2="20" stroke="black" stroke-width="4" />
@@ -466,17 +461,15 @@
                                 <path d="M 156.57 43.43 A 80 80 0 0 1 180 100" fill="none" stroke="#0284c7" stroke-width="18"/>
                             </g>
                             
-                            <!-- Aguja Clásica -->
+                            <!-- Aguja Clásica (Color Dinámico) -->
                             <g id="hum-needle" style="transform-origin: 100px 100px; transform: rotate(-90deg); transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);">
                                 <polygon id="hum-needle-path" points="96,100 104,100 100,25" fill="var(--accent-blue)" style="transition: fill 1.2s ease;" />
                                 <circle id="hum-needle-base" cx="100" cy="100" r="14" fill="var(--accent-blue)" style="transition: fill 1.2s ease;" />
                             </g>
                         </svg>
                         
-                        <!-- Texto del Porcentaje Fijo Abajo -->
-                        <div style="position: absolute; bottom: -5px; display: flex; flex-direction: column; align-items: center; width: 100%;">
-                            <div id="hum-custom-val" style="font-size: 2rem; font-weight: 800; color: white; line-height: 1; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">--%</div>
-                        </div>
+                        <!-- Texto del Porcentaje Abajo (Acomodado sin encimarse) -->
+                        <div id="hum-custom-val" style="font-size: 2.2rem; font-weight: 800; color: white; line-height: 1; margin-bottom: 5px; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">--%</div>
 
                     </div>
                 </div>
@@ -484,10 +477,10 @@
                 <!-- MÓDULO INACTIVO: Presión -->
                 <div class="widget w-gauge widget-inactive">
                     <div class="widget-header">Presión Atm <span class="badge-na">No Disp.</span></div>
-                    <div class="gauge-container" style="align-items: center;">
+                    <div style="position: relative; width: 100%; height: 110px; display: flex; justify-content: center; align-items: center;">
                         <i class="fa-solid fa-gauge-high" style="font-size: 3.5rem; color: var(--accent-disabled);"></i>
-                        <div class="gauge-value-center" style="bottom: 10px;">
-                            <div class="gauge-val" style="color: var(--accent-disabled); font-size: 1.5rem;">N/A</div>
+                        <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center;">
+                            <div style="color: var(--accent-disabled); font-size: 1.5rem; font-weight: bold;">N/A</div>
                         </div>
                     </div>
                 </div>
@@ -813,7 +806,6 @@
         document.getElementById('history-table-body').innerHTML = tableRowsHTML;
 
         // --- ACTUALIZACIONES UI DINÁMICA ---
-        const colorT = getTempColor(lastT);
         const colorH = getHumColor(lastH);
         
         // Número Fijo Principal
