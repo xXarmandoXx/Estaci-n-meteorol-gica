@@ -37,6 +37,7 @@
             --glass-border: rgba(255, 255, 255, 0.08);
             
             --accent-blue: #38bdf8;
+            --accent-blue-dark: #0ea5e9;
             --accent-pink: #f472b6;   
             --accent-orange: #fb923c; 
             --accent-green: #34d399;
@@ -85,6 +86,7 @@
 
         /* --- 3. MAIN CONTENT Y GRID --- */
         .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 30px; scroll-behavior: smooth; }
+        
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .header-info h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(90deg, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
@@ -138,29 +140,41 @@
         
         .gauge-container { position: relative; width: 100%; height: 110px; display: flex; justify-content: center; }
         .gauge-value-center { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center; }
-        .gauge-val { font-size: 2rem; font-weight: 700; line-height: 1; text-shadow: 0 0 15px rgba(0,0,0,0.5); transition: color 0.5s ease; }
+        
+        /* GAUGE NÚMEROS A BLANCO */
+        .gauge-val { font-size: 2rem; font-weight: 700; line-height: 1; text-shadow: 0 0 15px rgba(0,0,0,0.5); color: white; }
         .gauge-unit { font-size: 0.85rem; color: var(--text-muted); }
 
-        .big-value { font-size: 4rem; font-weight: 800; display: flex; align-items: baseline; gap: 5px; transition: color 0.5s ease; }
+        /* NÚMERO PRINCIPAL A BLANCO */
+        .big-value { font-size: 4rem; font-weight: 800; display: flex; align-items: baseline; gap: 5px; color: white; }
         .big-value .unit { font-size: 1.5rem; color: var(--text-muted); font-weight: 400; }
 
-        /* Animación Nube y Lluvia */
-        .anim-rain-container { position: relative; width: 40px; height: 35px; display: flex; justify-content: center; }
-        .anim-cloud { font-size: 1.5rem; color: var(--text-muted); animation: float-cloud 3s ease-in-out infinite; position: relative; z-index: 2; }
-        .anim-drop { position: absolute; font-size: 0.5rem; color: var(--accent-blue); opacity: 0; animation: fall-drop 1.2s linear infinite; }
-        .drop-1 { left: 10px; top: 15px; animation-delay: 0s; }
-        .drop-2 { left: 20px; top: 15px; animation-delay: 0.4s; }
-        .drop-3 { left: 30px; top: 15px; animation-delay: 0.8s; }
+        .temp-trend { font-size: 0.8rem; font-weight: 600; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; }
+        .trend-up { color: var(--accent-red); background: rgba(248, 113, 113, 0.1); }
+        .trend-down { color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); }
+        .trend-stable { color: var(--accent-green); background: rgba(52, 211, 153, 0.1); }
+
+        .hum-bar-wrap { width: 80%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 6px; margin-top: 5px; overflow: hidden; }
+        .hum-bar { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--accent-blue-dark), var(--accent-blue)); transition: width 1s ease; }
+
+        /* Icono Sol-Nube Stacked */
+        .fa-stack { width: 3em; height: 3em; line-height: 3em; }
+        @keyframes pulse-sun { 0%, 100% { filter: drop-shadow(0 0 15px #fbbf24); transform: scale(1); } 50% { filter: drop-shadow(0 0 30px #fbbf24); transform: scale(1.05); } }
+
+        /* Lluvia Animada Individual */
+        .anim-rain-container { position: relative; width: 60px; height: 45px; display: flex; justify-content: center; margin: 0 auto 5px auto; }
+        .anim-cloud { font-size: 2.2rem; color: white; animation: float-cloud 3s ease-in-out infinite; position: relative; z-index: 2; filter: drop-shadow(0 0 8px rgba(255,255,255,0.2)); }
+        .anim-drop { position: absolute; font-size: 0.7rem; opacity: 0; animation: fall-drop 1.2s linear infinite; }
+        .drop-1 { left: 15px; top: 20px; animation-delay: 0s; }
+        .drop-2 { left: 30px; top: 20px; animation-delay: 0.4s; }
+        .drop-3 { left: 45px; top: 20px; animation-delay: 0.8s; }
         
         @keyframes float-cloud { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-        @keyframes fall-drop { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(15px); opacity: 0; } }
+        @keyframes fall-drop { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(18px); opacity: 0; } }
 
         .rain-flex { display: flex; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
         .rain-box { text-align: center; }
         .rain-divider { width: 1px; height: 60%; background: var(--glass-border); }
-
-        /* Icono Dinámico Estado Actual */
-        .dynamic-weather-icon { font-size: 3rem; margin-bottom: 10px; transition: color 0.5s ease, transform 0.5s; filter: drop-shadow(0 0 10px rgba(255,255,255,0.1)); }
 
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } 50% { opacity: 0.4; box-shadow: 0 0 2px var(--accent-green); } 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } }
@@ -174,6 +188,9 @@
         th { text-align: left; padding: 15px; color: var(--text-muted); border-bottom: 2px solid var(--glass-border); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
         td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-main); transition: var(--transition); }
         tr:hover td { background: rgba(255,255,255,0.02); }
+        
+        .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; border-radius: 8px; height: 20px; width: 80%; margin: 0 auto; }
+        @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
         .dropdown-wrapper { position: relative; display: inline-block; }
         .btn-action { background: linear-gradient(135deg, var(--accent-blue), #2563eb); border: none; padding: 10px 20px; border-radius: 10px; color: white; font-family: 'Outfit'; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: var(--transition); box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); }
@@ -207,16 +224,13 @@
             .sidebar:hover .menu-btn span { display: none; }
             .main-content { padding-bottom: 90px; padding-left: 15px; padding-right: 15px; }
             
-            /* ORDEN MÁGICO PARA CELULARES */
             .dashboard-grid { display: flex; flex-direction: column; gap: 15px; }
             .w-status { order: 1; }
             .w-rain { order: 2; }
             .w-gauge { order: 3; }
             .w-mini { order: 4; }
             .w-map { order: 5; height: 250px; }
-            
             .widget-inactive { order: 99 !important; }
-            
             .big-value { font-size: 3.5rem; }
         }
     </style>
@@ -266,7 +280,7 @@
                     <div id="station-map"></div>
                 </div>
 
-                <!-- Resumen de Estado Inteligente -->
+                <!-- Resumen de Estado -->
                 <div class="widget w-status">
                     <div class="widget-header">
                         <span>Estado Actual</span>
@@ -274,84 +288,123 @@
                     </div>
                     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                         
-                        <!-- Icono Clima Dinámico -->
-                        <i id="main-weather-icon" class="fa-solid fa-cloud dynamic-weather-icon" style="color: rgba(255,255,255,0.3);"></i>
+                        <!-- CONTENEDOR ICONO CLIMA DINÁMICO -->
+                        <div id="weather-icon-container" style="height: 70px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
+                            <!-- Insertado vía JS -->
+                        </div>
 
-                        <!-- Valor Temperatura Dinámico -->
-                        <div class="big-value" id="temp-main-wrap" style="color: white;">
+                        <!-- Número en Blanco -->
+                        <div class="big-value">
                             <span id="temp-main">--</span><span class="unit" style="font-size: 1.5rem;">°C</span>
                         </div>
                         
-                        <div style="font-size: 1rem; font-weight: 500; color: var(--accent-blue); margin-top: 10px;">
-                            <i class="fa-solid fa-droplet"></i> Humedad: <span id="hum-main">--</span>%
+                        <div class="temp-trend trend-stable" id="temp-trend-pill">
+                            <i class="fa-solid fa-minus"></i> Estable
+                        </div>
+
+                        <div style="width: 100%; text-align: center; margin-top: 20px;">
+                            <div style="color: var(--accent-blue); font-weight: 500; font-size: 1rem; margin-bottom: 5px;">
+                                <i class="fa-solid fa-droplet"></i> Humedad: <span id="hum-main">--</span>%
+                            </div>
+                            <center><div class="hum-bar-wrap"><div class="hum-bar" id="hum-bar" style="width: 0%;"></div></div></center>
                         </div>
                         
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 10px; width: 100%; text-align: center;">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 25px; border-top: 1px solid var(--glass-border); padding-top: 10px; width: 100%; text-align: center;">
                             Paquete LoRa Ref: <span id="msg-id" style="color: white; font-weight: bold;">--</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Lluvia Acumulada Animada -->
+                <!-- Lluvia Acumulada Dual (Gotas Animadas Independientes) -->
                 <div class="widget w-rain">
                     <div class="widget-header">
                         <span>Precipitación Acumulada</span>
-                        <!-- Animación de Nube y Gotas -->
-                        <div class="anim-rain-container">
-                            <i class="fa-solid fa-cloud anim-cloud"></i>
-                            <i class="fa-solid fa-droplet anim-drop drop-1"></i>
-                            <i class="fa-solid fa-droplet anim-drop drop-2"></i>
-                            <i class="fa-solid fa-droplet anim-drop drop-3"></i>
-                        </div>
+                        <i class="fa-solid fa-cloud-showers-heavy" style="color: var(--text-muted);"></i>
                     </div>
                     <div class="rain-flex">
                         <div class="rain-box">
-                            <div class="big-value" style="color: var(--accent-orange); justify-content: center; font-size: 3rem;">
+                            <div class="anim-rain-container">
+                                <i class="fa-solid fa-cloud anim-cloud"></i>
+                                <i class="fa-solid fa-droplet anim-drop drop-1" style="color: var(--accent-orange);"></i>
+                                <i class="fa-solid fa-droplet anim-drop drop-2" style="color: var(--accent-orange);"></i>
+                                <i class="fa-solid fa-droplet anim-drop drop-3" style="color: var(--accent-orange);"></i>
+                            </div>
+                            <!-- Número en Blanco -->
+                            <div class="big-value" style="justify-content: center; font-size: 3rem;">
                                 <span id="p1-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUV 1</div>
+                            <div style="font-size: 0.85rem; color: var(--accent-orange); font-weight: 600; margin-top: 5px;">PLUV 1</div>
                         </div>
+                        
                         <div class="rain-divider"></div>
+                        
                         <div class="rain-box">
-                            <div class="big-value" style="color: var(--accent-purple); justify-content: center; font-size: 3rem;">
+                            <div class="anim-rain-container">
+                                <i class="fa-solid fa-cloud anim-cloud"></i>
+                                <i class="fa-solid fa-droplet anim-drop drop-1" style="color: var(--accent-purple);"></i>
+                                <i class="fa-solid fa-droplet anim-drop drop-2" style="color: var(--accent-purple);"></i>
+                                <i class="fa-solid fa-droplet anim-drop drop-3" style="color: var(--accent-purple);"></i>
+                            </div>
+                            <!-- Número en Blanco -->
+                            <div class="big-value" style="justify-content: center; font-size: 3rem;">
                                 <span id="p2-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUV 2</div>
+                            <div style="font-size: 0.85rem; color: var(--accent-purple); font-weight: 600; margin-top: 5px;">PLUV 2</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Gauge Temperatura Dinámico -->
+                <!-- Gauge Temperatura Dinámico (Número Blanco) -->
                 <div class="widget w-gauge">
                     <div class="widget-header">Índice Térmico</div>
                     <div class="gauge-container">
                         <canvas id="gaugeTemp"></canvas>
                         <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-pink);" id="g-temp-val">--</div>
+                            <div class="gauge-val" id="g-temp-val">--</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Gauge Humedad Dinámico -->
+                <!-- Gauge Humedad Dinámico (Número Blanco) -->
                 <div class="widget w-gauge">
                     <div class="widget-header">Humedad Relativa</div>
                     <div class="gauge-container">
                         <canvas id="gaugeHum"></canvas>
                         <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-blue);" id="g-hum-val">--</div>
+                            <div class="gauge-val" id="g-hum-val">--</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tendencia Mejorada -->
+                <!-- NUEVO WIDGET: Registros del Día -->
                 <div class="widget w-mini">
-                    <div class="widget-header">Tendencia Temp</div>
-                    <div style="display:flex; justify-content: space-between; align-items:flex-end;">
-                        <div id="trend-indicator" style="font-size: 1.4rem; font-weight: 800; letter-spacing: -1px; color: var(--text-muted);">
-                            --
+                    <div class="widget-header">Resumen del Día</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
+                            <span style="color: var(--accent-red); font-size: 0.85rem;"><i class="fa-solid fa-arrow-up"></i> Máx</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: white; font-size: 1.1rem;" id="dash-max-t">--°C</div>
+                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="dash-max-time">--:--</div>
+                            </div>
                         </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
+                            <span style="color: var(--accent-blue); font-size: 0.85rem;"><i class="fa-solid fa-arrow-down"></i> Mín</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: white; font-size: 1.1rem;" id="dash-min-t">--°C</div>
+                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="dash-min-time">--:--</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
+                            <span style="color: var(--accent-green); font-size: 0.85rem;"><i class="fa-solid fa-equals"></i> Prom.</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: white; font-size: 1.1rem;"><span id="dash-avg-t">--</span>° <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: normal;">|</span> <span id="dash-avg-h">--</span>%</div>
+                            </div>
+                        </div>
+
                     </div>
-                    <div style="height: 55px; width: 100%; margin-top:5px;"><canvas id="sparkTemp"></canvas></div>
                 </div>
 
                 <!-- MÓDULO INACTIVO: Presión -->
@@ -412,7 +465,7 @@
                 </div>
             </div>
 
-            <!-- TABLA DE DATOS -->
+            <!-- TABLA DE DATOS CON SKELETON -->
             <div class="widget" style="overflow-x: auto;">
                 <div class="widget-header">Registro Detallado (Últimos recibidos)</div>
                 <table>
@@ -427,7 +480,7 @@
                         </tr>
                     </thead>
                     <tbody id="history-table-body">
-                        <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando base de datos...</td></tr>
+                        <tr><td colspan="6" style="padding: 25px;"><div class="skeleton"></div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -600,13 +653,6 @@
         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
     });
 
-    const ctxSpark = document.getElementById('sparkTemp').getContext('2d');
-    const sparkChart = new Chart(ctxSpark, {
-        type: 'line',
-        data: { labels: [], datasets: [{ data: [], borderColor: '#f472b6', tension: 0.4, borderWidth: 2, pointRadius: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
-    });
-
     // --- FIREBASE LOGIC ---
     const firebaseConfig = { databaseURL: "https://estacion-texcoco-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
@@ -615,20 +661,65 @@
     let currentDayStamp = new Date().setHours(0,0,0,0);
     let prevTemp = null;
     
-    function calcularLluvia() {
+    // Función centralizada para Lluvia Diaria y Máximas/Mínimas
+    function calcularDatosDiarios() {
         db.ref('/estacion1/historial').orderByChild('fecha').startAt(currentDayStamp).on('value', snap => {
             let sP1 = 0, sP2 = 0;
+            let temps = [], hums = [];
+            let maxT = -Infinity, minT = Infinity;
+            let maxTime = '--:--', minTime = '--:--';
+
             snap.forEach(child => {
                 const v = child.val();
+                
+                // Lluvia
                 if(v.pluv1_mm) sP1 += parseFloat(v.pluv1_mm);
                 if(v.pluv2_mm) sP2 += parseFloat(v.pluv2_mm);
+
+                // Estadísticas Temp/Hum
+                if(v.temperatura !== undefined && v.fecha) {
+                    const t = parseFloat(v.temperatura);
+                    const h = parseFloat(v.humedad || 0);
+                    const timeStr = new Date(v.fecha).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+                    
+                    temps.push(t);
+                    hums.push(h);
+
+                    if(t > maxT) { maxT = t; maxTime = timeStr; }
+                    if(t < minT) { minT = t; minTime = timeStr; }
+                }
             });
+
+            // Actualizar Pluviómetros
             document.getElementById('p1-sum-val').innerText = sP1.toFixed(1);
             document.getElementById('p2-sum-val').innerText = sP2.toFixed(1);
+
+            // Actualizar Widget de Resumen del Día
+            if(temps.length > 0) {
+                const avgT = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
+                const avgH = (hums.reduce((a, b) => a + b, 0) / hums.length).toFixed(0);
+
+                document.getElementById('dash-max-t').innerText = maxT.toFixed(1) + "°C";
+                document.getElementById('dash-max-time').innerText = maxTime;
+                document.getElementById('dash-min-t').innerText = minT.toFixed(1) + "°C";
+                document.getElementById('dash-min-time').innerText = minTime;
+                document.getElementById('dash-avg-t').innerText = avgT;
+                document.getElementById('dash-avg-h').innerText = avgH;
+            }
         });
     }
-    calcularLluvia();
+    
+    // Iniciar y verificar reinicio de día
+    calcularDatosDiarios();
+    setInterval(() => {
+        const todayStamp = new Date().setHours(0,0,0,0);
+        if(currentDayStamp !== todayStamp) {
+            currentDayStamp = todayStamp;
+            calcularDatosDiarios();
+        }
+    }, 60000);
 
+    // Listener Principal 30 registros
     db.ref('/estacion1/historial').limitToLast(30).on('value', snap => {
         let labels = [], dTemp = [], dHum = [];
         let tableRowsHTML = "";
@@ -669,50 +760,54 @@
         const colorT = getTempColor(lastT);
         const colorH = getHumColor(lastH);
 
-        // Textos y Colores Principales
+        // Textos Principales (Textos en Blanco, solo actualizamos valor)
         document.getElementById('temp-main').innerText = lastT;
-        document.getElementById('temp-main-wrap').style.color = colorT;
         document.getElementById('hum-main').innerText = lastH;
+        document.getElementById('hum-bar').style.width = lastH + '%';
         document.getElementById('msg-id').innerText = lastId;
 
-        // Ícono Dinámico de Estado Actual
-        const iconEl = document.getElementById('main-weather-icon');
-        iconEl.style.color = colorT;
+        // Ícono Dinámico de Estado Actual (Sol Amarillo / Nube Blanca)
+        const iconContainer = document.getElementById('weather-icon-container');
         if(lastT < 25) {
-            iconEl.className = 'fa-solid fa-cloud dynamic-weather-icon';
+            // Nube Blanca
+            iconContainer.innerHTML = `<i class="fa-solid fa-cloud" style="color: white; font-size: 3.5rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));"></i>`;
         } else if(lastT < 32) {
-            iconEl.className = 'fa-solid fa-cloud-sun dynamic-weather-icon';
+            // Sol Amarillo Atrás + Nube Blanca Adelante
+            iconContainer.innerHTML = `
+                <span class="fa-stack" style="font-size: 1.8rem; width: 4rem; height: 3.5rem;">
+                    <i class="fa-solid fa-sun fa-stack-1x" style="color: #fbbf24; transform: translate(12px, -12px) scale(1.3);"></i>
+                    <i class="fa-solid fa-cloud fa-stack-1x" style="color: white; transform: translate(-5px, 5px) scale(1.5); filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));"></i>
+                </span>
+            `;
         } else {
-            iconEl.className = 'fa-solid fa-sun dynamic-weather-icon';
-            iconEl.style.filter = `drop-shadow(0 0 15px ${colorT})`; // Glow intenso para calor
+            // Sol Amarillo Fuerte
+            iconContainer.innerHTML = `<i class="fa-solid fa-sun" style="color: #fbbf24; font-size: 3.5rem; animation: pulse-sun 2s infinite;"></i>`;
         }
 
         // Tendencia Temp y Flecha
-        const trendEl = document.getElementById('trend-indicator');
+        const trendEl = document.getElementById('temp-trend-pill');
         if (prevTemp !== null) {
             const diff = (lastT - prevTemp).toFixed(1);
             if (diff > 0.2) {
+                trendEl.className = 'temp-trend trend-up';
                 trendEl.innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> +${diff}°`;
-                trendEl.style.color = 'var(--accent-red)';
             } else if (diff < -0.2) {
+                trendEl.className = 'temp-trend trend-down';
                 trendEl.innerHTML = `<i class="fa-solid fa-arrow-trend-down"></i> ${diff}°`;
-                trendEl.style.color = 'var(--accent-blue)';
             } else {
+                trendEl.className = 'temp-trend trend-stable';
                 trendEl.innerHTML = `<i class="fa-solid fa-minus"></i> 0.0°`;
-                trendEl.style.color = 'var(--accent-green)';
             }
         }
         prevTemp = lastT;
 
-        // Gauges Dinámicos
+        // Gauges Dinámicos (Número Blanco fijo en CSS, solo actualizamos barra color)
         document.getElementById('g-temp-val').innerText = lastT + "°";
-        document.getElementById('g-temp-val').style.color = colorT;
         chartGaugeTemp.data.datasets[0].data = [lastT, Math.max(0, 50 - lastT)];
         chartGaugeTemp.data.datasets[0].backgroundColor[0] = colorT;
         chartGaugeTemp.update();
 
         document.getElementById('g-hum-val').innerText = lastH + "%";
-        document.getElementById('g-hum-val').style.color = colorH;
         chartGaugeHum.data.datasets[0].data = [lastH, Math.max(0, 100 - lastH)];
         chartGaugeHum.data.datasets[0].backgroundColor[0] = colorH;
         chartGaugeHum.update();
@@ -722,12 +817,6 @@
         mainChart.data.datasets[0].data = dTemp;
         mainChart.data.datasets[1].data = dHum;
         mainChart.update();
-
-        sparkChart.data.labels = labels;
-        sparkChart.data.datasets[0].data = dTemp;
-        sparkChart.data.datasets[0].borderColor = colorT;
-        sparkChart.data.datasets[0].backgroundColor = colorT + '33'; // Hex opacity
-        sparkChart.update();
 
         // Estado SD
         const sdText = document.getElementById('sd-status-text');
