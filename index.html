@@ -3,688 +3,1486 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Estación Meteorológica | Mando</title>
-    
+    <title>AgroClima Pro | INIFAP Las Margaritas</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Clima Mando">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <meta name="apple-mobile-web-app-title" content="AgroClima Pro">
 
+    <!-- FONTS -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- ICONS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- LEAFLET MAP -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- CHART.JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <!-- FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
+    <!-- PDF EXPORT -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-        /* --- 1. VARIABLES Y RESET --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    /* ============================================================
+       1. VARIABLES & RESET
+    ============================================================ */
+    *, *::before, *::after {
+        margin: 0; padding: 0; box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
 
-        :root {
-            --bg-body: #121212; 
-            --bg-sidebar: #0a0a0a;
-            --glass-bg: rgba(25, 25, 25, 0.6); 
-            --glass-border: rgba(255, 255, 255, 0.08);
-            
-            --accent-blue: #38bdf8;
-            --accent-pink: #f472b6;   
-            --accent-orange: #fb923c; 
-            --accent-green: #34d399;
-            --accent-purple: #c084fc; 
-            --accent-disabled: #475569; 
-            
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    :root {
+        --bg-deep:        #070b14;
+        --bg-surface:     #0d1117;
+        --bg-card:        rgba(16, 22, 36, 0.75);
+        --bg-card-hover:  rgba(22, 30, 50, 0.9);
+        --border:         rgba(255, 255, 255, 0.06);
+        --border-glow:    rgba(56, 189, 248, 0.25);
+
+        --blue:     #38bdf8;
+        --blue-dim: #0ea5e9;
+        --pink:     #f472b6;
+        --orange:   #fb923c;
+        --green:    #34d399;
+        --purple:   #a78bfa;
+        --yellow:   #fbbf24;
+        --red:      #f87171;
+        --disabled: #334155;
+
+        --text:       #f1f5f9;
+        --text-muted: #64748b;
+        --text-sub:   #94a3b8;
+
+        --radius-sm: 10px;
+        --radius-md: 16px;
+        --radius-lg: 24px;
+        --radius-xl: 32px;
+
+        --ease: cubic-bezier(0.4, 0, 0.2, 1);
+        --transition: all 0.3s var(--ease);
+        --shadow-glow: 0 0 40px rgba(56, 189, 248, 0.08);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+        font-family: 'Outfit', sans-serif;
+        background-color: var(--bg-deep);
+        color: var(--text);
+        height: 100vh;
+        display: flex;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* ============================================================
+       2. CANVAS DE PARTÍCULAS (fondo animado)
+    ============================================================ */
+    #particle-canvas {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.4;
+    }
+
+    /* ============================================================
+       3. SIDEBAR PREMIUM
+    ============================================================ */
+    .sidebar {
+        width: 72px;
+        min-width: 72px;
+        background: rgba(7, 11, 20, 0.95);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 24px 0;
+        z-index: 200;
+        transition: width 0.4s var(--ease), min-width 0.4s var(--ease);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(20px);
+    }
+
+    .sidebar::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--blue), transparent);
+        animation: borderSlide 4s linear infinite;
+    }
+    @keyframes borderSlide {
+        0%   { background-position: -200% center; }
+        100% { background-position: 200% center; }
+    }
+
+    .sidebar:hover {
+        width: 230px;
+        min-width: 230px;
+        align-items: flex-start;
+        padding: 24px 16px;
+        box-shadow: 8px 0 40px rgba(0,0,0,0.6);
+    }
+
+    /* LOGO */
+    .brand-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 40px;
+        padding: 10px 12px;
+        border-radius: var(--radius-md);
+        width: 100%;
+        overflow: hidden;
+        min-height: 48px;
+    }
+
+    .brand-logo {
+        width: 40px; height: 40px;
+        min-width: 40px;
+        background: linear-gradient(135deg, var(--blue), #6366f1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: white;
+        box-shadow: 0 4px 20px rgba(56, 189, 248, 0.4);
+        transition: var(--transition);
+    }
+    .sidebar:hover .brand-logo { transform: rotate(-5deg) scale(1.05); }
+
+    .brand-text {
+        display: none;
+        flex-direction: column;
+        white-space: nowrap;
+    }
+    .sidebar:hover .brand-text { display: flex; }
+    .brand-title { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .brand-sub { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; }
+
+    /* MENU */
+    .menu-items { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+
+    .menu-btn {
+        padding: 13px;
+        width: 100%;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        transition: var(--transition);
+        border: 1px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+    .menu-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(56,189,248,0.05), transparent);
+        opacity: 0;
+        transition: var(--transition);
+    }
+    .menu-btn:hover::before { opacity: 1; }
+
+    .sidebar:hover .menu-btn { justify-content: flex-start; padding-left: 14px; gap: 14px; }
+    .menu-btn span { display: none; font-weight: 500; font-size: 0.9rem; white-space: nowrap; }
+    .sidebar:hover .menu-btn span { display: block; }
+    .menu-btn i { font-size: 1.05rem; min-width: 18px; text-align: center; }
+
+    .menu-btn:hover { color: var(--text); border-color: var(--border); background: rgba(255,255,255,0.04); transform: translateX(2px); }
+
+    .menu-btn.active {
+        color: var(--blue);
+        background: rgba(56, 189, 248, 0.08);
+        border-color: rgba(56, 189, 248, 0.2);
+        box-shadow: inset 3px 0 0 var(--blue), 0 4px 20px rgba(56,189,248,0.1);
+    }
+
+    /* DIVIDER */
+    .menu-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 10px 0;
+        width: 100%;
+    }
+
+    /* BOTTOM BADGE */
+    .sidebar-footer {
+        margin-top: auto;
+        padding: 0 6px;
+        width: 100%;
+        overflow: hidden;
+    }
+    .sidebar-version {
+        display: none;
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        text-align: center;
+        padding: 8px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+    .sidebar:hover .sidebar-version { display: block; }
+
+    /* PULSE BADGE en menú */
+    .menu-badge {
+        display: none;
+        background: var(--green);
+        color: #000;
+        font-size: 0.6rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 20px;
+        margin-left: auto;
+    }
+    .sidebar:hover .menu-badge { display: block; }
+
+    /* ============================================================
+       4. MAIN CONTENT
+    ============================================================ */
+    .main-content {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        padding: 24px 28px;
+        scroll-behavior: smooth;
+        position: relative;
+        z-index: 1;
+    }
+    .main-content::-webkit-scrollbar { width: 4px; }
+    .main-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ============================================================
+       5. HEADER TOP
+    ============================================================ */
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .header-info h1 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, var(--text) 0%, var(--text-sub) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
+    }
+
+    .header-meta {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+    }
+
+    .status-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(52, 211, 153, 0.08);
+        border: 1px solid rgba(52, 211, 153, 0.2);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--green);
+    }
+    .status-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green);
+        animation: pulse-green 2s ease-in-out infinite;
+    }
+    @keyframes pulse-green {
+        0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 8px var(--green); }
+        50%       { opacity: 0.5; transform: scale(0.8); box-shadow: 0 0 2px var(--green); }
+    }
+
+    .lora-pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(56, 189, 248, 0.06);
+        border: 1px solid rgba(56, 189, 248, 0.15);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        color: var(--blue);
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* CLOCK PANEL */
+    .clock-panel {
+        background: var(--bg-card);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 12px 24px;
+        text-align: right;
+        position: relative;
+        overflow: hidden;
+        min-width: 180px;
+    }
+    .clock-panel::before {
+        content: '';
+        position: absolute;
+        top: 0; right: 0;
+        width: 60px; height: 60px;
+        background: radial-gradient(circle, rgba(56,189,248,0.1), transparent 70%);
+    }
+    .clock-time {
+        font-size: 1.6rem;
+        font-weight: 300;
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--blue);
+        letter-spacing: 2px;
+        line-height: 1;
+    }
+    .clock-date {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-top: 4px;
+    }
+
+    /* ============================================================
+       6. GRID DE DASHBOARD
+    ============================================================ */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        grid-auto-rows: minmax(130px, auto);
+        gap: 18px;
+        width: 100%;
+    }
+
+    /* WIDGET BASE */
+    .widget {
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+    .widget::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+    .widget:hover {
+        border-color: rgba(255,255,255,0.1);
+        background: var(--bg-card-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4), var(--shadow-glow);
+    }
+
+    /* Grid spans */
+    .w-map    { grid-column: span 7; grid-row: span 3; padding: 0; overflow: hidden; }
+    .w-temp   { grid-column: span 5; grid-row: span 2; }
+    .w-rain   { grid-column: span 5; grid-row: span 1; }
+    .w-gauge  { grid-column: span 3; }
+    .w-mini   { grid-column: span 3; }
+    .w-spark  { grid-column: span 4; }
+    .w-wide   { grid-column: span 6; }
+    .w-full   { grid-column: span 12; }
+
+    /* Inactive */
+    .widget-inactive {
+        opacity: 0.45;
+        background: rgba(7, 11, 20, 0.5);
+        border: 1px dashed var(--border);
+        filter: grayscale(0.8);
+        pointer-events: none;
+    }
+    .widget-inactive:hover { transform: none; box-shadow: none; background: rgba(7,11,20,0.5); }
+    .badge-na {
+        background: rgba(255,255,255,0.07);
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.6rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+
+    /* ============================================================
+       7. WIDGET HEADERS & INTERNOS
+    ============================================================ */
+    .widget-header {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 16px;
+    }
+    .widget-header i { font-size: 0.95rem; }
+
+    /* MAPA */
+    #station-map { width: 100%; height: 100%; z-index: 1; }
+    .map-overlay {
+        position: absolute;
+        bottom: 20px; left: 20px;
+        background: rgba(7,11,20,0.85);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        z-index: 400;
+        font-size: 0.75rem;
+        color: var(--text-sub);
+    }
+    .map-overlay span { color: var(--blue); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+    /* TEMPERATURA PRINCIPAL */
+    .temp-hero {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        flex: 1;
+        gap: 8px;
+        position: relative;
+    }
+    .temp-ring-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .temp-ring-label {
+        position: absolute;
+        text-align: center;
+    }
+    .temp-number {
+        font-size: 3.8rem;
+        font-weight: 800;
+        line-height: 1;
+        background: linear-gradient(135deg, #fff 0%, var(--pink) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -2px;
+    }
+    .temp-unit-big {
+        font-size: 1.4rem;
+        color: var(--text-muted);
+        font-weight: 300;
+    }
+    .hum-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(56, 189, 248, 0.07);
+        border: 1px solid rgba(56, 189, 248, 0.15);
+        padding: 8px 18px;
+        border-radius: 30px;
+        font-size: 1rem;
+        color: var(--blue);
+        font-weight: 500;
+    }
+    .msg-id-row {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        font-family: 'JetBrains Mono', monospace;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+        width: 100%;
+        text-align: center;
+    }
+    .msg-id-row b { color: var(--text); }
+
+    /* GAUGE */
+    .gauge-wrap {
+        position: relative;
+        height: 105px;
+        display: flex;
+        justify-content: center;
+        flex: 1;
+    }
+    .gauge-center {
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        pointer-events: none;
+    }
+    .gauge-val {
+        font-size: 1.9rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .gauge-unit-small {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-weight: 400;
+    }
+
+    /* RAIN WIDGET */
+    .rain-grid {
+        display: grid;
+        grid-template-columns: 1fr 1px 1fr;
+        align-items: center;
+        flex: 1;
+        gap: 0;
+    }
+    .rain-col { text-align: center; padding: 10px; }
+    .rain-sep { background: var(--border); height: 60%; }
+    .rain-amount {
+        font-size: 2.4rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .rain-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-top: 6px;
+    }
+    .rain-icon { font-size: 0.85rem; margin-right: 4px; }
+
+    /* MINI STAT WIDGET */
+    .mini-stat {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex: 1;
+    }
+    .mini-icon {
+        width: 50px; height: 50px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+    .mini-info { flex: 1; }
+    .mini-val {
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .mini-sub {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 3px;
+    }
+
+    /* ============================================================
+       8. NOTIFICACIÓN TOAST
+    ============================================================ */
+    .toast-container {
+        position: fixed;
+        top: 24px; right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .toast {
+        background: rgba(16, 22, 36, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 14px 18px;
+        min-width: 280px;
+        max-width: 360px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        animation: toastIn 0.4s var(--ease);
+        transform-origin: top right;
+    }
+    @keyframes toastIn  { from { opacity: 0; transform: scale(0.9) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    @keyframes toastOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.9) translateY(-10px); } }
+    .toast-icon { font-size: 1.1rem; margin-top: 1px; }
+    .toast-body { flex: 1; }
+    .toast-title { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .toast-msg   { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .toast-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; padding: 0; }
+    .toast-close:hover { color: var(--text); }
+    .toast.toast-success { border-left: 3px solid var(--green); }
+    .toast.toast-info    { border-left: 3px solid var(--blue); }
+    .toast.toast-warn    { border-left: 3px solid var(--yellow); }
+    .toast.toast-error   { border-left: 3px solid var(--red); }
+
+    /* ============================================================
+       9. VIEWS SYSTEM (transición entre secciones)
+    ============================================================ */
+    .view-section { display: none; }
+    .view-section.active {
+        display: block;
+        animation: viewFadeIn 0.45s var(--ease);
+    }
+    @keyframes viewFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ============================================================
+       10. SECCIÓN HISTORIAL
+    ============================================================ */
+    .chart-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    .chart-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+
+    .chart-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .chart-title {
+        font-size: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .chart-title i { color: var(--blue); }
+
+    /* TAB FILTER */
+    .tab-group {
+        display: flex;
+        gap: 4px;
+        background: rgba(255,255,255,0.04);
+        padding: 4px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+    }
+    .tab-btn {
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    .tab-btn.active { background: var(--blue); color: #000; box-shadow: 0 2px 10px rgba(56,189,248,0.4); }
+
+    /* EXPORT BUTTON */
+    .btn-export-wrap { position: relative; display: inline-flex; }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--blue), #3b82f6);
+        border: none;
+        padding: 10px 20px;
+        border-radius: var(--radius-sm);
+        color: #000;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
+        font-size: 0.875rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: var(--transition);
+        box-shadow: 0 4px 20px rgba(56,189,248,0.3);
+    }
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(56,189,248,0.5);
+        filter: brightness(1.1);
+    }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .export-dropdown {
+        position: absolute;
+        right: 0; top: calc(100% + 10px);
+        background: rgba(10, 15, 25, 0.98);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        width: 230px;
+        padding: 8px;
+        box-shadow: 0 16px 50px rgba(0,0,0,0.7);
+        opacity: 0; visibility: hidden;
+        transform: translateY(-8px);
+        transition: var(--transition);
+        z-index: 1000;
+    }
+    .export-dropdown.show { opacity: 1; visibility: visible; transform: translateY(0); }
+
+    .export-separator { height: 1px; background: var(--border); margin: 6px 0; }
+
+    .export-item {
+        display: flex; align-items: center; gap: 12px;
+        padding: 11px 14px;
+        color: var(--text);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: var(--transition);
+        font-size: 0.88rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    .export-item:hover { background: rgba(255,255,255,0.07); padding-left: 18px; }
+    .export-item i { font-size: 1rem; width: 20px; text-align: center; }
+    .e-csv  i { color: var(--green); }
+    .e-json i { color: var(--orange); }
+    .e-pdf  i { color: var(--pink); }
+
+    /* TABLA */
+    .table-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        overflow-x: auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    thead th {
+        text-align: left; padding: 12px 16px;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 1.5px;
+        white-space: nowrap;
+    }
+    tbody td {
+        padding: 13px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.025);
+        color: var(--text);
+        transition: var(--transition);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,0.025); }
+    tbody tr:hover td:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+    tbody tr:hover td:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+
+    /* ============================================================
+       11. SECCIÓN HARDWARE (CONFIG)
+    ============================================================ */
+    .hw-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 18px;
+    }
+
+    .hw-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+    .hw-card:hover {
+        border-color: rgba(255,255,255,0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+    .hw-card-title {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .hw-card-title i { color: var(--blue); }
+
+    .hw-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.88rem;
+        gap: 10px;
+    }
+    .hw-row:last-child { border-bottom: none; }
+    .hw-row-label {
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .hw-row-label i { width: 16px; text-align: center; color: var(--text-muted); }
+    .hw-row-val { font-weight: 600; text-align: right; }
+
+    .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+    .chip-ok     { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+    .chip-fail   { background: rgba(248,113,113,0.12); color: var(--red);   border: 1px solid rgba(248,113,113,0.25); }
+    .chip-na     { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border); }
+    .chip-active { background: rgba(56,189,248,0.12); color: var(--blue); border: 1px solid rgba(56,189,248,0.25); }
+
+    /* PROGRESS BAR (para uptime, etc.) */
+    .progress-bar {
+        height: 4px;
+        background: rgba(255,255,255,0.07);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+    .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, var(--blue), var(--purple));
+        transition: width 1s var(--ease);
+        box-shadow: 0 0 8px rgba(56,189,248,0.5);
+    }
+
+    /* ============================================================
+       12. ACERCA DE (sección extra en sidebar)
+    ============================================================ */
+    #view-about .about-hero {
+        text-align: center;
+        padding: 40px 20px 20px;
+    }
+    .about-logo {
+        width: 80px; height: 80px;
+        background: linear-gradient(135deg, var(--blue), var(--purple));
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        margin: 0 auto 20px;
+        box-shadow: 0 8px 40px rgba(56,189,248,0.3);
+    }
+    .about-title { font-size: 1.5rem; font-weight: 800; }
+    .about-sub { color: var(--text-muted); margin-top: 6px; font-size: 0.9rem; }
+
+    .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+        margin-top: 24px;
+    }
+    .tech-chip {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 14px;
+        text-align: center;
+        transition: var(--transition);
+    }
+    .tech-chip:hover { border-color: var(--border-glow); transform: translateY(-2px); }
+    .tech-chip i { font-size: 1.4rem; display: block; margin-bottom: 8px; }
+    .tech-chip span { font-size: 0.8rem; font-weight: 600; color: var(--text-sub); }
+
+    /* ============================================================
+       13. RESPONSIVO — TABLET
+    ============================================================ */
+    @media (max-width: 1100px) {
+        .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
+        .w-map    { grid-column: span 6; height: 280px; grid-row: span 1; }
+        .w-temp   { grid-column: span 6; grid-row: span 1; }
+        .w-rain   { grid-column: span 6; }
+        .w-gauge, .w-mini { grid-column: span 3; }
+        .w-spark  { grid-column: span 6; }
+        .w-wide   { grid-column: span 6; }
+    }
+
+    /* ============================================================
+       14. RESPONSIVO — MÓVIL
+    ============================================================ */
+    @media (max-width: 640px) {
+        body { flex-direction: column; }
+
+        .sidebar {
+            width: 100%; min-width: 100%;
+            height: 64px;
+            flex-direction: row;
+            padding: 0 12px;
+            position: fixed;
+            bottom: 0; top: auto;
+            border-top: 1px solid var(--border);
+            border-right: none;
+            z-index: 999;
+            background: rgba(7,11,20,0.97);
+            justify-content: space-around;
         }
+        .sidebar::before { top: auto; bottom: 0; left: 0; right: 0; height: 1px; width: 100%; }
+        .sidebar:hover { width: 100%; min-width: 100%; padding: 0 12px; box-shadow: none; align-items: center; }
+        .brand-wrap { display: none; }
+        .menu-items { flex-direction: row; justify-content: space-around; gap: 0; }
+        .menu-btn { padding: 10px 14px; flex-direction: column; gap: 4px; font-size: 0.65rem; border-radius: 8px; justify-content: center; }
+        .sidebar:hover .menu-btn { justify-content: center; padding-left: 14px; gap: 4px; flex-direction: column; }
+        .sidebar:hover .menu-btn span { display: block; font-size: 0.65rem; }
+        .menu-btn span { display: block; font-size: 0.65rem; }
+        .menu-badge, .menu-divider, .sidebar-footer { display: none; }
+        .menu-btn.active { box-shadow: none; border-left: none; border-bottom: 2px solid var(--blue); border-top: 2px solid transparent; }
 
-        body { 
-            font-family: 'Outfit', sans-serif; 
-            background-color: var(--bg-body); 
-            color: var(--text-main); 
-            height: 100vh; 
-            display: flex; 
-            overflow: hidden; 
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.03) 0%, transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(244, 114, 182, 0.03) 0%, transparent 25%);
-        }
+        .main-content { padding: 16px 14px 90px; }
+        .header-top { margin-bottom: 18px; }
+        .header-info h1 { font-size: 1.2rem; }
+        .clock-panel { padding: 10px 16px; }
+        .clock-time { font-size: 1.3rem; }
 
-        /* --- 2. SIDEBAR INTERACTIVO --- */
-        .sidebar { width: 80px; background: var(--bg-sidebar); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; z-index: 100; transition: width 0.3s; }
-        .sidebar:hover { width: 220px; align-items: flex-start; padding: 20px; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
-        
-        .brand-icon { font-size: 1.8rem; color: var(--accent-blue); filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.3)); margin-bottom: 40px; transition: var(--transition); }
-        .sidebar:hover .brand-icon { margin-left: 10px; transform: scale(1.1); }
-        
-        .menu-items { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        .menu-btn { padding: 14px; width: 100%; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: var(--transition); border: 1px solid transparent; }
-        .sidebar:hover .menu-btn { justify-content: flex-start; padding-left: 15px; gap: 15px; }
-        .menu-btn span { display: none; font-weight: 500; font-size: 0.95rem; white-space: nowrap; }
-        .sidebar:hover .menu-btn span { display: block; }
-        
-        .menu-btn:hover { background: rgba(255, 255, 255, 0.05); color: white; border: 1px solid rgba(255,255,255,0.1); transform: translateY(-2px); }
-        .menu-btn.active { color: var(--accent-blue); background: rgba(56, 189, 248, 0.05); border-left: 3px solid var(--accent-blue); border-top: 1px solid transparent; border-right: 1px solid transparent; border-bottom: 1px solid transparent; }
+        .dashboard-grid { display: flex; flex-direction: column; gap: 14px; }
+        .w-map  { height: 220px; order: 1; }
+        .w-temp { order: 2; }
+        .w-rain { order: 3; }
+        .widget { order: 4; }
+        .widget-inactive { order: 99 !important; }
 
-        /* --- 3. MAIN CONTENT Y GRID --- */
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 30px; scroll-behavior: smooth; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .header-info h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(90deg, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            grid-auto-rows: minmax(150px, auto);
-            gap: 20px;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-        }
+        .hw-grid { grid-template-columns: 1fr; }
+        .tech-grid { grid-template-columns: repeat(2, 1fr); }
+    }
 
-        .widget {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            transition: var(--transition);
-        }
-        .widget:hover { border-color: rgba(255,255,255,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+    /* ============================================================
+       15. ANIMACIONES ESPECIALES
+    ============================================================ */
+    @keyframes shimmer {
+        0%   { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+    .skeleton {
+        background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite linear;
+        border-radius: 8px;
+    }
 
-        /* Tamaños de Grid */
-        .w-map { grid-column: span 8; grid-row: span 2; padding: 0; border: none; }
-        .w-status { grid-column: span 4; grid-row: span 2; }
-        .w-gauge { grid-column: span 3; grid-row: span 1; align-items: center; justify-content: center; }
-        .w-rain { grid-column: span 6; grid-row: span 1; }
-        .w-mini { grid-column: span 3; grid-row: span 1; }
+    @keyframes float-up {
+        0%   { opacity: 0; transform: translateY(0); }
+        50%  { opacity: 1; }
+        100% { opacity: 0; transform: translateY(-40px); }
+    }
+    .float-badge {
+        animation: float-up 2s ease-out forwards;
+        position: absolute;
+        font-size: 0.75rem;
+        font-weight: 700;
+        pointer-events: none;
+    }
 
-        /* Módulos Inactivos */
-        .widget-inactive { opacity: 0.5; background: rgba(10, 10, 10, 0.4); border: 1px dashed var(--glass-border); filter: grayscale(100%); cursor: not-allowed; }
-        .widget-inactive:hover { opacity: 0.7; transform: none; box-shadow: none; }
-        .badge-na { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    /* Scrollbar global */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-        /* --- 4. COMPONENTES INTERNOS --- */
-        .widget-header { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px; }
-        
-        #station-map { width: 100%; height: 100%; border-radius: 20px; z-index: 1; }
-        
-        .gauge-container { position: relative; width: 100%; height: 110px; display: flex; justify-content: center; }
-        .gauge-value-center { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center; }
-        .gauge-val { font-size: 2rem; font-weight: 700; line-height: 1; text-shadow: 0 0 15px rgba(0,0,0,0.5); }
-        .gauge-unit { font-size: 0.85rem; color: var(--text-muted); }
-
-        .big-value { font-size: 3rem; font-weight: 700; display: flex; align-items: baseline; gap: 5px; }
-        .big-value .unit { font-size: 1.2rem; color: var(--text-muted); font-weight: 400; }
-
-        .rain-flex { display: flex; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
-        .rain-box { text-align: center; }
-        .rain-divider { width: 1px; height: 60%; background: var(--glass-border); }
-
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } 50% { opacity: 0.4; box-shadow: 0 0 2px var(--accent-green); } 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } }
-
-        /* --- 5. TABLA Y BOTONES --- */
-        .view-section { display: none; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .view-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-top: 15px; }
-        th { text-align: left; padding: 15px; color: var(--text-muted); border-bottom: 2px solid var(--glass-border); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
-        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-main); transition: var(--transition); }
-        tr:hover td { background: rgba(255,255,255,0.02); }
-
-        .dropdown-wrapper { position: relative; display: inline-block; }
-        .btn-action { background: linear-gradient(135deg, var(--accent-blue), #2563eb); border: none; padding: 10px 20px; border-radius: 10px; color: white; font-family: 'Outfit'; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: var(--transition); box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); }
-        .btn-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5); }
-        .btn-action:disabled { opacity: 0.7; cursor: not-allowed; }
-        
-        .dropdown-menu { position: absolute; right: 0; top: calc(100% + 10px); background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 12px; width: 220px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: var(--transition); z-index: 1000; }
-        .dropdown-menu.show { opacity: 1; visibility: visible; transform: translateY(0); }
-        
-        .dropdown-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: var(--text-main); text-decoration: none; border-radius: 8px; transition: var(--transition); font-size: 0.9rem; font-weight: 500; }
-        .dropdown-item:hover { background: rgba(255,255,255,0.1); padding-left: 20px; }
-        .dropdown-item i { font-size: 1.1rem; width: 20px; text-align: center; }
-        .item-csv i { color: var(--accent-green); }
-        .item-json i { color: var(--accent-orange); }
-        .item-pdf i { color: var(--accent-pink); }
-
-        /* --- MÓVIL Y TABLET (Ajustes UX y Orden) --- */
-        @media (max-width: 1024px) {
-            .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
-            .w-map { grid-column: span 6; height: 300px; }
-            .w-status, .w-rain { grid-column: span 6; }
-            .w-gauge, .w-mini { grid-column: span 3; }
-        }
-        
-        @media (max-width: 600px) {
-            .sidebar { width: 100%; height: 70px; flex-direction: row; padding: 0 10px; position: fixed; bottom: 0; border-top: 1px solid var(--glass-border); border-right: none; z-index: 1000; background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); }
-            .sidebar:hover { width: 100%; padding: 0 10px; box-shadow: none; }
-            .brand-icon { display: none; }
-            .menu-items { flex-direction: row; justify-content: space-around; gap: 5px; }
-            .menu-btn { padding: 10px; flex-direction: column; gap: 5px; border-radius: 8px; }
-            .sidebar:hover .menu-btn span { display: none; }
-            .main-content { padding-bottom: 90px; padding-left: 15px; padding-right: 15px; }
-            
-            /* TRUCO UX: Cambiamos de Grid a Flexbox en móviles para garantizar el orden de los elementos */
-            .dashboard-grid { display: flex; flex-direction: column; gap: 15px; }
-            
-            /* ORDEN ESPECÍFICO EN CELULAR */
-            .w-map { order: 1; height: 250px; }
-            .w-status { order: 2; }
-            .w-rain { order: 3; }
-            .widget { order: 4; } /* Los demás widgets activos (Gauges de temp/hum) */
-            
-            /* Forzamos los widgets inactivos al final de la página */
-            .widget-inactive { order: 99 !important; }
-            
-            .big-value { font-size: 2.5rem; }
-        }
+    /* Leaflet customization */
+    .leaflet-popup-content-wrapper {
+        background: rgba(10,15,25,0.95) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-md) !important;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+    }
+    .leaflet-popup-tip { background: rgba(10,15,25,0.95) !important; }
+    .leaflet-control-zoom a {
+        background: rgba(10,15,25,0.9) !important;
+        color: var(--text) !important;
+        border-color: var(--border) !important;
+    }
+    .leaflet-control-zoom a:hover { background: rgba(56,189,248,0.15) !important; }
     </style>
 </head>
 <body>
 
-    <nav class="sidebar">
-        <i class="fa-solid fa-satellite-dish brand-icon"></i>
-        <div class="menu-items">
-            <div class="menu-btn active" onclick="switchView('dashboard', this)">
-                <i class="fa-solid fa-border-all"></i> <span>Dashboard</span>
-            </div>
-            <div class="menu-btn" onclick="switchView('historial', this)">
-                <i class="fa-solid fa-chart-line"></i> <span>Datos & Gráficos</span>
-            </div>
-            <div class="menu-btn" onclick="switchView('config', this)">
-                <i class="fa-solid fa-microchip"></i> <span>Hardware</span>
+<!-- CANVAS PARTÍCULAS -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ====================================================
+     SIDEBAR
+===================================================== -->
+<nav class="sidebar" id="sidebar">
+    <div class="brand-wrap">
+        <div class="brand-logo"><i class="fa-solid fa-satellite-dish"></i></div>
+        <div class="brand-text">
+            <span class="brand-title">AgroClima</span>
+            <span class="brand-sub">Pro v2.0</span>
+        </div>
+    </div>
+
+    <div class="menu-items">
+        <div class="menu-btn active" onclick="switchView('dashboard', this)" title="Dashboard">
+            <i class="fa-solid fa-border-all"></i>
+            <span>Dashboard</span>
+            <span class="menu-badge">LIVE</span>
+        </div>
+        <div class="menu-btn" onclick="switchView('historial', this)" title="Datos & Gráficos">
+            <i class="fa-solid fa-chart-area"></i>
+            <span>Datos & Gráficos</span>
+        </div>
+        <div class="menu-divider"></div>
+        <div class="menu-btn" onclick="switchView('config', this)" title="Hardware">
+            <i class="fa-solid fa-microchip"></i>
+            <span>Hardware</span>
+        </div>
+        <div class="menu-btn" onclick="switchView('about', this)" title="Acerca de">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Acerca de</span>
+        </div>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-version">INIFAP © 2025<br>Las Margaritas, Chis.</div>
+    </div>
+</nav>
+
+<!-- ====================================================
+     MAIN CONTENT
+===================================================== -->
+<main class="main-content">
+
+    <!-- HEADER -->
+    <div class="header-top">
+        <div class="header-info">
+            <h1 id="page-title">INIFAP Las Margaritas</h1>
+            <div class="header-meta">
+                <div class="status-pill">
+                    <div class="status-dot" id="header-dot"></div>
+                    <span id="header-status">En línea</span>
+                </div>
+                <div class="lora-pill">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                    <span>SHT41 · LoRa 868MHz</span>
+                </div>
             </div>
         </div>
-    </nav>
-
-    <main class="main-content">
-        <div class="header-top">
-            <div class="header-info">
-                <h1 id="page-title">INIFAP Las Margaritas</h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; margin-top: 5px;">
-                    <span class="status-dot" id="header-dot"></span> 
-                    <span id="header-status">Sensor SHT41 vía LoRa</span>
-                </p>
-            </div>
-            <div style="text-align: right; background: var(--glass-bg); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border);">
-                <h2 style="font-size: 1.5rem; font-weight: 400; letter-spacing: 2px; color: var(--accent-blue);" id="clock">00:00:00</h2>
-                <p style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;" id="date-display">--</p>
-            </div>
+        <div class="clock-panel">
+            <div class="clock-time" id="clock">00:00:00</div>
+            <div class="clock-date" id="date-display">--</div>
         </div>
+    </div>
 
-        <section id="dashboard" class="view-section active">
-            <div class="dashboard-grid">
-                
-                <div class="widget w-map">
-                    <div id="station-map"></div>
-                </div>
+    <!-- ============ SECCIÓN: DASHBOARD ============ -->
+    <section id="view-dashboard" class="view-section active">
+        <div class="dashboard-grid">
 
-                <div class="widget w-status">
-                    <div class="widget-header">
-                        <span>Estado Actual</span>
-                        <i class="fa-solid fa-bolt" style="color: var(--accent-blue);"></i>
-                    </div>
-                    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                        <i class="fa-solid fa-cloud" style="font-size: 2.5rem; color: rgba(255,255,255,0.2); margin-bottom: 10px;"></i>
-                        <div class="big-value" style="color: white; font-size: 4rem;">
-                            <span id="temp-main">--</span><span class="unit" style="font-size: 1.5rem;">°C</span>
-                        </div>
-                        <div style="color: var(--accent-blue); font-weight: 500; font-size: 1.1rem; margin-top: 5px;">
-                            <i class="fa-solid fa-droplet"></i> Humedad: <span id="hum-main">--</span>%
-                        </div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 25px; border-top: 1px solid var(--glass-border); padding-top: 10px; width: 100%; text-align: center;">
-                            Paquete LoRa Ref: <span id="msg-id" style="color: white; font-weight: bold;">--</span>
-                        </div>
-                    </div>
+            <!-- MAPA -->
+            <div class="widget w-map">
+                <div id="station-map"></div>
+                <div class="map-overlay">
+                    📍 <span>19.996°N, 97.306°W</span> · Las Margaritas
                 </div>
-
-                <div class="widget w-rain">
-                    <div class="widget-header">
-                        <span>Precipitación Acumulada (Desde medianoche)</span>
-                        <i class="fa-solid fa-cloud-showers-heavy" style="color: var(--accent-purple);"></i>
-                    </div>
-                    <div class="rain-flex">
-                        <div class="rain-box">
-                            <div class="big-value" style="color: var(--accent-orange); justify-content: center;">
-                                <span id="p1-sum-val">0.0</span><span class="unit">mm</span>
-                            </div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUVIÓMETRO 1</div>
-                        </div>
-                        <div class="rain-divider"></div>
-                        <div class="rain-box">
-                            <div class="big-value" style="color: var(--accent-purple); justify-content: center;">
-                                <span id="p2-sum-val">0.0</span><span class="unit">mm</span>
-                            </div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">PLUVIÓMETRO 2</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge">
-                    <div class="widget-header">Índice Térmico</div>
-                    <div class="gauge-container">
-                        <canvas id="gaugeTemp"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-pink);" id="g-temp-val">--</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge">
-                    <div class="widget-header">Humedad Relativa</div>
-                    <div class="gauge-container">
-                        <canvas id="gaugeHum"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-blue);" id="g-hum-val">--</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-mini">
-                    <div class="widget-header">Tendencia Temp</div>
-                    <div style="height: 60px; width: 100%;"><canvas id="sparkTemp"></canvas></div>
-                </div>
-
-                <div class="widget w-gauge widget-inactive">
-                    <div class="widget-header">Presión Atm <span class="badge-na">No Disp.</span></div>
-                    <div class="gauge-container">
-                        <canvas id="gaugePres"></canvas>
-                        <div class="gauge-value-center">
-                            <div class="gauge-val" style="color: var(--accent-disabled);">N/A</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge widget-inactive" style="text-align: center;">
-                    <div class="widget-header">Radiación Solar <span class="badge-na">No Disp.</span></div>
-                    <i class="fa-solid fa-sun" style="font-size: 3rem; color: var(--accent-disabled); margin-top: 15px;"></i>
-                    <div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-disabled); margin-top: 15px;">N/A W/m²</div>
-                </div>
-                
-                <div class="widget w-mini widget-inactive">
-                    <div class="widget-header">Anemómetro <span class="badge-na">No Disp.</span></div>
-                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; gap: 15px;">
-                        <i class="fa-solid fa-wind" style="font-size: 2rem; color: var(--accent-disabled);"></i>
-                        <span style="font-size: 1.5rem; font-weight: bold; color: var(--accent-disabled);">N/A</span>
-                    </div>
-                </div>
-
             </div>
-        </section>
 
-        <section id="historial" class="view-section">
-            <div class="widget" style="margin-bottom: 20px;">
-                <div class="widget-header" style="font-size: 1rem;">
-                    <span><i class="fa-solid fa-chart-area"></i> Gráfico General (Últimas lecturas)</span>
-                    
-                    <div class="dropdown-wrapper">
-                        <button class="btn-action" id="btnExport" onclick="toggleDropdown(event)">
-                            <i class="fa-solid fa-download"></i> Exportar Historial Completo <i class="fa-solid fa-caret-down"></i>
+            <!-- TEMPERATURA PRINCIPAL -->
+            <div class="widget w-temp">
+                <div class="widget-header">
+                    <span>Estado Actual · SHT41</span>
+                    <i class="fa-solid fa-bolt" style="color: var(--blue);"></i>
+                </div>
+                <div class="temp-hero">
+                    <div class="temp-ring-wrap">
+                        <canvas id="ringTemp" width="180" height="180"></canvas>
+                        <div class="temp-ring-label">
+                            <div class="temp-number" id="temp-main">--</div>
+                            <div class="temp-unit-big">°C</div>
+                        </div>
+                    </div>
+                    <div class="hum-row">
+                        <i class="fa-solid fa-droplet" style="color: var(--blue);"></i>
+                        Humedad: <strong id="hum-main">--</strong>%
+                    </div>
+                    <div class="msg-id-row">
+                        Paquete LoRa Ref: <b id="msg-id">--</b>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PLUVIÓMETROS -->
+            <div class="widget w-rain">
+                <div class="widget-header">
+                    <span>Precipitación · Desde medianoche</span>
+                    <i class="fa-solid fa-cloud-showers-heavy" style="color: var(--purple);"></i>
+                </div>
+                <div class="rain-grid">
+                    <div class="rain-col">
+                        <div class="rain-amount" style="color: var(--orange);">
+                            <span id="p1-sum-val">0.0</span><span style="font-size:1rem; color: var(--text-muted);"> mm</span>
+                        </div>
+                        <div class="rain-label"><i class="fa-solid fa-droplet rain-icon" style="color:var(--orange);"></i>Pluviómetro 1</div>
+                    </div>
+                    <div class="rain-sep"></div>
+                    <div class="rain-col">
+                        <div class="rain-amount" style="color: var(--purple);">
+                            <span id="p2-sum-val">0.0</span><span style="font-size:1rem; color: var(--text-muted);"> mm</span>
+                        </div>
+                        <div class="rain-label"><i class="fa-solid fa-droplet rain-icon" style="color:var(--purple);"></i>Pluviómetro 2</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GAUGE TEMPERATURA -->
+            <div class="widget w-gauge">
+                <div class="widget-header">
+                    <span>Índice Térmico</span>
+                    <i class="fa-solid fa-temperature-half" style="color: var(--pink);"></i>
+                </div>
+                <div class="gauge-wrap">
+                    <canvas id="gaugeTemp"></canvas>
+                    <div class="gauge-center">
+                        <div class="gauge-val" style="color: var(--pink);" id="g-temp-val">--</div>
+                        <div class="gauge-unit-small">°C</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GAUGE HUMEDAD -->
+            <div class="widget w-gauge">
+                <div class="widget-header">
+                    <span>Humedad Relativa</span>
+                    <i class="fa-solid fa-droplet" style="color: var(--blue);"></i>
+                </div>
+                <div class="gauge-wrap">
+                    <canvas id="gaugeHum"></canvas>
+                    <div class="gauge-center">
+                        <div class="gauge-val" style="color: var(--blue);" id="g-hum-val">--</div>
+                        <div class="gauge-unit-small">%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SPARKLINE TEMPERATURA -->
+            <div class="widget w-mini">
+                <div class="widget-header">
+                    <span>Tendencia · Temp</span>
+                </div>
+                <div style="flex:1; min-height:60px; position:relative;">
+                    <canvas id="sparkTemp"></canvas>
+                </div>
+            </div>
+
+            <!-- SPARKLINE HUMEDAD -->
+            <div class="widget w-mini">
+                <div class="widget-header">
+                    <span>Tendencia · Hum</span>
+                </div>
+                <div style="flex:1; min-height:60px; position:relative;">
+                    <canvas id="sparkHum"></canvas>
+                </div>
+            </div>
+
+            <!-- INACTIVOS -->
+            <div class="widget w-gauge widget-inactive">
+                <div class="widget-header">Presión Atm <span class="badge-na">No Disp.</span></div>
+                <div class="gauge-wrap">
+                    <canvas id="gaugePres"></canvas>
+                    <div class="gauge-center">
+                        <div class="gauge-val" style="color: var(--disabled);">N/A</div>
+                        <div class="gauge-unit-small">hPa</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="widget w-gauge widget-inactive" style="align-items:center; justify-content:center; text-align:center;">
+                <div class="widget-header">Radiación Solar <span class="badge-na">No Disp.</span></div>
+                <i class="fa-solid fa-sun" style="font-size:2.8rem; color: var(--disabled); margin: 16px 0;"></i>
+                <div style="font-size:0.9rem; font-weight:700; color: var(--disabled);">N/A W/m²</div>
+            </div>
+
+            <div class="widget w-mini widget-inactive">
+                <div class="widget-header">Viento <span class="badge-na">No Disp.</span></div>
+                <div style="display:flex; align-items:center; justify-content:center; flex:1; gap:14px;">
+                    <i class="fa-solid fa-wind" style="font-size:2rem; color:var(--disabled);"></i>
+                    <span style="font-size:1.5rem; font-weight:700; color:var(--disabled);">N/A</span>
+                </div>
+            </div>
+
+        </div><!-- /dashboard-grid -->
+    </section>
+
+    <!-- ============ SECCIÓN: HISTORIAL ============ -->
+    <section id="view-historial" class="view-section">
+        <div class="chart-card">
+            <div class="chart-controls">
+                <div class="chart-title">
+                    <i class="fa-solid fa-chart-area"></i>
+                    <span>Evolución histórica · Últimas lecturas</span>
+                </div>
+                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                    <div class="tab-group">
+                        <button class="tab-btn active" onclick="setChartRange(30, this)">30 pts</button>
+                        <button class="tab-btn" onclick="setChartRange(60, this)">60 pts</button>
+                        <button class="tab-btn" onclick="setChartRange(120, this)">120 pts</button>
+                    </div>
+                    <div class="btn-export-wrap">
+                        <button class="btn-primary" id="btnExport" onclick="toggleDropdown(event)">
+                            <i class="fa-solid fa-download"></i> Exportar <i class="fa-solid fa-chevron-down" style="font-size:0.7rem;"></i>
                         </button>
-                        <div class="dropdown-menu" id="exportMenu">
-                            <a href="#" class="dropdown-item item-csv" onclick="exportData('csv', event)">
+                        <div class="export-dropdown" id="exportMenu">
+                            <a class="export-item e-csv" onclick="exportData('csv', event)">
                                 <i class="fa-solid fa-file-csv"></i> Excel (.CSV)
                             </a>
-                            <a href="#" class="dropdown-item item-json" onclick="exportData('json', event)">
-                                <i class="fa-solid fa-file-code"></i> Formato crudo (.JSON)
+                            <a class="export-item e-json" onclick="exportData('json', event)">
+                                <i class="fa-solid fa-file-code"></i> Crudo (.JSON)
                             </a>
-                            <a href="#" class="dropdown-item item-pdf" onclick="exportData('pdf', event)">
-                                <i class="fa-solid fa-file-pdf"></i> Reporte Limpio (.PDF)
+                            <div class="export-separator"></div>
+                            <a class="export-item e-pdf" onclick="exportData('pdf', event)">
+                                <i class="fa-solid fa-file-pdf"></i> Reporte PDF
                             </a>
                         </div>
                     </div>
                 </div>
-                <div style="position: relative; height: 350px; width: 100%;">
-                    <canvas id="mainChart"></canvas>
+            </div>
+            <div style="position:relative; height:320px; width:100%;">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                <div style="font-size:0.72rem; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted);">
+                    <i class="fa-solid fa-table" style="color:var(--blue);"></i> &nbsp;Registro detallado
+                </div>
+                <div style="font-family:'JetBrains Mono', monospace; font-size:0.75rem; color:var(--text-muted);" id="record-count">-- registros cargados</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th><i class="fa-solid fa-temperature-half" style="color:var(--pink);"></i> Temp °C</th>
+                        <th><i class="fa-solid fa-droplet" style="color:var(--blue);"></i> Hum %</th>
+                        <th><i class="fa-solid fa-cloud-rain" style="color:var(--orange);"></i> Pluv 1</th>
+                        <th><i class="fa-solid fa-cloud-rain" style="color:var(--purple);"></i> Pluv 2</th>
+                        <th>SD Card</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">
+                        <i class="fa-solid fa-spinner fa-spin"></i> &nbsp;Cargando base de datos...
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ============ SECCIÓN: HARDWARE ============ -->
+    <section id="view-config" class="view-section">
+        <div class="hw-grid">
+
+            <!-- Microcontrolador -->
+            <div class="hw-card">
+                <div class="hw-card-title">
+                    <i class="fa-solid fa-microchip"></i> Microcontrolador
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-tag"></i> Modelo</span>
+                    <span class="hw-row-val" style="color:var(--blue);">Heltec LoRa V3</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-brands fa-cpu"></i> CPU</span>
+                    <span class="hw-row-val">ESP32-S3 · 240 MHz</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-memory"></i> Flash / RAM</span>
+                    <span class="hw-row-val">8 MB / 512 KB</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-circle-check"></i> Estado</span>
+                    <span class="status-chip chip-active"><i class="fa-solid fa-circle-dot"></i> Operativo</span>
                 </div>
             </div>
 
-            <div class="widget" style="overflow-x: auto;">
-                <div class="widget-header">Registro Detallado (Últimos recibidos)</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Hora</th>
-                            <th>Temp (°C)</th>
-                            <th>Hum (%)</th>
-                            <th>Pluv 1 (mm)</th>
-                            <th>Pluv 2 (mm)</th>
-                            <th>Estado SD</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-table-body">
-                        <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando base de datos...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="config" class="view-section">
-            <div class="widget" style="max-width: 600px;">
-                <div class="widget-header">Diagnóstico de Hardware</div>
-                <div style="padding: 15px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-sd-card"></i> Estado Memoria SD (Datalogger):</span>
-                    <span id="sd-status-text" style="padding: 5px 12px; border-radius: 8px; font-weight: bold; background: rgba(255,255,255,0.1);">Verificando...</span>
+            <!-- Sensor Principal -->
+            <div class="hw-card">
+                <div class="hw-card-title">
+                    <i class="fa-solid fa-temperature-half"></i> Sensor Principal
                 </div>
-                <div style="padding: 15px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-microchip"></i> Microcontrolador:</span>
-                    <span style="color: var(--text-main); font-weight: 500;">Heltec LoRa V3 (ESP32)</span>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-tag"></i> Modelo</span>
+                    <span class="hw-row-val" style="color:var(--pink);">SHT41</span>
                 </div>
-                <div style="padding: 15px 0; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-temperature-half"></i> Sensor Principal:</span>
-                    <span style="color: var(--accent-pink); font-weight: 500;">SHT41 (I2C)</span>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-plug"></i> Interfaz</span>
+                    <span class="hw-row-val">I²C · 400 kHz</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-bullseye"></i> Precisión</span>
+                    <span class="hw-row-val">±0.2°C · ±1.8% HR</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-circle-check"></i> Estado</span>
+                    <span class="status-chip chip-ok"><i class="fa-solid fa-check"></i> Activo</span>
                 </div>
             </div>
-        </section>
 
-    </main>
+            <!-- SD Card / Datalogger -->
+            <div class="hw-card">
+                <div class="hw-card-title">
+                    <i class="fa-solid fa-sd-card"></i> Almacenamiento SD
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-tag"></i> Tipo</span>
+                    <span class="hw-row-val">MicroSD · SPI</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-database"></i> Formato</span>
+                    <span class="hw-row-val">CSV · FAT32</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-circle-check"></i> Estado</span>
+                    <span id="sd-status-chip" class="status-chip chip-ok"><i class="fa-solid fa-check"></i> Operativa</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="sd-progress" style="width: 0%;"></div>
+                </div>
+            </div>
 
-<script>
-    // --- RELOJ ---
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString('es-MX', {hour12: false});
-        document.getElementById('date-display').innerText = now.toLocaleDateString('es-MX', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+            <!-- Comunicación LoRa -->
+            <div class="hw-card">
+                <div class="hw-card-title">
+                    <i class="fa-solid fa-tower-broadcast"></i> Comunicación LoRa
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-radio"></i> Frecuencia</span>
+                    <span class="hw-row-val" style="color:var(--green);">868 MHz</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-signal"></i> RSSI</span>
+                    <span class="hw-row-val" id="rssi-val">-- dBm</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-satellite"></i> Protocolo</span>
+                    <span class="hw-row-val">SX1262 · SF7-SF12</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-circle-check"></i> Enlace</span>
+                    <span class="status-chip chip-ok"><i class="fa-solid fa-check"></i> Establecido</span>
+                </div>
+            </div>
 
-    // --- NAVEGACIÓN ---
-    function switchView(viewId, btn) {
-        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(viewId).classList.add('active');
-        document.getElementById('exportMenu').classList.remove('show');
-    }
+            <!-- Pluviómetros -->
+            <div class="hw-card">
+                <div class="hw-card-title">
+                    <i class="fa-solid fa-cloud-showers-heavy"></i> Pluviómetros
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-tag"></i> Tipo</span>
+                    <span class="hw-row-val">Báscula de balancín</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-ruler"></i> Resolución</span>
+                    <span class="hw-row-val">0.2 mm / pulso</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-plug"></i> Interfaz</span>
+                    <span class="hw-row-val">GPIO · Interrupción</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-hashtag"></i> Cantidad</span>
+                    <span class="hw-row-val" style="color:var(--green);">2 unidades activas</span>
+                </div>
+            </div>
 
-    // --- LÓGICA DEL DROPDOWN Y EXPORTACIÓN CORREGIDA ---
-    function toggleDropdown(e) {
-        e.preventDefault();
-        document.getElementById('exportMenu').classList.toggle('show');
-    }
+            <!-- Sensores No Disponibles -->
+            <div class="hw-card" style="opacity:0.55; filter:grayscale(0.7);">
+                <div class="hw-card-title">
+                    <i class="fa-solid fa-circle-xmark" style="color:var(--text-muted);"></i> Módulos Pendientes
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-sun"></i> Piranómetro</span>
+                    <span class="status-chip chip-na">No Disp.</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-wind"></i> Anemómetro</span>
+                    <span class="status-chip chip-na">No Disp.</span>
+                </div>
+                <div class="hw-row">
+                    <span class="hw-row-label"><i class="fa-solid fa-gauge-high"></i> Barométrico</span>
+                    <span class="status-chip chip-na">No Disp.</span>
+                </div>
+            </div>
 
-    window.onclick = function(event) {
-        if (!event.target.closest('.btn-action') && !event.target.closest('.dropdown-menu')) {
-            const dropdowns = document.getElementsByClassName("dropdown-menu");
-            for (let i = 0; i < dropdowns.length; i++) {
-                if (dropdowns[i].classList.contains('show')) {
-                    dropdowns[i].classList.remove('show');
-                }
-            }
-        }
-    }
+        </div>
+    </section>
 
-    // Exportación completa a Firebase
-    function exportData(format, e) {
-        e.preventDefault();
-        document.getElementById('exportMenu').classList.remove('show');
-        
-        const btn = document.getElementById('btnExport');
-        const originalHTML = btn.innerHTML;
-        
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Descargando miles de datos...';
-        btn.disabled = true;
+    <!-- ============ SECCIÓN: ACERCA DE ============ -->
+    <section id="view-about" class="view-section">
+        <div class="hw-card" style="max-width:700px; margin: 0 auto;">
+            <div class="about-hero">
+                <div class="about-logo"><i class="fa-solid fa-satellite-dish"></i></div>
+                <div class="about-title">AgroClima Pro</div>
+                <div class="about-sub">Estación Meteorológica Inteligente · INIFAP Las Margaritas, Chiapas</div>
+            </div>
+            <div style="padding: 0 20px 20px;">
+                <div class="tech-grid">
+                    <div class="tech-chip"><i class="fa-solid fa-microchip" style="color:var(--blue);"></i><span>ESP32-S3</span></div>
+                    <div class="tech-chip"><i class="fa-solid fa-tower-broadcast" style="color:var(--green);"></i><span>LoRa 868</span></div>
+                    <div class="tech-chip"><i class="fa-brands fa-google" style="color:var(--orange);"></i><span>Firebase RTDB</span></div>
+                    <div class="tech-chip"><i class="fa-solid fa-map" style="color:var(--purple);"></i><span>Leaflet JS</span></div>
+                    <div class="tech-chip"><i class="fa-solid fa-chart-bar" style="color:var(--pink);"></i><span>Chart.js 4</span></div>
+                    <div class="tech-chip"><i class="fa-solid fa-file-pdf" style="color:var(--red);"></i><span>jsPDF</span></div>
+                </div>
+                <div style="margin-top:24px; font-size:0.82rem; color:var(--text-muted); line-height:1.7; text-align:center;">
+                    Sistema de monitoreo agrometeorológico en tiempo real desarrollado para el INIFAP.<br>
+                    Transmisión inalámbrica via LoRa · Almacenamiento en Firebase RTDB · SHT41 de alta precisión.
+                </div>
+            </div>
+        </div>
+    </section>
 
-        db.ref('/estacion1/historial').once('value').then(snap => {
-            const allData = [];
-            snap.forEach(child => {
-                if(child.val().fecha) {
-                    allData.push(child.val());
-                }
-            });
-
-            if (allData.length === 0) {
-                alert("No hay datos en la base de datos para exportar.");
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-                return;
-            }
-
-            const dateStr = new Date().toISOString().split('T')[0];
-            const fileName = `INIFAP_Margaritas_Historial_${dateStr}`;
-
-            if (format === 'csv') {
-                let csvContent = "Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm)\n";
-                allData.forEach(row => {
-                    const dt = new Date(row.fecha);
-                    csvContent += `${dt.toLocaleDateString('es-MX')},${dt.toLocaleTimeString('es-MX')},${row.temperatura || 0},${row.humedad || 0},${row.pluv1_mm || 0},${row.pluv2_mm || 0}\n`;
-                });
-                downloadBlob(csvContent, `${fileName}.csv`, 'text/csv');
-            } 
-            else if (format === 'json') {
-                const jsonContent = JSON.stringify(allData, null, 2);
-                downloadBlob(jsonContent, `${fileName}.json`, 'application/json');
-            }
-            else if (format === 'pdf') {
-                generarPDF(fileName, allData);
-            }
-
-            btn.innerHTML = originalHTML;
-            btn.disabled = false;
-            
-        }).catch(error => {
-            console.error(error);
-            alert("Hubo un error contactando a la base de datos.");
-            btn.innerHTML = originalHTML;
-            btn.disabled = false;
-        });
-    }
-
-    function downloadBlob(content, fileName, contentType) {
-        const a = document.createElement("a");
-        const file = new Blob([content], { type: contentType });
-        a.href = URL.createObjectURL(file);
-        a.download = fileName;
-        a.click();
-    }
-
-    function generarPDF(fileName, dataArray) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        doc.text("Reporte Climatológico Completo - INIFAP Las Margaritas", 14, 20);
-        
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text(`Fecha de generación: ${new Date().toLocaleString('es-MX')}`, 14, 28);
-        doc.text(`Sensor: SHT41 | Total de registros: ${dataArray.length}`, 14, 33);
-
-        const tableColumn = ["Fecha", "Hora", "Temp (°C)", "Hum (%)", "Pluv 1 (mm)", "Pluv 2 (mm)"];
-        const tableRows = [];
-
-        dataArray.forEach(row => {
-            const dt = new Date(row.fecha);
-            tableRows.push([
-                dt.toLocaleDateString('es-MX'),
-                dt.toLocaleTimeString('es-MX'),
-                (row.temperatura || 0).toString(),
-                (row.humedad || 0).toString(),
-                (row.pluv1_mm || 0).toString(),
-                (row.pluv2_mm || 0).toString()
-            ]);
-        });
-
-        doc.autoTable({
-            head: [tableColumn],
-            body: tableRows,
-            startY: 40,
-            theme: 'striped',
-            headStyles: { fillColor: [56, 189, 248] }, 
-            styles: { fontSize: 9 }
-        });
-
-        doc.save(`${fileName}.pdf`);
-    }
-
-    // --- MAPA LEAFLET ---
-    const map = L.map('station-map', { zoomControl: false }).setView([19.996, -97.306], 12);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20
-    }).addTo(map);
-    
-    const stationIcon = L.divIcon({
-        className: 'custom-div-icon',
-        html: "<div style='background-color:var(--accent-blue); width:16px; height:16px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>",
-        iconSize: [16, 16], iconAnchor: [8, 8]
-    });
-    L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map)
-        .bindPopup('<b style="color:black;">Estación LoRa Mando</b><br>Las Margaritas, INIFAP')
-        .openPopup();
-
-    // --- GRÁFICOS (CHART.JS) ---
-    Chart.defaults.color = '#94a3b8';
-    Chart.defaults.font.family = 'Outfit';
-
-    const gaugeOptions = {
-        circumference: 180, rotation: -90, cutout: '80%',
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-        maintainAspectRatio: false, responsive: true
-    };
-
-    const ctxGaugeTemp = document.getElementById('gaugeTemp').getContext('2d');
-    const chartGaugeTemp = new Chart(ctxGaugeTemp, {
-        type: 'doughnut',
-        data: { datasets: [{ data: [0, 50], backgroundColor: ['#f472b6', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
-        options: gaugeOptions
-    });
-
-    const ctxGaugeHum = document.getElementById('gaugeHum').getContext('2d');
-    const chartGaugeHum = new Chart(ctxGaugeHum, {
-        type: 'doughnut',
-        data: { datasets: [{ data: [0, 100], backgroundColor: ['#38bdf8', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
-        options: gaugeOptions
-    });
-
-    const ctxGaugePres = document.getElementById('gaugePres').getContext('2d');
-    new Chart(ctxGaugePres, {
-        type: 'doughnut',
-        data: { datasets: [{ data: [1, 1], backgroundColor: ['#475569', '#1e293b'], borderWidth: 0, borderRadius: 10 }] },
-        options: gaugeOptions
-    });
-
-    const ctxMain = document.getElementById('mainChart').getContext('2d');
-    const mainChart = new Chart(ctxMain, {
-        type: 'line',
-        data: { labels: [], datasets: [
-            { label: 'Temp °C', data: [], borderColor: '#f472b6', tension: 0.4, borderWidth: 3, pointRadius: 0, fill: true, backgroundColor: 'rgba(244, 114, 182, 0.05)' },
-            { label: 'Hum %', data: [], borderColor: '#38bdf8', tension: 0.4, borderWidth: 3, pointRadius: 0, fill: true, backgroundColor: 'rgba(56, 189, 248, 0.05)' }
-        ]},
-        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
-    });
-
-    const ctxSpark = document.getElementById('sparkTemp').getContext('2d');
-    const sparkChart = new Chart(ctxSpark, {
-        type: 'line',
-        data: { labels: [], datasets: [{ data: [], borderColor: '#f472b6', tension: 0.4, borderWidth: 2, pointRadius: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
-    });
-
-    // --- FIREBASE LOGIC ---
-    const firebaseConfig = { databaseURL: "https://estacion-texcoco-default-rtdb.firebaseio.com" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    let currentDayStamp = new Date().setHours(0,0,0,0);
-    
-    function calcularLluvia() {
-        db.ref('/estacion1/historial').orderByChild('fecha').startAt(currentDayStamp).on('value', snap => {
-            let sP1 = 0, sP2 = 0;
-            snap.forEach(child => {
-                const v = child.val();
-                if(v.pluv1_mm) sP1 += parseFloat(v.pluv1_mm);
-                if(v.pluv2_mm) sP2 += parseFloat(v.pluv2_mm);
-            });
-            document.getElementById('p1-sum-val').innerText = sP1.toFixed(1);
-            document.getElementById('p2-sum-val').innerText = sP2.toFixed(1);
-        });
-    }
-    calcularLluvia();
-
-    db.ref('/estacion1/historial').limitToLast(30).on('value', snap => {
-        let labels = [], dTemp = [], dHum = [];
-        let tableRowsHTML = "";
-        let lastT = 0, lastH = 0, lastId = "--", lastSD = 1;
-
-        snap.forEach(child => {
-            const val = child.val();
-            if(val.fecha) {
-                const timeStr = new Date(val.fecha).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
-                labels.push(timeStr);
-                
-                const temp = val.temperatura !== undefined ? parseFloat(val.temperatura).toFixed(1) : 0;
-                const hum = val.humedad !== undefined ? parseFloat(val.humedad).toFixed(0) : 0;
-                const p1 = val.pluv1_mm !== undefined ? parseFloat(val.pluv1_mm).toFixed(1) : 0;
-                const p2 = val.pluv2_mm !== undefined ? parseFloat(val.pluv2_mm).toFixed(1) : 0;
-                const sd = val.estado_sd !== undefined ? val.estado_sd : 1;
-
-                dTemp.push(temp);
-                dHum.push(hum);
-                
-                lastT = temp; lastH = hum; lastId = val.id_mensaje || "--"; lastSD = sd;
-
-                let sdBadge = sd === 1 ? `<span style="color:var(--accent-green);"><i class="fa-solid fa-check"></i> OK</span>` : `<span style="color:var(--accent-pink);"><i class="fa-solid fa-xmark"></i> Falla</span>`;
-                
-                tableRowsHTML = `<tr>
-                    <td style="color:#f1f5f9; font-weight:500;">${timeStr}</td>
-                    <td style="color:var(--accent-pink); font-weight:bold;">${temp}°</td>
-                    <td style="color:var(--accent-blue); font-weight:bold;">${hum}%</td>
-                    <td style="color:var(--accent-orange);">${p1}</td>
-                    <td style="color:var(--accent-purple);">${p2}</td>
-                    <td>${sdBadge}</td>
-                </tr>` + tableRowsHTML;
-            }
-        });
-
-        if(tableRowsHTML === "") tableRowsHTML = "<tr><td colspan='6' style='text-align:center;'>No hay datos recientes.</td></tr>";
-        document.getElementById('history-table-body').innerHTML = tableRowsHTML;
-
-        document.getElementById('temp-main').innerText = lastT;
-        document.getElementById('hum-main').innerText = lastH;
-        document.getElementById('msg-id').innerText = lastId;
-
-        document.getElementById('g-temp-val').innerText = lastT + "°";
-        chartGaugeTemp.data.datasets[0].data = [lastT, Math.max(0, 50 - lastT)];
-        chartGaugeTemp.update();
-
-        document.getElementById('g-hum-val').innerText = lastH + "%";
-        chartGaugeHum.data.datasets[0].data = [lastH, Math.max(0, 100 - lastH)];
-        chartGaugeHum.update();
-
-        mainChart.data.labels = labels;
-        mainChart.data.datasets[0].data = dTemp;
-        mainChart.data.datasets[1].data = dHum;
-        mainChart.update();
-
-        sparkChart.data.labels = labels;
-        sparkChart.data.datasets[0].data = dTemp;
-        sparkChart.update();
-
-        const sdText = document.getElementById('sd-status-text');
-        if (lastSD === 1) {
-            sdText.innerHTML = '<i class="fa-solid fa-circle-check"></i> OPERATIVA';
-            sdText.style.color = "var(--accent-green)";
-            sdText.style.background = "rgba(52, 211, 153, 0.1)";
-        } else {
-            sdText.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> FALLA DETECTADA';
-            sdText.style.color = "var(--accent-pink)";
-            sdText.style.background = "rgba(244, 114, 182, 0.1)";
-        }
-    });
-</script>
-</body>
-</html>
+</main>
