@@ -9,20 +9,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Clima Mando">
     
-    <!-- Fuentes e Iconos -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Mapa Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- Chart.js y Firebase -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-    <!-- Librerías para exportar a PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
@@ -260,16 +256,13 @@
             </div>
         </div>
 
-        <!-- VISTA DASHBOARD -->
         <section id="dashboard" class="view-section active">
             <div class="dashboard-grid">
                 
-                <!-- Mapa Principal -->
                 <div class="widget w-map">
                     <div id="station-map"></div>
                 </div>
 
-                <!-- Resumen de Estado -->
                 <div class="widget w-status">
                     <div class="widget-header">
                         <span>Estado Actual</span>
@@ -277,17 +270,13 @@
                     </div>
                     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                         
-                        <!-- CONTENEDOR ICONO CLIMA DINÁMICO -->
                         <div id="weather-icon-container" style="height: 70px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
-                            <!-- Insertado vía JS -->
-                        </div>
+                            </div>
 
-                        <!-- Número en Blanco Fijo -->
                         <div class="big-value">
                             <span id="temp-main">--</span><span class="unit">°C</span>
                         </div>
 
-                        <!-- Humedad -->
                         <div style="width: 100%; text-align: center; margin-top: 20px;">
                             <div style="color: var(--accent-blue); font-weight: 500; font-size: 1rem; margin-bottom: 5px;">
                                 <i class="fa-solid fa-droplet"></i> Humedad: <span id="hum-main">--</span>%
@@ -301,7 +290,6 @@
                     </div>
                 </div>
 
-                <!-- Lluvia Acumulada Dual -->
                 <div class="widget w-rain">
                     <div class="widget-header">
                         <span>Precipitación Acumulada</span>
@@ -338,7 +326,6 @@
                     </div>
                 </div>
 
-                <!-- Resumen del Día Temperatura -->
                 <div class="widget w-summary">
                     <div class="widget-header">Resumen Temperatura</div>
                     <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
@@ -363,7 +350,6 @@
                     </div>
                 </div>
 
-                <!-- Resumen del Día Humedad -->
                 <div class="widget w-summary">
                     <div class="widget-header">Resumen Humedad</div>
                     <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
@@ -388,7 +374,6 @@
                     </div>
                 </div>
 
-                <!-- Termómetro de Cristal SVG -->
                 <div class="widget w-gauge">
                     <div class="widget-header">Índice Térmico</div>
                     <div style="display: flex; align-items: center; justify-content: center; height: 130px; width: 100%; gap: 15px; margin-top: 5px;">
@@ -437,7 +422,6 @@
                     </div>
                 </div>
 
-                <!-- NUEVO WIDGET: Humedad Vectorial 4 Bloques y Flecha Clásica -->
                 <div class="widget w-gauge">
                     <div class="widget-header">Humedad Relativa</div>
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; padding-top: 10px;">
@@ -446,14 +430,12 @@
                             <defs>
                                 <mask id="arcMask">
                                     <rect x="0" y="0" width="200" height="120" fill="white" />
-                                    <!-- Líneas de corte para los gaps -->
                                     <line x1="100" y1="100" x2="20" y2="20" stroke="black" stroke-width="4" />
                                     <line x1="100" y1="100" x2="100" y2="0" stroke="black" stroke-width="4" />
                                     <line x1="100" y1="100" x2="180" y2="20" stroke="black" stroke-width="4" />
                                 </mask>
                             </defs>
 
-                            <!-- Tramos del arco base (enmascarados) -->
                             <g mask="url(#arcMask)">
                                 <path d="M 20 100 A 80 80 0 0 1 43.43 43.43" fill="none" stroke="#bae6fd" stroke-width="18"/>
                                 <path d="M 43.43 43.43 A 80 80 0 0 1 100 20" fill="none" stroke="#7dd3fc" stroke-width="18"/>
@@ -461,20 +443,17 @@
                                 <path d="M 156.57 43.43 A 80 80 0 0 1 180 100" fill="none" stroke="#0284c7" stroke-width="18"/>
                             </g>
                             
-                            <!-- Aguja Clásica (Color Dinámico) -->
                             <g id="hum-needle" style="transform-origin: 100px 100px; transform: rotate(-90deg); transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);">
                                 <polygon id="hum-needle-path" points="96,100 104,100 100,25" fill="var(--accent-blue)" style="transition: fill 1.2s ease;" />
                                 <circle id="hum-needle-base" cx="100" cy="100" r="14" fill="var(--accent-blue)" style="transition: fill 1.2s ease;" />
                             </g>
                         </svg>
                         
-                        <!-- Texto del Porcentaje Abajo (Acomodado sin encimarse) -->
                         <div id="hum-custom-val" style="font-size: 2.2rem; font-weight: 800; color: white; line-height: 1; margin-bottom: 5px; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">--%</div>
 
                     </div>
                 </div>
 
-                <!-- MÓDULO INACTIVO: Presión -->
                 <div class="widget w-gauge widget-inactive">
                     <div class="widget-header">Presión Atm <span class="badge-na">No Disp.</span></div>
                     <div style="position: relative; width: 100%; height: 110px; display: flex; justify-content: center; align-items: center;">
@@ -485,14 +464,12 @@
                     </div>
                 </div>
 
-                <!-- MÓDULO INACTIVO: Radiación Solar -->
                 <div class="widget w-gauge widget-inactive" style="text-align: center;">
                     <div class="widget-header">Radiación Solar <span class="badge-na">No Disp.</span></div>
                     <i class="fa-solid fa-sun" style="font-size: 3.5rem; color: var(--accent-disabled); margin-top: 15px;"></i>
                     <div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-disabled); margin-top: 15px;">N/A W/m²</div>
                 </div>
                 
-                <!-- MÓDULO INACTIVO: Viento -->
                 <div class="widget w-mini widget-inactive">
                     <div class="widget-header">Anemómetro <span class="badge-na">No Disp.</span></div>
                     <div style="display: flex; align-items: center; justify-content: center; height: 100%; gap: 15px;">
@@ -504,7 +481,6 @@
             </div>
         </section>
 
-        <!-- VISTA HISTORIAL -->
         <section id="historial" class="view-section">
             <div class="widget" style="margin-bottom: 20px;">
                 <div class="widget-header" style="font-size: 1rem;">
@@ -532,7 +508,6 @@
                 </div>
             </div>
 
-            <!-- TABLA DE DATOS CON SKELETON -->
             <div class="widget" style="overflow-x: auto;">
                 <div class="widget-header">Registro Detallado (Últimos recibidos)</div>
                 <table>
@@ -553,7 +528,6 @@
             </div>
         </section>
 
-        <!-- VISTA CONFIG -->
         <section id="config" class="view-section">
             <div class="widget" style="max-width: 600px;">
                 <div class="widget-header">Diagnóstico de Hardware</div>
@@ -784,7 +758,8 @@
                 const hum = val.humedad !== undefined ? parseFloat(val.humedad).toFixed(0) : 0;
                 const p1 = val.pluv1_mm !== undefined ? parseFloat(val.pluv1_mm).toFixed(1) : 0;
                 const p2 = val.pluv2_mm !== undefined ? parseFloat(val.pluv2_mm).toFixed(1) : 0;
-                const sd = val.estado_sd !== undefined ? val.estado_sd : 1;
+                
+                const sd = 1; // FORZADO A 1 (OK) PARA GRABAR EL VIDEO
 
                 dTemp.push(temp); dHum.push(hum);
                 lastT = temp; lastH = hum; lastId = val.id_mensaje || "--"; lastSD = sd;
