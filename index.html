@@ -23,7 +23,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-        /* --- 1. VARIABLES Y RESET --- */
+        /* --- VARIABLES Y RESET --- */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         :root {
@@ -64,29 +64,26 @@
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 
-        /* --- 2. SIDEBAR INTERACTIVO --- */
+        /* --- SIDEBAR --- */
         .sidebar { width: 80px; background: var(--bg-sidebar); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; z-index: 100; transition: width 0.3s; }
         .sidebar:hover { width: 220px; align-items: flex-start; padding: 20px; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
-        
         .brand-icon { font-size: 1.8rem; color: var(--accent-blue); filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.3)); margin-bottom: 40px; transition: var(--transition); }
         .sidebar:hover .brand-icon { margin-left: 10px; transform: scale(1.1); }
-        
         .menu-items { display: flex; flex-direction: column; gap: 10px; width: 100%; }
         .menu-btn { padding: 14px; width: 100%; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: var(--transition); border: 1px solid transparent; }
         .sidebar:hover .menu-btn { justify-content: flex-start; padding-left: 15px; gap: 15px; }
         .menu-btn span { display: none; font-weight: 500; font-size: 0.95rem; white-space: nowrap; }
         .sidebar:hover .menu-btn span { display: block; }
-        
         .menu-btn:hover { background: rgba(255, 255, 255, 0.05); color: white; border: 1px solid rgba(255,255,255,0.1); transform: translateY(-2px); }
         .menu-btn.active { color: var(--accent-blue); background: rgba(56, 189, 248, 0.05); border-left: 3px solid var(--accent-blue); border-top: 1px solid transparent; border-right: 1px solid transparent; border-bottom: 1px solid transparent; }
 
-        /* --- NUEVO: SELECTOR DE ESTACIONES --- */
+        /* --- SELECTOR ESTACIONES --- */
         .station-tabs { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
         .tab-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 10px; color: var(--text-muted); cursor: pointer; font-family: 'Outfit'; font-weight: 600; transition: var(--transition); }
         .tab-btn:hover { background: rgba(255,255,255,0.1); color: white; }
         .tab-btn.active { background: var(--accent-blue); color: #000; border-color: var(--accent-blue); box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
 
-        /* --- 3. MAIN CONTENT Y GRID --- */
+        /* --- MAIN CONTENT Y GRID --- */
         .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 30px; scroll-behavior: smooth; }
         .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }
         .header-info h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(90deg, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
@@ -113,9 +110,8 @@
         .widget-inactive:hover { opacity: 0.7; transform: none; box-shadow: none; }
         .badge-na { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* --- 4. COMPONENTES Y ANIMACIONES --- */
+        /* --- COMPONENTES Y ANIMACIONES --- */
         .widget-header { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }
-        
         #station-map { width: 100%; height: 100%; border-radius: 20px; z-index: 1; }
         
         .big-value { font-size: 4rem; font-weight: 800; display: flex; align-items: baseline; justify-content: center; gap: 5px; color: white; transition: color 0.5s ease; }
@@ -127,16 +123,6 @@
         .fa-stack { width: 3em; height: 3em; line-height: 3em; }
         @keyframes pulse-sun { 0%, 100% { filter: drop-shadow(0 0 15px #fbbf24); transform: scale(1); } 50% { filter: drop-shadow(0 0 30px #fbbf24); transform: scale(1.05); } }
 
-        .anim-rain-container { position: relative; width: 60px; height: 45px; display: flex; justify-content: center; margin: 0 auto 5px auto; }
-        .anim-cloud { font-size: 2.2rem; color: white; animation: float-cloud 3s ease-in-out infinite; position: relative; z-index: 2; filter: drop-shadow(0 0 8px rgba(255,255,255,0.2)); }
-        .anim-drop { position: absolute; font-size: 0.7rem; opacity: 0; animation: fall-drop 1.2s linear infinite; }
-        .drop-1 { left: 15px; top: 20px; animation-delay: 0s; }
-        .drop-2 { left: 30px; top: 20px; animation-delay: 0.4s; }
-        .drop-3 { left: 45px; top: 20px; animation-delay: 0.8s; }
-        
-        @keyframes float-cloud { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-        @keyframes fall-drop { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(18px); opacity: 0; } }
-
         .rain-flex { display: flex; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
         .rain-box { text-align: center; }
         .rain-divider { width: 1px; height: 60%; background: var(--glass-border); }
@@ -145,7 +131,7 @@
         @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } 50% { opacity: 0.4; box-shadow: 0 0 2px var(--accent-green); } 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } }
         .status-dot.offline { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); animation: none; }
 
-        /* --- 5. TABLA Y EXPORTACIÓN --- */
+        /* --- TABLA Y EXPORTACIÓN --- */
         .view-section { display: none; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -173,7 +159,7 @@
         .item-json i { color: var(--accent-orange); }
         .item-pdf i { color: var(--accent-pink); }
 
-        /* --- 6. MÓVIL Y TABLET --- */
+        /* --- MÓVIL Y TABLET --- */
         @media (max-width: 1024px) {
             .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
             .w-map { grid-column: span 6; height: 300px; }
@@ -225,7 +211,6 @@
             <div class="header-info">
                 <h1 id="page-title">INIFAP Margaritas - Nodo 1</h1>
                 
-                <!-- PESTAÑAS DE LAS ESTACIONES -->
                 <div class="station-tabs">
                     <button id="tab-st-1" class="tab-btn active" onclick="changeStation(1)">Estación 1</button>
                     <button id="tab-st-2" class="tab-btn" onclick="changeStation(2)">Estación 2</button>
@@ -284,7 +269,6 @@
                     </div>
                 </div>
 
-                <!-- AHORA MOSTRAMOS LOS 4 PLUVIÓMETROS COMO ME PEDISTE -->
                 <div class="widget w-rain" style="grid-column: span 12;">
                     <div class="widget-header">
                         <span>Precipitación Acumulada</span>
@@ -295,28 +279,28 @@
                             <div class="big-value" style="font-size: 2.5rem;">
                                 <span id="p1-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--accent-blue); font-weight: 600;">PLUV 1 (Pin 6)</div>
+                            <div style="font-size: 0.85rem; color: var(--accent-blue); font-weight: 600;">PLUV 1</div>
                         </div>
                         <div class="rain-divider"></div>
                         <div class="rain-box">
                             <div class="big-value" style="font-size: 2.5rem;">
                                 <span id="p2-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--accent-green); font-weight: 600;">PLUV 2 (Pin 5)</div>
+                            <div style="font-size: 0.85rem; color: var(--accent-green); font-weight: 600;">PLUV 2</div>
                         </div>
                         <div class="rain-divider"></div>
                         <div class="rain-box">
                             <div class="big-value" style="font-size: 2.5rem;">
                                 <span id="p3-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--accent-orange); font-weight: 600;">PLUV 3 (Pin 4)</div>
+                            <div style="font-size: 0.85rem; color: var(--accent-orange); font-weight: 600;">PLUV 3</div>
                         </div>
                         <div class="rain-divider"></div>
                         <div class="rain-box">
                             <div class="big-value" style="font-size: 2.5rem;">
                                 <span id="p4-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--accent-purple); font-weight: 600;">PLUV 4 (Pin 2)</div>
+                            <div style="font-size: 0.85rem; color: var(--accent-purple); font-weight: 600;">PLUV 4</div>
                         </div>
                     </div>
                 </div>
@@ -387,6 +371,10 @@
                             </a>
                             <a href="#" class="dropdown-item item-json" onclick="exportData('json', event)">
                                 <i class="fa-solid fa-file-code"></i> Formato crudo (.JSON)
+                            </a>
+                            <!-- BOTÓN DE PDF RESTAURADO -->
+                            <a href="#" class="dropdown-item item-pdf" onclick="exportData('pdf', event)">
+                                <i class="fa-solid fa-file-pdf"></i> Reporte Limpio (.PDF)
                             </a>
                         </div>
                     </div>
@@ -479,7 +467,6 @@
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Descargando...';
         btn.disabled = true;
 
-        // Exportar apuntando a la estación actual
         db.ref('/estacion' + currentStation + '/historial').once('value').then(snap => {
             const allData = [];
             snap.forEach(child => { if(child.val().fecha) allData.push(child.val()); });
@@ -497,6 +484,8 @@
                 downloadBlob(csvContent, `${fileName}.csv`, 'text/csv');
             } 
             else if (format === 'json') { downloadBlob(JSON.stringify(allData, null, 2), `${fileName}.json`, 'application/json'); }
+            // LÓGICA DE PDF RESTAURADA Y ADAPTADA A 4 COLUMNAS
+            else if (format === 'pdf') { generarPDF(fileName, allData); }
 
             btn.innerHTML = originalHTML; btn.disabled = false;
         }).catch(err => { alert("Error de conexión."); btn.innerHTML = originalHTML; btn.disabled = false; });
@@ -509,13 +498,43 @@
         a.download = fileName; a.click();
     }
 
+    // FUNCIÓN DEL PDF
+    function generarPDF(fileName, dataArray) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('landscape'); // Horizontal para que quepan bien las 4 borneras
+        doc.setFont("helvetica", "bold"); doc.setFontSize(16);
+        doc.text("Reporte Climatológico Completo - INIFAP", 14, 20);
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        doc.text(`Fecha de corte: ${new Date().toLocaleString('es-MX')} | Estación Nodo: ${currentStation} | Total de Registros: ${dataArray.length}`, 14, 28);
+
+        const tableRows = dataArray.map(r => {
+            const dt = new Date(r.fecha);
+            return [
+                dt.toLocaleDateString('es-MX'), 
+                dt.toLocaleTimeString('es-MX'), 
+                (r.temperatura||0).toString(), 
+                (r.humedad||0).toString(), 
+                (r.pluv1_mm||0).toString(), 
+                (r.pluv2_mm||0).toString(),
+                (r.pluv3_mm||0).toString(),
+                (r.pluv4_mm||0).toString()
+            ];
+        });
+
+        doc.autoTable({
+            head: [["Fecha", "Hora", "Temp (°C)", "Hum (%)", "Pluv 1 (mm)", "Pluv 2 (mm)", "Pluv 3 (mm)", "Pluv 4 (mm)"]],
+            body: tableRows, startY: 35, theme: 'striped',
+            headStyles: { fillColor: [56, 189, 248] }, styles: { fontSize: 9 }
+        });
+        doc.save(`${fileName}.pdf`);
+    }
+
     // --- MAPA LEAFLET ---
     const map = L.map('station-map', { zoomControl: false }).setView([20.5, -99.0], 6);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20 }).addTo(map);
     const stationIcon = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:var(--accent-blue); width:16px; height:16px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>", iconSize: [16, 16], iconAnchor: [8, 8] });
     
-    // Aquí podrías agregar un arreglo de coordenadas para cada estación si están regadas en el campo
-    let currentMarker = L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map).bindPopup('<b style="color:black;">Estación 1</b><br>INIFAP Las Margaritas').openPopup();
+    let currentMarker = L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map).bindPopup('<b style="color:black;">Estación LoRa</b><br>INIFAP Las Margaritas').openPopup();
 
     // --- GRÁFICOS CHART.JS ---
     Chart.defaults.color = '#94a3b8';
@@ -531,12 +550,7 @@
         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
     });
 
-
-    // ============================================================
-    // LÓGICA CORE DE FIREBASE Y CAMBIO DE ESTACIÓN
-    // ============================================================
-    
-    // ⚠️ ATENCIÓN: ¡URL ACTUALIZADA A TU NUEVO PROYECTO! ⚠️
+    // --- LÓGICA CORE DE FIREBASE ---
     const firebaseConfig = { databaseURL: "https://estaciones-margaritas-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -546,20 +560,16 @@
     let realtimeListenerRef = null;
     let currentDayStamp = new Date().setHours(0,0,0,0);
 
-    // FUNCIÓN MAGISTRAL PARA CAMBIAR DE ESTACIÓN
     function changeStation(id) {
         currentStation = id;
         
-        // 1. Apariencia de los botones
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById('tab-st-' + id).classList.add('active');
 
-        // 2. Actualizar Textos
         document.getElementById('page-title').innerText = "INIFAP Margaritas - Nodo " + id;
         document.getElementById('export-lbl').innerText = id;
         document.getElementById('diag-st').innerText = "Estación " + id;
         
-        // Limpiar UI visualmente para que se note el cambio
         document.getElementById('temp-main').innerText = "--";
         document.getElementById('hum-main').innerText = "--";
         document.getElementById('weather-icon-container').innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="color: var(--text-muted); font-size: 2rem;"></i>`;
@@ -567,18 +577,16 @@
         document.getElementById('header-dot').className = 'status-dot offline';
         document.getElementById('header-status-text').innerText = "Cargando datos...";
 
-        // 3. APAGAR LOS MICRÓFONOS ANTERIORES PARA EVITAR MEZCLAS DE DATOS
         if(dailyListenerRef) dailyListenerRef.off();
         if(realtimeListenerRef) realtimeListenerRef.off();
 
-        // 4. ENCENDER LOS NUEVOS MICRÓFONOS
         arrancarListenersBaseDeDatos();
     }
 
     function arrancarListenersBaseDeDatos() {
         const rutaEstacion = '/estacion' + currentStation + '/historial';
 
-        // --- LISTENER 1: DATOS DIARIOS (MÁXIMAS, MÍNIMAS, LLUVIA TOTAL) ---
+        // LISTENER DATOS DIARIOS
         dailyListenerRef = db.ref(rutaEstacion).orderByChild('fecha').startAt(currentDayStamp);
         
         dailyListenerRef.on('value', snap => {
@@ -607,13 +615,11 @@
                 }
             });
 
-            // Imprimir Sumas de Lluvia de los 4 puertos
             document.getElementById('p1-sum-val').innerText = sP1.toFixed(1);
             document.getElementById('p2-sum-val').innerText = sP2.toFixed(1);
             document.getElementById('p3-sum-val').innerText = sP3.toFixed(1);
             document.getElementById('p4-sum-val').innerText = sP4.toFixed(1);
 
-            // Imprimir Resúmenes si hay datos
             if(temps.length > 0) {
                 const avgT = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
                 const avgH = (hums.reduce((a, b) => a + b, 0) / hums.length).toFixed(0);
@@ -630,13 +636,12 @@
                 document.getElementById('dash-min-h-time').innerText = minHTime;
                 document.getElementById('dash-avg-h').innerText = avgH;
             } else {
-                // Limpiar si es una estación nueva sin datos hoy
                 document.getElementById('dash-max-t').innerText = "--°C"; document.getElementById('dash-min-t').innerText = "--°C"; document.getElementById('dash-avg-t').innerText = "--";
                 document.getElementById('dash-max-h').innerText = "--%"; document.getElementById('dash-min-h').innerText = "--%"; document.getElementById('dash-avg-h').innerText = "--";
             }
         });
 
-        // --- LISTENER 2: TIEMPO REAL Y GRÁFICOS (ÚLTIMOS 30 DATOS) ---
+        // LISTENER TIEMPO REAL
         realtimeListenerRef = db.ref(rutaEstacion).limitToLast(30);
         
         realtimeListenerRef.on('value', snap => {
@@ -688,7 +693,6 @@
                 document.getElementById('header-dot').className = 'status-dot';
                 document.getElementById('header-status-text').innerText = "Sensor SHT41 vía LoRa";
 
-                // Ícono Dinámico
                 const iconContainer = document.getElementById('weather-icon-container');
                 if(lastT < 25) { iconContainer.innerHTML = `<i class="fa-solid fa-cloud" style="color: white; font-size: 3.5rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));"></i>`; } 
                 else if(lastT < 32) { iconContainer.innerHTML = `<span class="fa-stack" style="font-size: 1.8rem; width: 4rem; height: 3.5rem;"><i class="fa-solid fa-sun fa-stack-1x" style="color: #fbbf24; transform: translate(12px, -12px) scale(1.3);"></i><i class="fa-solid fa-cloud fa-stack-1x" style="color: white; transform: translate(-5px, 5px) scale(1.5); filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));"></i></span>`; } 
@@ -696,20 +700,16 @@
             }
 
             document.getElementById('history-table-body').innerHTML = tableRowsHTML;
-
-            // Actualizar Números Finales
             document.getElementById('temp-main').innerText = lastT;
             document.getElementById('hum-main').innerText = lastH;
             document.getElementById('hum-bar').style.width = lastH + '%';
             document.getElementById('msg-id').innerText = lastId;
 
-            // Gráficos de Líneas Historial
             mainChart.data.labels = labels;
             mainChart.data.datasets[0].data = dTemp;
             mainChart.data.datasets[1].data = dHum;
             mainChart.update();
 
-            // Estado SD
             const sdText = document.getElementById('sd-status-text');
             if (lastSD === 1) {
                 sdText.innerHTML = '<i class="fa-solid fa-circle-check"></i> OPERATIVA';
@@ -721,13 +721,11 @@
         });
     }
 
-    // Cronómetro de reinicio de medianoche
     setInterval(() => {
         const todayStamp = new Date().setHours(0,0,0,0);
         if(currentDayStamp !== todayStamp) { currentDayStamp = todayStamp; arrancarListenersBaseDeDatos(); }
     }, 60000);
 
-    // ARRANCAR LA PÁGINA EN LA ESTACIÓN 1 POR DEFECTO
     changeStation(1);
 
 </script>
