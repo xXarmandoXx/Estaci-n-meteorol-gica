@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Estación Meteorológica | Mando</title>
+    <title>Estaciones Margaritas | Mando</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -80,10 +80,16 @@
         .menu-btn:hover { background: rgba(255, 255, 255, 0.05); color: white; border: 1px solid rgba(255,255,255,0.1); transform: translateY(-2px); }
         .menu-btn.active { color: var(--accent-blue); background: rgba(56, 189, 248, 0.05); border-left: 3px solid var(--accent-blue); border-top: 1px solid transparent; border-right: 1px solid transparent; border-bottom: 1px solid transparent; }
 
+        /* --- NUEVO: SELECTOR DE ESTACIONES --- */
+        .station-tabs { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .tab-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 10px; color: var(--text-muted); cursor: pointer; font-family: 'Outfit'; font-weight: 600; transition: var(--transition); }
+        .tab-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .tab-btn.active { background: var(--accent-blue); color: #000; border-color: var(--accent-blue); box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
+
         /* --- 3. MAIN CONTENT Y GRID --- */
         .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 30px; scroll-behavior: smooth; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .header-info h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(90deg, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }
+        .header-info h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(90deg, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
         
         .lora-signal { display: flex; align-items: flex-end; gap: 3px; height: 14px; margin-left: 10px; }
         .lora-bar { width: 3px; background: var(--accent-blue); border-radius: 2px; animation: signal-pulse 1.5s infinite; }
@@ -93,32 +99,10 @@
         .lora-bar:nth-child(4) { height: 14px; animation-delay: 0.6s; }
         @keyframes signal-pulse { 0%,100% { opacity:1; box-shadow: 0 0 5px var(--accent-blue);} 50% { opacity:0.3; box-shadow: none;} }
 
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            grid-auto-rows: minmax(150px, auto);
-            gap: 20px;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .widget {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            transition: var(--transition);
-        }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); grid-auto-rows: minmax(150px, auto); gap: 20px; max-width: 1600px; margin: 0 auto; width: 100%; }
+        .widget { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.15); transition: var(--transition); }
         .widget:hover { border-color: rgba(255,255,255,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
 
-        /* Tamaños de Grid Ajustados */
         .w-map { grid-column: span 8; grid-row: span 2; padding: 0; border: none; }
         .w-status { grid-column: span 4; grid-row: span 2; }
         .w-rain { grid-column: span 6; grid-row: span 1; }
@@ -140,11 +124,9 @@
         .hum-bar-wrap { width: 80%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 6px; margin-top: 5px; overflow: hidden; }
         .hum-bar { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--accent-blue-dark), var(--accent-blue)); transition: width 1s ease; }
 
-        /* Icono Sol-Nube Stacked */
         .fa-stack { width: 3em; height: 3em; line-height: 3em; }
         @keyframes pulse-sun { 0%, 100% { filter: drop-shadow(0 0 15px #fbbf24); transform: scale(1); } 50% { filter: drop-shadow(0 0 30px #fbbf24); transform: scale(1.05); } }
 
-        /* Lluvia Animada Individual */
         .anim-rain-container { position: relative; width: 60px; height: 45px; display: flex; justify-content: center; margin: 0 auto 5px auto; }
         .anim-cloud { font-size: 2.2rem; color: white; animation: float-cloud 3s ease-in-out infinite; position: relative; z-index: 2; filter: drop-shadow(0 0 8px rgba(255,255,255,0.2)); }
         .anim-drop { position: absolute; font-size: 0.7rem; opacity: 0; animation: fall-drop 1.2s linear infinite; }
@@ -161,6 +143,7 @@
 
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } 50% { opacity: 0.4; box-shadow: 0 0 2px var(--accent-green); } 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } }
+        .status-dot.offline { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); animation: none; }
 
         /* --- 5. TABLA Y EXPORTACIÓN --- */
         .view-section { display: none; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -190,7 +173,7 @@
         .item-json i { color: var(--accent-orange); }
         .item-pdf i { color: var(--accent-pink); }
 
-        /* --- 6. MÓVIL Y TABLET (FLEXBOX ORDENADO) --- */
+        /* --- 6. MÓVIL Y TABLET --- */
         @media (max-width: 1024px) {
             .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
             .w-map { grid-column: span 6; height: 300px; }
@@ -207,16 +190,16 @@
             .sidebar:hover .menu-btn span { display: none; }
             .main-content { padding-bottom: 90px; padding-left: 15px; padding-right: 15px; }
             
-            /* ORDEN MÁGICO PARA CELULARES (Mapa Arriba) */
             .dashboard-grid { display: flex; flex-direction: column; gap: 15px; }
             .w-map { order: 1; height: 250px; }
             .w-status { order: 2; }
             .w-rain { order: 3; }
             .w-summary { order: 4; }
             .w-gauge { order: 5; }
-            
             .widget-inactive { order: 99 !important; }
             .big-value { font-size: 3.5rem; }
+            .station-tabs { justify-content: space-between; }
+            .tab-btn { padding: 8px 12px; font-size: 0.9rem; }
         }
     </style>
 </head>
@@ -240,11 +223,21 @@
     <main class="main-content">
         <div class="header-top">
             <div class="header-info">
-                <h1 id="page-title">INIFAP Las Margaritas</h1>
-                <p style="color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+                <h1 id="page-title">INIFAP Margaritas - Nodo 1</h1>
+                
+                <!-- PESTAÑAS DE LAS ESTACIONES -->
+                <div class="station-tabs">
+                    <button id="tab-st-1" class="tab-btn active" onclick="changeStation(1)">Estación 1</button>
+                    <button id="tab-st-2" class="tab-btn" onclick="changeStation(2)">Estación 2</button>
+                    <button id="tab-st-3" class="tab-btn" onclick="changeStation(3)">Estación 3</button>
+                    <button id="tab-st-4" class="tab-btn" onclick="changeStation(4)">Estación 4</button>
+                    <button id="tab-st-5" class="tab-btn" onclick="changeStation(5)">Estación 5</button>
+                </div>
+
+                <p style="color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; margin-top: 10px;">
                     <span class="status-dot" id="header-dot"></span> 
-                    <span>Sensor SHT41 vía LoRa</span>
-                    <span class="lora-signal">
+                    <span id="header-status-text">Sensor SHT41 vía LoRa</span>
+                    <span class="lora-signal" id="header-lora-bars">
                         <span class="lora-bar"></span><span class="lora-bar"></span>
                         <span class="lora-bar"></span><span class="lora-bar"></span>
                     </span>
@@ -271,7 +264,8 @@
                     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                         
                         <div id="weather-icon-container" style="height: 70px; display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
-                            </div>
+                            <i class="fa-solid fa-spinner fa-spin" style="color: var(--text-muted); font-size: 2rem;"></i>
+                        </div>
 
                         <div class="big-value">
                             <span id="temp-main">--</span><span class="unit">°C</span>
@@ -290,43 +284,44 @@
                     </div>
                 </div>
 
-                <div class="widget w-rain">
+                <!-- AHORA MOSTRAMOS LOS 4 PLUVIÓMETROS COMO ME PEDISTE -->
+                <div class="widget w-rain" style="grid-column: span 12;">
                     <div class="widget-header">
                         <span>Precipitación Acumulada</span>
                         <i class="fa-solid fa-cloud-showers-heavy" style="color: var(--text-muted);"></i>
                     </div>
                     <div class="rain-flex">
                         <div class="rain-box">
-                            <div class="anim-rain-container">
-                                <i class="fa-solid fa-cloud anim-cloud"></i>
-                                <i class="fa-solid fa-droplet anim-drop drop-1" style="color: var(--accent-orange);"></i>
-                                <i class="fa-solid fa-droplet anim-drop drop-2" style="color: var(--accent-orange);"></i>
-                                <i class="fa-solid fa-droplet anim-drop drop-3" style="color: var(--accent-orange);"></i>
-                            </div>
-                            <div class="big-value" style="font-size: 3rem;">
+                            <div class="big-value" style="font-size: 2.5rem;">
                                 <span id="p1-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--accent-orange); font-weight: 600; margin-top: 5px;">PLUV 1</div>
+                            <div style="font-size: 0.85rem; color: var(--accent-blue); font-weight: 600;">PLUV 1 (Pin 6)</div>
                         </div>
-                        
                         <div class="rain-divider"></div>
-                        
                         <div class="rain-box">
-                            <div class="anim-rain-container">
-                                <i class="fa-solid fa-cloud anim-cloud"></i>
-                                <i class="fa-solid fa-droplet anim-drop drop-1" style="color: var(--accent-purple);"></i>
-                                <i class="fa-solid fa-droplet anim-drop drop-2" style="color: var(--accent-purple);"></i>
-                                <i class="fa-solid fa-droplet anim-drop drop-3" style="color: var(--accent-purple);"></i>
-                            </div>
-                            <div class="big-value" style="font-size: 3rem;">
+                            <div class="big-value" style="font-size: 2.5rem;">
                                 <span id="p2-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--accent-purple); font-weight: 600; margin-top: 5px;">PLUV 2</div>
+                            <div style="font-size: 0.85rem; color: var(--accent-green); font-weight: 600;">PLUV 2 (Pin 5)</div>
+                        </div>
+                        <div class="rain-divider"></div>
+                        <div class="rain-box">
+                            <div class="big-value" style="font-size: 2.5rem;">
+                                <span id="p3-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--accent-orange); font-weight: 600;">PLUV 3 (Pin 4)</div>
+                        </div>
+                        <div class="rain-divider"></div>
+                        <div class="rain-box">
+                            <div class="big-value" style="font-size: 2.5rem;">
+                                <span id="p4-sum-val">0.0</span><span class="unit" style="font-size: 1rem;">mm</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--accent-purple); font-weight: 600;">PLUV 4 (Pin 2)</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="widget w-summary">
+                <div class="widget w-summary" style="grid-column: span 6;">
                     <div class="widget-header">Resumen Temperatura</div>
                     <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
@@ -350,7 +345,7 @@
                     </div>
                 </div>
 
-                <div class="widget w-summary">
+                <div class="widget w-summary" style="grid-column: span 6;">
                     <div class="widget-header">Resumen Humedad</div>
                     <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
@@ -374,121 +369,17 @@
                     </div>
                 </div>
 
-                <div class="widget w-gauge">
-                    <div class="widget-header">Índice Térmico</div>
-                    <div style="display: flex; align-items: center; justify-content: center; height: 130px; width: 100%; gap: 15px; margin-top: 5px;">
-                        
-                        <svg viewBox="0 0 100 150" style="height: 120px; overflow: visible; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
-                            <defs>
-                                <linearGradient id="thermoGrad" x1="0" y1="1" x2="0" y2="0">
-                                    <stop offset="0%" stop-color="#38bdf8" />
-                                    <stop offset="30%" stop-color="#34d399" />
-                                    <stop offset="60%" stop-color="#fbbf24" />
-                                    <stop offset="80%" stop-color="#fb923c" />
-                                    <stop offset="100%" stop-color="#f87171" />
-                                </linearGradient>
-                                <clipPath id="thermoClip">
-                                    <path d="M 42,20 v 85 a 15,15 0 1,0 16,0 v -85 a 8,8 0 0,0 -16,0 z" />
-                                </clipPath>
-                            </defs>
-                            
-                            <line x1="62" y1="20" x2="70" y2="20" stroke="white" stroke-width="1.5"/>
-                            <text x="75" y="23" fill="white" font-size="8">50</text>
-                            <line x1="62" y1="38" x2="67" y2="38" stroke="white" stroke-width="1"/>
-                            <text x="70" y="41" fill="#94a3b8" font-size="7">40</text>
-                            <line x1="62" y1="56" x2="70" y2="56" stroke="white" stroke-width="1.5"/>
-                            <text x="75" y="59" fill="white" font-size="8">30</text>
-                            <line x1="62" y1="74" x2="67" y2="74" stroke="white" stroke-width="1"/>
-                            <text x="70" y="77" fill="#94a3b8" font-size="7">20</text>
-                            <line x1="62" y1="92" x2="70" y2="92" stroke="white" stroke-width="1.5"/>
-                            <text x="75" y="95" fill="white" font-size="8">10</text>
-                            <line x1="62" y1="110" x2="67" y2="110" stroke="white" stroke-width="1"/>
-                            <text x="70" y="113" fill="#94a3b8" font-size="7">0</text>
-
-                            <path d="M 38,20 v 85 a 18,18 0 1,0 24,0 v -85 a 12,12 0 0,0 -24,0 z" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
-                            
-                            <g clip-path="url(#thermoClip)">
-                                <rect x="30" y="0" width="40" height="150" fill="rgba(0,0,0,0.2)" />
-                                <rect id="thermo-liquid" x="30" y="110" width="40" height="40" fill="url(#thermoGrad)" style="transition: y 1s ease, height 1s ease;" />
-                            </g>
-                            
-                            <circle cx="50" cy="118" r="5" fill="rgba(255,255,255,0.3)" />
-                        </svg>
-
-                        <div style="display: flex; flex-direction: column; justify-content: center;">
-                            <div id="thermo-val-text" style="font-size: 2.2rem; font-weight: 800; color: white; line-height: 1;">--°</div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">Celsius</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge">
-                    <div class="widget-header">Humedad Relativa</div>
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; padding-top: 10px;">
-                        
-                        <svg viewBox="0 0 200 110" style="width: 100%; max-width: 170px; overflow: visible;">
-                            <defs>
-                                <mask id="arcMask">
-                                    <rect x="0" y="0" width="200" height="120" fill="white" />
-                                    <line x1="100" y1="100" x2="20" y2="20" stroke="black" stroke-width="4" />
-                                    <line x1="100" y1="100" x2="100" y2="0" stroke="black" stroke-width="4" />
-                                    <line x1="100" y1="100" x2="180" y2="20" stroke="black" stroke-width="4" />
-                                </mask>
-                            </defs>
-
-                            <g mask="url(#arcMask)">
-                                <path d="M 20 100 A 80 80 0 0 1 43.43 43.43" fill="none" stroke="#bae6fd" stroke-width="18"/>
-                                <path d="M 43.43 43.43 A 80 80 0 0 1 100 20" fill="none" stroke="#7dd3fc" stroke-width="18"/>
-                                <path d="M 100 20 A 80 80 0 0 1 156.57 43.43" fill="none" stroke="#38bdf8" stroke-width="18"/>
-                                <path d="M 156.57 43.43 A 80 80 0 0 1 180 100" fill="none" stroke="#0284c7" stroke-width="18"/>
-                            </g>
-                            
-                            <g id="hum-needle" style="transform-origin: 100px 100px; transform: rotate(-90deg); transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);">
-                                <polygon id="hum-needle-path" points="96,100 104,100 100,25" fill="var(--accent-blue)" style="transition: fill 1.2s ease;" />
-                                <circle id="hum-needle-base" cx="100" cy="100" r="14" fill="var(--accent-blue)" style="transition: fill 1.2s ease;" />
-                            </g>
-                        </svg>
-                        
-                        <div id="hum-custom-val" style="font-size: 2.2rem; font-weight: 800; color: white; line-height: 1; margin-bottom: 5px; text-shadow: 0 2px 5px rgba(0,0,0,0.5);">--%</div>
-
-                    </div>
-                </div>
-
-                <div class="widget w-gauge widget-inactive">
-                    <div class="widget-header">Presión Atm <span class="badge-na">No Disp.</span></div>
-                    <div style="position: relative; width: 100%; height: 110px; display: flex; justify-content: center; align-items: center;">
-                        <i class="fa-solid fa-gauge-high" style="font-size: 3.5rem; color: var(--accent-disabled);"></i>
-                        <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); text-align: center;">
-                            <div style="color: var(--accent-disabled); font-size: 1.5rem; font-weight: bold;">N/A</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="widget w-gauge widget-inactive" style="text-align: center;">
-                    <div class="widget-header">Radiación Solar <span class="badge-na">No Disp.</span></div>
-                    <i class="fa-solid fa-sun" style="font-size: 3.5rem; color: var(--accent-disabled); margin-top: 15px;"></i>
-                    <div style="font-size: 0.9rem; font-weight: bold; color: var(--accent-disabled); margin-top: 15px;">N/A W/m²</div>
-                </div>
-                
-                <div class="widget w-mini widget-inactive">
-                    <div class="widget-header">Anemómetro <span class="badge-na">No Disp.</span></div>
-                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; gap: 15px;">
-                        <i class="fa-solid fa-wind" style="font-size: 2rem; color: var(--accent-disabled);"></i>
-                        <span style="font-size: 1.5rem; font-weight: bold; color: var(--accent-disabled);">N/A</span>
-                    </div>
-                </div>
-
             </div>
         </section>
 
         <section id="historial" class="view-section">
             <div class="widget" style="margin-bottom: 20px;">
                 <div class="widget-header" style="font-size: 1rem;">
-                    <span><i class="fa-solid fa-chart-area"></i> Gráfico General (Últimas lecturas)</span>
+                    <span><i class="fa-solid fa-chart-area"></i> Gráfico General</span>
                     
                     <div class="dropdown-wrapper">
                         <button class="btn-action" id="btnExport" onclick="toggleDropdown(event)">
-                            <i class="fa-solid fa-download"></i> Exportar Historial <i class="fa-solid fa-caret-down"></i>
+                            <i class="fa-solid fa-download"></i> Exportar Estación <span id="export-lbl">1</span> <i class="fa-solid fa-caret-down"></i>
                         </button>
                         <div class="dropdown-menu" id="exportMenu">
                             <a href="#" class="dropdown-item item-csv" onclick="exportData('csv', event)">
@@ -496,9 +387,6 @@
                             </a>
                             <a href="#" class="dropdown-item item-json" onclick="exportData('json', event)">
                                 <i class="fa-solid fa-file-code"></i> Formato crudo (.JSON)
-                            </a>
-                            <a href="#" class="dropdown-item item-pdf" onclick="exportData('pdf', event)">
-                                <i class="fa-solid fa-file-pdf"></i> Reporte Limpio (.PDF)
                             </a>
                         </div>
                     </div>
@@ -516,13 +404,15 @@
                             <th>Hora</th>
                             <th>Temp (°C)</th>
                             <th>Hum (%)</th>
-                            <th>Pluv 1 (mm)</th>
-                            <th>Pluv 2 (mm)</th>
+                            <th>P1</th>
+                            <th>P2</th>
+                            <th>P3</th>
+                            <th>P4</th>
                             <th>Estado SD</th>
                         </tr>
                     </thead>
                     <tbody id="history-table-body">
-                        <tr><td colspan="6" style="padding: 25px;"><div class="skeleton"></div></td></tr>
+                        <tr><td colspan="8" style="padding: 25px;"><div class="skeleton"></div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -530,7 +420,7 @@
 
         <section id="config" class="view-section">
             <div class="widget" style="max-width: 600px;">
-                <div class="widget-header">Diagnóstico de Hardware</div>
+                <div class="widget-header">Diagnóstico de Hardware - <span id="diag-st">Estación 1</span></div>
                 <div style="padding: 15px 0; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
                     <span style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-sd-card"></i> Estado Memoria SD (Datalogger):</span>
                     <span id="sd-status-text" style="padding: 5px 12px; border-radius: 8px; font-weight: bold; background: rgba(255,255,255,0.1);">Verificando...</span>
@@ -558,22 +448,6 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // --- LÓGICA DE COLORES DINÁMICOS ---
-    function getTempColor(t) {
-        if(t < 20) return '#38bdf8'; // Azul (Fresco)
-        if(t < 26) return '#34d399'; // Verde (Templado)
-        if(t < 32) return '#fbbf24'; // Amarillo (Cálido)
-        if(t < 36) return '#fb923c'; // Naranja (Caliente)
-        return '#f87171'; // Rojo (Muy Caliente)
-    }
-
-    function getHumColor(h) {
-        if(h < 25) return '#bae6fd'; 
-        if(h < 50) return '#7dd3fc'; 
-        if(h < 75) return '#38bdf8'; 
-        return '#0284c7'; 
-    }
-
     // --- NAVEGACIÓN Y EXPORTACIÓN ---
     function switchView(viewId, btn) {
         document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
@@ -592,9 +466,7 @@
         if (!event.target.closest('.btn-action') && !event.target.closest('.dropdown-menu')) {
             const dropdowns = document.getElementsByClassName("dropdown-menu");
             for (let i = 0; i < dropdowns.length; i++) {
-                if (dropdowns[i].classList.contains('show')) {
-                    dropdowns[i].classList.remove('show');
-                }
+                if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show');
             }
         }
     }
@@ -607,24 +479,24 @@
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Descargando...';
         btn.disabled = true;
 
-        db.ref('/estacion1/historial').once('value').then(snap => {
+        // Exportar apuntando a la estación actual
+        db.ref('/estacion' + currentStation + '/historial').once('value').then(snap => {
             const allData = [];
             snap.forEach(child => { if(child.val().fecha) allData.push(child.val()); });
-            if (allData.length === 0) { alert("No hay datos."); btn.innerHTML = originalHTML; btn.disabled = false; return; }
+            if (allData.length === 0) { alert("No hay datos para esta estación."); btn.innerHTML = originalHTML; btn.disabled = false; return; }
 
             const dateStr = new Date().toISOString().split('T')[0];
-            const fileName = `INIFAP_Margaritas_${dateStr}`;
+            const fileName = `INIFAP_Margaritas_E${currentStation}_${dateStr}`;
 
             if (format === 'csv') {
-                let csvContent = "Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm)\n";
+                let csvContent = "Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm),Pluv3(mm),Pluv4(mm)\n";
                 allData.forEach(row => {
                     const dt = new Date(row.fecha);
-                    csvContent += `${dt.toLocaleDateString('es-MX')},${dt.toLocaleTimeString('es-MX')},${row.temperatura || 0},${row.humedad || 0},${row.pluv1_mm || 0},${row.pluv2_mm || 0}\n`;
+                    csvContent += `${dt.toLocaleDateString('es-MX')},${dt.toLocaleTimeString('es-MX')},${row.temperatura || 0},${row.humedad || 0},${row.pluv1_mm || 0},${row.pluv2_mm || 0},${row.pluv3_mm || 0},${row.pluv4_mm || 0}\n`;
                 });
                 downloadBlob(csvContent, `${fileName}.csv`, 'text/csv');
             } 
             else if (format === 'json') { downloadBlob(JSON.stringify(allData, null, 2), `${fileName}.json`, 'application/json'); }
-            else if (format === 'pdf') { generarPDF(fileName, allData); }
 
             btn.innerHTML = originalHTML; btn.disabled = false;
         }).catch(err => { alert("Error de conexión."); btn.innerHTML = originalHTML; btn.disabled = false; });
@@ -637,35 +509,15 @@
         a.download = fileName; a.click();
     }
 
-    function generarPDF(fileName, dataArray) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFont("helvetica", "bold"); doc.setFontSize(16);
-        doc.text("Reporte Climatológico Completo - INIFAP", 14, 20);
-        doc.setFontSize(10); doc.setFont("helvetica", "normal");
-        doc.text(`Fecha: ${new Date().toLocaleString('es-MX')} | Total: ${dataArray.length} registros`, 14, 28);
-
-        const tableRows = dataArray.map(r => {
-            const dt = new Date(r.fecha);
-            return [dt.toLocaleDateString('es-MX'), dt.toLocaleTimeString('es-MX'), (r.temperatura||0).toString(), (r.humedad||0).toString(), (r.pluv1_mm||0).toString(), (r.pluv2_mm||0).toString()];
-        });
-
-        doc.autoTable({
-            head: [["Fecha", "Hora", "Temp (°C)", "Hum (%)", "Pluv 1 (mm)", "Pluv 2 (mm)"]],
-            body: tableRows, startY: 35, theme: 'striped',
-            headStyles: { fillColor: [56, 189, 248] }, styles: { fontSize: 9 }
-        });
-        doc.save(`${fileName}.pdf`);
-    }
-
     // --- MAPA LEAFLET ---
-    // Zoom ajustado a nivel 6
     const map = L.map('station-map', { zoomControl: false }).setView([20.5, -99.0], 6);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20 }).addTo(map);
     const stationIcon = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:var(--accent-blue); width:16px; height:16px; border-radius:50%; box-shadow: 0 0 15px var(--accent-blue); border: 2px solid white;'></div>", iconSize: [16, 16], iconAnchor: [8, 8] });
-    L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map).bindPopup('<b style="color:black;">Estación LoRa Mando</b><br>INIFAP Las Margaritas').openPopup();
+    
+    // Aquí podrías agregar un arreglo de coordenadas para cada estación si están regadas en el campo
+    let currentMarker = L.marker([19.996, -97.306], {icon: stationIcon}).addTo(map).bindPopup('<b style="color:black;">Estación 1</b><br>INIFAP Las Margaritas').openPopup();
 
-    // --- GRÁFICOS CHART.JS (Solo Líneas Historial) ---
+    // --- GRÁFICOS CHART.JS ---
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = 'Outfit';
 
@@ -679,27 +531,68 @@
         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
     });
 
-    // --- FIREBASE LOGIC ---
-    const firebaseConfig = { databaseURL: "https://estacion-texcoco-default-rtdb.firebaseio.com" };
+
+    // ============================================================
+    // LÓGICA CORE DE FIREBASE Y CAMBIO DE ESTACIÓN
+    // ============================================================
+    
+    // ⚠️ ATENCIÓN: ¡URL ACTUALIZADA A TU NUEVO PROYECTO! ⚠️
+    const firebaseConfig = { databaseURL: "https://estaciones-margaritas-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    let currentStation = 1;
+    let dailyListenerRef = null;
+    let realtimeListenerRef = null;
     let currentDayStamp = new Date().setHours(0,0,0,0);
-    
-    // Calcular Datos Diarios (Lluvia, Max/Min Temp/Hum)
-    function calcularDatosDiarios() {
-        db.ref('/estacion1/historial').orderByChild('fecha').startAt(currentDayStamp).on('value', snap => {
-            let sP1 = 0, sP2 = 0;
+
+    // FUNCIÓN MAGISTRAL PARA CAMBIAR DE ESTACIÓN
+    function changeStation(id) {
+        currentStation = id;
+        
+        // 1. Apariencia de los botones
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('tab-st-' + id).classList.add('active');
+
+        // 2. Actualizar Textos
+        document.getElementById('page-title').innerText = "INIFAP Margaritas - Nodo " + id;
+        document.getElementById('export-lbl').innerText = id;
+        document.getElementById('diag-st').innerText = "Estación " + id;
+        
+        // Limpiar UI visualmente para que se note el cambio
+        document.getElementById('temp-main').innerText = "--";
+        document.getElementById('hum-main').innerText = "--";
+        document.getElementById('weather-icon-container').innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="color: var(--text-muted); font-size: 2rem;"></i>`;
+        document.getElementById('history-table-body').innerHTML = `<tr><td colspan="8" style="padding: 25px;"><div class="skeleton"></div></td></tr>`;
+        document.getElementById('header-dot').className = 'status-dot offline';
+        document.getElementById('header-status-text').innerText = "Cargando datos...";
+
+        // 3. APAGAR LOS MICRÓFONOS ANTERIORES PARA EVITAR MEZCLAS DE DATOS
+        if(dailyListenerRef) dailyListenerRef.off();
+        if(realtimeListenerRef) realtimeListenerRef.off();
+
+        // 4. ENCENDER LOS NUEVOS MICRÓFONOS
+        arrancarListenersBaseDeDatos();
+    }
+
+    function arrancarListenersBaseDeDatos() {
+        const rutaEstacion = '/estacion' + currentStation + '/historial';
+
+        // --- LISTENER 1: DATOS DIARIOS (MÁXIMAS, MÍNIMAS, LLUVIA TOTAL) ---
+        dailyListenerRef = db.ref(rutaEstacion).orderByChild('fecha').startAt(currentDayStamp);
+        
+        dailyListenerRef.on('value', snap => {
+            let sP1 = 0, sP2 = 0, sP3 = 0, sP4 = 0;
             let temps = [], hums = [];
-            let maxT = -Infinity, minT = Infinity;
-            let maxH = -Infinity, minH = Infinity;
-            let maxTTime = '--:--', minTTime = '--:--';
-            let maxHTime = '--:--', minHTime = '--:--';
+            let maxT = -Infinity, minT = Infinity, maxH = -Infinity, minH = Infinity;
+            let maxTTime = '--:--', minTTime = '--:--', maxHTime = '--:--', minHTime = '--:--';
 
             snap.forEach(child => {
                 const v = child.val();
                 if(v.pluv1_mm) sP1 += parseFloat(v.pluv1_mm);
                 if(v.pluv2_mm) sP2 += parseFloat(v.pluv2_mm);
+                if(v.pluv3_mm) sP3 += parseFloat(v.pluv3_mm);
+                if(v.pluv4_mm) sP4 += parseFloat(v.pluv4_mm);
 
                 if(v.temperatura !== undefined && v.fecha) {
                     const t = parseFloat(v.temperatura);
@@ -707,7 +600,6 @@
                     const timeStr = new Date(v.fecha).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
                     
                     temps.push(t); hums.push(h);
-
                     if(t > maxT) { maxT = t; maxTTime = timeStr; }
                     if(t < minT) { minT = t; minTTime = timeStr; }
                     if(h > maxH) { maxH = h; maxHTime = timeStr; }
@@ -715,9 +607,13 @@
                 }
             });
 
+            // Imprimir Sumas de Lluvia de los 4 puertos
             document.getElementById('p1-sum-val').innerText = sP1.toFixed(1);
             document.getElementById('p2-sum-val').innerText = sP2.toFixed(1);
+            document.getElementById('p3-sum-val').innerText = sP3.toFixed(1);
+            document.getElementById('p4-sum-val').innerText = sP4.toFixed(1);
 
+            // Imprimir Resúmenes si hay datos
             if(temps.length > 0) {
                 const avgT = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
                 const avgH = (hums.reduce((a, b) => a + b, 0) / hums.length).toFixed(0);
@@ -733,111 +629,107 @@
                 document.getElementById('dash-min-h').innerText = minH.toFixed(0) + "%";
                 document.getElementById('dash-min-h-time').innerText = minHTime;
                 document.getElementById('dash-avg-h').innerText = avgH;
+            } else {
+                // Limpiar si es una estación nueva sin datos hoy
+                document.getElementById('dash-max-t').innerText = "--°C"; document.getElementById('dash-min-t').innerText = "--°C"; document.getElementById('dash-avg-t').innerText = "--";
+                document.getElementById('dash-max-h').innerText = "--%"; document.getElementById('dash-min-h').innerText = "--%"; document.getElementById('dash-avg-h').innerText = "--";
+            }
+        });
+
+        // --- LISTENER 2: TIEMPO REAL Y GRÁFICOS (ÚLTIMOS 30 DATOS) ---
+        realtimeListenerRef = db.ref(rutaEstacion).limitToLast(30);
+        
+        realtimeListenerRef.on('value', snap => {
+            let labels = [], dTemp = [], dHum = [];
+            let tableRowsHTML = "";
+            let lastT = 0, lastH = 0, lastId = "--", lastSD = 1;
+            let hayDatos = false;
+
+            snap.forEach(child => {
+                hayDatos = true;
+                const val = child.val();
+                if(val.fecha) {
+                    const timeStr = new Date(val.fecha).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
+                    labels.push(timeStr);
+                    
+                    const temp = val.temperatura !== undefined ? parseFloat(val.temperatura).toFixed(1) : 0;
+                    const hum = val.humedad !== undefined ? parseFloat(val.humedad).toFixed(0) : 0;
+                    const p1 = val.pluv1_mm !== undefined ? parseFloat(val.pluv1_mm).toFixed(1) : 0;
+                    const p2 = val.pluv2_mm !== undefined ? parseFloat(val.pluv2_mm).toFixed(1) : 0;
+                    const p3 = val.pluv3_mm !== undefined ? parseFloat(val.pluv3_mm).toFixed(1) : 0;
+                    const p4 = val.pluv4_mm !== undefined ? parseFloat(val.pluv4_mm).toFixed(1) : 0;
+                    
+                    const sd = val.estado_sd !== undefined ? val.estado_sd : 1; 
+
+                    dTemp.push(temp); dHum.push(hum);
+                    lastT = temp; lastH = hum; lastId = val.id_mensaje || "--"; lastSD = sd;
+
+                    let sdBadge = sd === 1 ? `<span style="color:var(--accent-green);"><i class="fa-solid fa-check"></i> OK</span>` : `<span style="color:var(--accent-pink);"><i class="fa-solid fa-xmark"></i> Falla</span>`;
+                    
+                    tableRowsHTML = `<tr>
+                        <td style="color:#f1f5f9; font-weight:500;">${timeStr}</td>
+                        <td style="color:var(--accent-pink); font-weight:bold;">${temp}°</td>
+                        <td style="color:var(--accent-blue); font-weight:bold;">${hum}%</td>
+                        <td style="color:var(--accent-blue);">${p1}</td>
+                        <td style="color:var(--accent-green);">${p2}</td>
+                        <td style="color:var(--accent-orange);">${p3}</td>
+                        <td style="color:var(--accent-purple);">${p4}</td>
+                        <td>${sdBadge}</td>
+                    </tr>` + tableRowsHTML;
+                }
+            });
+
+            if(!hayDatos) {
+                tableRowsHTML = "<tr><td colspan='8' style='text-align:center;'>Aún no hay datos registrados para esta estación.</td></tr>";
+                document.getElementById('header-dot').className = 'status-dot offline';
+                document.getElementById('header-status-text').innerText = "Esperando conexión...";
+                document.getElementById('weather-icon-container').innerHTML = `<i class="fa-solid fa-satellite-dish" style="color: var(--text-muted); font-size: 2.5rem;"></i>`;
+            } else {
+                document.getElementById('header-dot').className = 'status-dot';
+                document.getElementById('header-status-text').innerText = "Sensor SHT41 vía LoRa";
+
+                // Ícono Dinámico
+                const iconContainer = document.getElementById('weather-icon-container');
+                if(lastT < 25) { iconContainer.innerHTML = `<i class="fa-solid fa-cloud" style="color: white; font-size: 3.5rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));"></i>`; } 
+                else if(lastT < 32) { iconContainer.innerHTML = `<span class="fa-stack" style="font-size: 1.8rem; width: 4rem; height: 3.5rem;"><i class="fa-solid fa-sun fa-stack-1x" style="color: #fbbf24; transform: translate(12px, -12px) scale(1.3);"></i><i class="fa-solid fa-cloud fa-stack-1x" style="color: white; transform: translate(-5px, 5px) scale(1.5); filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));"></i></span>`; } 
+                else { iconContainer.innerHTML = `<i class="fa-solid fa-sun" style="color: #fbbf24; font-size: 3.5rem; animation: pulse-sun 2s infinite;"></i>`; }
+            }
+
+            document.getElementById('history-table-body').innerHTML = tableRowsHTML;
+
+            // Actualizar Números Finales
+            document.getElementById('temp-main').innerText = lastT;
+            document.getElementById('hum-main').innerText = lastH;
+            document.getElementById('hum-bar').style.width = lastH + '%';
+            document.getElementById('msg-id').innerText = lastId;
+
+            // Gráficos de Líneas Historial
+            mainChart.data.labels = labels;
+            mainChart.data.datasets[0].data = dTemp;
+            mainChart.data.datasets[1].data = dHum;
+            mainChart.update();
+
+            // Estado SD
+            const sdText = document.getElementById('sd-status-text');
+            if (lastSD === 1) {
+                sdText.innerHTML = '<i class="fa-solid fa-circle-check"></i> OPERATIVA';
+                sdText.style.color = "var(--accent-green)"; sdText.style.background = "rgba(52, 211, 153, 0.1)";
+            } else {
+                sdText.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> FALLA DETECTADA';
+                sdText.style.color = "var(--accent-pink)"; sdText.style.background = "rgba(244, 114, 182, 0.1)";
             }
         });
     }
-    calcularDatosDiarios();
+
+    // Cronómetro de reinicio de medianoche
     setInterval(() => {
         const todayStamp = new Date().setHours(0,0,0,0);
-        if(currentDayStamp !== todayStamp) { currentDayStamp = todayStamp; calcularDatosDiarios(); }
+        if(currentDayStamp !== todayStamp) { currentDayStamp = todayStamp; arrancarListenersBaseDeDatos(); }
     }, 60000);
 
-    // Listener Principal en Tiempo Real
-    db.ref('/estacion1/historial').limitToLast(30).on('value', snap => {
-        let labels = [], dTemp = [], dHum = [];
-        let tableRowsHTML = "";
-        let lastT = 0, lastH = 0, lastId = "--", lastSD = 1;
+    // ARRANCAR LA PÁGINA EN LA ESTACIÓN 1 POR DEFECTO
+    changeStation(1);
 
-        snap.forEach(child => {
-            const val = child.val();
-            if(val.fecha) {
-                const timeStr = new Date(val.fecha).toLocaleTimeString("es-MX", {hour:'2-digit', minute:'2-digit'});
-                labels.push(timeStr);
-                
-                const temp = val.temperatura !== undefined ? parseFloat(val.temperatura).toFixed(1) : 0;
-                const hum = val.humedad !== undefined ? parseFloat(val.humedad).toFixed(0) : 0;
-                const p1 = val.pluv1_mm !== undefined ? parseFloat(val.pluv1_mm).toFixed(1) : 0;
-                const p2 = val.pluv2_mm !== undefined ? parseFloat(val.pluv2_mm).toFixed(1) : 0;
-                
-                const sd = 1; // FORZADO A 1 (OK) PARA GRABAR EL VIDEO
-
-                dTemp.push(temp); dHum.push(hum);
-                lastT = temp; lastH = hum; lastId = val.id_mensaje || "--"; lastSD = sd;
-
-                let sdBadge = sd === 1 ? `<span style="color:var(--accent-green);"><i class="fa-solid fa-check"></i> OK</span>` : `<span style="color:var(--accent-pink);"><i class="fa-solid fa-xmark"></i> Falla</span>`;
-                
-                tableRowsHTML = `<tr>
-                    <td style="color:#f1f5f9; font-weight:500;">${timeStr}</td>
-                    <td style="color:var(--accent-pink); font-weight:bold;">${temp}°</td>
-                    <td style="color:var(--accent-blue); font-weight:bold;">${hum}%</td>
-                    <td style="color:var(--accent-orange);">${p1}</td>
-                    <td style="color:var(--accent-purple);">${p2}</td>
-                    <td>${sdBadge}</td>
-                </tr>` + tableRowsHTML;
-            }
-        });
-
-        if(tableRowsHTML === "") tableRowsHTML = "<tr><td colspan='6' style='text-align:center;'>No hay datos recientes.</td></tr>";
-        document.getElementById('history-table-body').innerHTML = tableRowsHTML;
-
-        // --- ACTUALIZACIONES UI DINÁMICA ---
-        const colorH = getHumColor(lastH);
-        
-        // Número Fijo Principal
-        document.getElementById('temp-main').innerText = lastT;
-        document.getElementById('hum-main').innerText = lastH;
-        document.getElementById('hum-bar').style.width = lastH + '%';
-        document.getElementById('msg-id').innerText = lastId;
-
-        // Ícono Dinámico de Estado Actual (Sol Amarillo / Nube Blanca)
-        const iconContainer = document.getElementById('weather-icon-container');
-        if(lastT < 25) {
-            iconContainer.innerHTML = `<i class="fa-solid fa-cloud" style="color: white; font-size: 3.5rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));"></i>`;
-        } else if(lastT < 32) {
-            iconContainer.innerHTML = `
-                <span class="fa-stack" style="font-size: 1.8rem; width: 4rem; height: 3.5rem;">
-                    <i class="fa-solid fa-sun fa-stack-1x" style="color: #fbbf24; transform: translate(12px, -12px) scale(1.3);"></i>
-                    <i class="fa-solid fa-cloud fa-stack-1x" style="color: white; transform: translate(-5px, 5px) scale(1.5); filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));"></i>
-                </span>
-            `;
-        } else {
-            iconContainer.innerHTML = `<i class="fa-solid fa-sun" style="color: #fbbf24; font-size: 3.5rem; animation: pulse-sun 2s infinite;"></i>`;
-        }
-
-        // SVG Termómetro Custom (0 a 50°C escala)
-        document.getElementById('thermo-val-text').innerText = lastT + "°";
-        const tempPct = Math.min(Math.max(lastT, 0), 50) / 50; 
-        const tempY = 110 - (tempPct * 90); 
-        document.getElementById('thermo-liquid').style.y = tempY + 'px';
-        document.getElementById('thermo-liquid').style.height = (150 - tempY) + 'px';
-
-        // NUEVO: SVG Aguja Clásica Humedad (0 a 100%) - Rotación y Color Dinámico
-        document.getElementById('hum-custom-val').innerText = lastH + "%";
-        const humPct = Math.min(Math.max(lastH, 0), 100) / 100;
-        const needleAngle = (humPct * 180) - 90; // Rotación de -90 a 90 grados
-        
-        document.getElementById('hum-needle').style.transform = `rotate(${needleAngle}deg)`;
-        document.getElementById('hum-needle-path').style.fill = colorH;
-        document.getElementById('hum-needle-base').style.fill = colorH;
-
-        // Gráficos de Líneas Historial
-        mainChart.data.labels = labels;
-        mainChart.data.datasets[0].data = dTemp;
-        mainChart.data.datasets[1].data = dHum;
-        mainChart.update();
-
-        // Estado SD
-        const sdText = document.getElementById('sd-status-text');
-        if (lastSD === 1) {
-            sdText.innerHTML = '<i class="fa-solid fa-circle-check"></i> OPERATIVA';
-            sdText.style.color = "var(--accent-green)";
-            sdText.style.background = "rgba(52, 211, 153, 0.1)";
-        } else {
-            sdText.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> FALLA DETECTADA';
-            sdText.style.color = "var(--accent-pink)";
-            sdText.style.background = "rgba(244, 114, 182, 0.1)";
-        }
-    });
 </script>
 </body>
 </html>
