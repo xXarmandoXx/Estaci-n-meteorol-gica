@@ -102,8 +102,9 @@
 
         .w-map { grid-column: span 8; grid-row: span 2; padding: 0; border: none; }
         .w-status { grid-column: span 4; grid-row: span 2; }
-        .w-rain { grid-column: span 6; grid-row: span 1; }
-        .w-summary { grid-column: span 3; grid-row: span 1; }
+        .w-rain { grid-column: span 12; grid-row: span 1; }
+        .w-summary { grid-column: span 6; grid-row: span 1; }
+        .w-search { grid-column: span 12; grid-row: span 1; }
         .w-gauge { grid-column: span 3; grid-row: span 1; align-items: center; justify-content: space-between; }
 
         .widget-inactive { opacity: 0.5; background: rgba(10, 10, 10, 0.4); border: 1px dashed var(--glass-border); filter: grayscale(100%); cursor: not-allowed; }
@@ -111,7 +112,7 @@
         .badge-na { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
 
         /* --- COMPONENTES Y ANIMACIONES --- */
-        .widget-header { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }
+        .widget-header { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
         #station-map { width: 100%; height: 100%; border-radius: 20px; z-index: 1; }
         
         .big-value { font-size: 4rem; font-weight: 800; display: flex; align-items: baseline; justify-content: center; gap: 5px; color: white; transition: color 0.5s ease; }
@@ -130,6 +131,22 @@
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } 50% { opacity: 0.4; box-shadow: 0 0 2px var(--accent-green); } 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-green); } }
         .status-dot.offline { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); animation: none; }
+
+        /* --- ESTILOS BÚSQUEDA POR DÍA --- */
+        .search-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .btn-quick-date { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-muted); padding: 7px 12px; border-radius: 10px; font-family: 'Outfit'; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn-quick-date:hover, .btn-quick-date.active { background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); border-color: var(--accent-blue); }
+        .date-picker-custom { background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: white; padding: 6px 14px; border-radius: 10px; font-family: 'Outfit'; font-size: 0.9rem; font-weight: 500; outline: none; color-scheme: dark; cursor: pointer; transition: var(--transition); }
+        .date-picker-custom:hover, .date-picker-custom:focus { border-color: var(--accent-blue); background: rgba(255,255,255,0.1); box-shadow: 0 0 12px rgba(56, 189, 248, 0.25); }
+        
+        .search-results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
+        .search-card { background: rgba(0, 0, 0, 0.3); border-radius: 16px; padding: 18px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; justify-content: space-between; transition: var(--transition); }
+        .search-card:hover { border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+        .search-card-title { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+        .search-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.95rem; }
+        .search-stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .rain-pills { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+        .rain-pill { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 8px 10px; text-align: center; }
 
         /* --- TABLA Y EXPORTACIÓN --- */
         .view-section { display: none; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -163,8 +180,9 @@
         @media (max-width: 1024px) {
             .dashboard-grid { grid-template-columns: repeat(6, 1fr); }
             .w-map { grid-column: span 6; height: 300px; }
-            .w-status, .w-rain { grid-column: span 6; }
+            .w-status, .w-rain, .w-search { grid-column: span 6; }
             .w-summary, .w-gauge { grid-column: span 3; }
+            .search-results-grid { grid-template-columns: 1fr; }
         }
         
         @media (max-width: 600px) {
@@ -181,11 +199,14 @@
             .w-status { order: 2; }
             .w-rain { order: 3; }
             .w-summary { order: 4; }
-            .w-gauge { order: 5; }
+            .w-search { order: 5; }
+            .w-gauge { order: 6; }
             .widget-inactive { order: 99 !important; }
             .big-value { font-size: 3.5rem; }
             .station-tabs { justify-content: space-between; }
             .tab-btn { padding: 8px 12px; font-size: 0.9rem; }
+            .search-controls { width: 100%; justify-content: space-between; }
+            .date-picker-custom { flex-grow: 1; }
         }
     </style>
 </head>
@@ -269,9 +290,9 @@
                     </div>
                 </div>
 
-                <div class="widget w-rain" style="grid-column: span 12;">
+                <div class="widget w-rain">
                     <div class="widget-header">
-                        <span>Precipitación Acumulada</span>
+                        <span>Precipitación Acumulada (Hoy)</span>
                         <i class="fa-solid fa-cloud-showers-heavy" style="color: var(--text-muted);"></i>
                     </div>
                     <div class="rain-flex">
@@ -305,8 +326,8 @@
                     </div>
                 </div>
 
-                <div class="widget w-summary" style="grid-column: span 6;">
-                    <div class="widget-header">Resumen Temperatura</div>
+                <div class="widget w-summary">
+                    <div class="widget-header">Resumen Temperatura (Hoy)</div>
                     <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
                             <span style="color: var(--accent-red); font-size: 0.85rem;"><i class="fa-solid fa-arrow-up"></i> Máx</span>
@@ -329,8 +350,8 @@
                     </div>
                 </div>
 
-                <div class="widget w-summary" style="grid-column: span 6;">
-                    <div class="widget-header">Resumen Humedad</div>
+                <div class="widget w-summary">
+                    <div class="widget-header">Resumen Humedad (Hoy)</div>
                     <div style="display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px;">
                             <span style="color: var(--accent-blue-dark); font-size: 0.85rem;"><i class="fa-solid fa-arrow-up"></i> Máx</span>
@@ -349,6 +370,24 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
                             <span style="color: var(--accent-green); font-size: 0.85rem;"><i class="fa-solid fa-equals"></i> Prom.</span>
                             <div style="font-weight: 700; color: white; font-size: 1.2rem;"><span id="dash-avg-h">--</span>%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WIDGET INTERACTIVO: CONSULTA HISTÓRICA POR DÍA -->
+                <div class="widget w-search">
+                    <div class="widget-header">
+                        <span><i class="fa-solid fa-calendar-check" style="color: var(--accent-blue); margin-right: 6px;"></i> Consulta Rápida por Día</span>
+                        <div class="search-controls">
+                            <button class="btn-quick-date" id="btn-ayer" onclick="seleccionarDiaRapido(-1)">Ayer</button>
+                            <button class="btn-quick-date" id="btn-hoy" onclick="seleccionarDiaRapido(0)">Hoy</button>
+                            <input type="date" id="search-date" class="date-picker-custom" onchange="buscarDatosPorDia(true)">
+                        </div>
+                    </div>
+                    <div id="search-results" class="search-results-grid">
+                        <div style="text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 25px; background: rgba(0,0,0,0.2); border-radius: 14px; border: 1px dashed var(--glass-border);">
+                            <i class="fa-regular fa-calendar-days" style="font-size: 1.8rem; color: var(--accent-blue); margin-bottom: 8px; display: block;"></i>
+                            Toca <b>"Ayer"</b> o elige cualquier fecha en el calendario para consultar cuánta lluvia cayó y las temperaturas extremas de ese día sin descargar archivos.
                         </div>
                     </div>
                 </div>
@@ -372,7 +411,6 @@
                             <a href="#" class="dropdown-item item-json" onclick="exportData('json', event)">
                                 <i class="fa-solid fa-file-code"></i> Formato crudo (.JSON)
                             </a>
-                            <!-- BOTÓN DE PDF RESTAURADO -->
                             <a href="#" class="dropdown-item item-pdf" onclick="exportData('pdf', event)">
                                 <i class="fa-solid fa-file-pdf"></i> Reporte Limpio (.PDF)
                             </a>
@@ -470,7 +508,15 @@
         db.ref('/estacion' + currentStation + '/historial').once('value').then(snap => {
             const allData = [];
             snap.forEach(child => { if(child.val().fecha) allData.push(child.val()); });
-            if (allData.length === 0) { alert("No hay datos para esta estación."); btn.innerHTML = originalHTML; btn.disabled = false; return; }
+            if (allData.length === 0) {
+                alert("No hay datos para esta estación.");
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                return;
+            }
+
+            // MEJORA 1: Ordenar del más reciente al más antiguo (el último dato queda hasta arriba)
+            allData.sort((a, b) => b.fecha - a.fecha);
 
             const dateStr = new Date().toISOString().split('T')[0];
             const fileName = `INIFAP_Margaritas_E${currentStation}_${dateStr}`;
@@ -479,32 +525,42 @@
                 let csvContent = "Fecha,Hora,Temperatura(C),Humedad(%),Pluv1(mm),Pluv2(mm),Pluv3(mm),Pluv4(mm)\n";
                 allData.forEach(row => {
                     const dt = new Date(row.fecha);
-                    csvContent += `${dt.toLocaleDateString('es-MX')},${dt.toLocaleTimeString('es-MX')},${row.temperatura || 0},${row.humedad || 0},${row.pluv1_mm || 0},${row.pluv2_mm || 0},${row.pluv3_mm || 0},${row.pluv4_mm || 0}\n`;
+                    csvContent += `${dt.toLocaleDateString('es-MX')},${dt.toLocaleTimeString('es-MX')},${row.temperatura ?? 0},${row.humedad ?? 0},${row.pluv1_mm ?? 0},${row.pluv2_mm ?? 0},${row.pluv3_mm ?? 0},${row.pluv4_mm ?? 0}\n`;
                 });
-                downloadBlob(csvContent, `${fileName}.csv`, 'text/csv');
+                downloadBlob(csvContent, `${fileName}.csv`, 'text/csv;charset=utf-8;');
             } 
-            else if (format === 'json') { downloadBlob(JSON.stringify(allData, null, 2), `${fileName}.json`, 'application/json'); }
-            // LÓGICA DE PDF RESTAURADA Y ADAPTADA A 4 COLUMNAS
-            else if (format === 'pdf') { generarPDF(fileName, allData); }
+            else if (format === 'json') {
+                downloadBlob(JSON.stringify(allData, null, 2), `${fileName}.json`, 'application/json');
+            }
+            else if (format === 'pdf') {
+                generarPDF(fileName, allData);
+            }
 
-            btn.innerHTML = originalHTML; btn.disabled = false;
-        }).catch(err => { alert("Error de conexión."); btn.innerHTML = originalHTML; btn.disabled = false; });
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }).catch(err => {
+            alert("Error de conexión.");
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        });
     }
 
     function downloadBlob(content, fileName, contentType) {
         const a = document.createElement("a");
         const file = new Blob([content], { type: contentType });
         a.href = URL.createObjectURL(file);
-        a.download = fileName; a.click();
+        a.download = fileName;
+        a.click();
     }
 
-    // FUNCIÓN DEL PDF
     function generarPDF(fileName, dataArray) {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('landscape'); // Horizontal para que quepan bien las 4 borneras
-        doc.setFont("helvetica", "bold"); doc.setFontSize(16);
-        doc.text("Reporte Climatológico Completo - INIFAP", 14, 20);
-        doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        const doc = new jsPDF('landscape');
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.text("Reporte Climatológico Completo - INIFAP (Más recientes primero)", 14, 20);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
         doc.text(`Fecha de corte: ${new Date().toLocaleString('es-MX')} | Estación Nodo: ${currentStation} | Total de Registros: ${dataArray.length}`, 14, 28);
 
         const tableRows = dataArray.map(r => {
@@ -512,19 +568,22 @@
             return [
                 dt.toLocaleDateString('es-MX'), 
                 dt.toLocaleTimeString('es-MX'), 
-                (r.temperatura||0).toString(), 
-                (r.humedad||0).toString(), 
-                (r.pluv1_mm||0).toString(), 
-                (r.pluv2_mm||0).toString(),
-                (r.pluv3_mm||0).toString(),
-                (r.pluv4_mm||0).toString()
+                (r.temperatura ?? 0).toString(), 
+                (r.humedad ?? 0).toString(), 
+                (r.pluv1_mm ?? 0).toString(), 
+                (r.pluv2_mm ?? 0).toString(),
+                (r.pluv3_mm ?? 0).toString(),
+                (r.pluv4_mm ?? 0).toString()
             ];
         });
 
         doc.autoTable({
             head: [["Fecha", "Hora", "Temp (°C)", "Hum (%)", "Pluv 1 (mm)", "Pluv 2 (mm)", "Pluv 3 (mm)", "Pluv 4 (mm)"]],
-            body: tableRows, startY: 35, theme: 'striped',
-            headStyles: { fillColor: [56, 189, 248] }, styles: { fontSize: 9 }
+            body: tableRows,
+            startY: 35,
+            theme: 'striped',
+            headStyles: { fillColor: [56, 189, 248] },
+            styles: { fontSize: 9 }
         });
         doc.save(`${fileName}.pdf`);
     }
@@ -581,12 +640,17 @@
         if(realtimeListenerRef) realtimeListenerRef.off();
 
         arrancarListenersBaseDeDatos();
+
+        // Actualizar automáticamente la consulta por día si ya había una fecha seleccionada
+        if (document.getElementById('search-date').value) {
+            buscarDatosPorDia(false);
+        }
     }
 
     function arrancarListenersBaseDeDatos() {
         const rutaEstacion = '/estacion' + currentStation + '/historial';
 
-        // LISTENER DATOS DIARIOS
+        // LISTENER DATOS DIARIOS (HOY)
         dailyListenerRef = db.ref(rutaEstacion).orderByChild('fecha').startAt(currentDayStamp);
         
         dailyListenerRef.on('value', snap => {
@@ -641,7 +705,7 @@
             }
         });
 
-        // LISTENER TIEMPO REAL
+        // LISTENER TIEMPO REAL (ÚLTIMOS 30)
         realtimeListenerRef = db.ref(rutaEstacion).limitToLast(30);
         
         realtimeListenerRef.on('value', snap => {
@@ -719,6 +783,172 @@
                 sdText.style.color = "var(--accent-pink)"; sdText.style.background = "rgba(244, 114, 182, 0.1)";
             }
         });
+    }
+
+    // --- MEJORA 2: BÚSQUEDA HISTÓRICA POR DÍA ---
+    function seleccionarDiaRapido(offsetDias) {
+        const target = new Date();
+        target.setDate(target.getDate() + offsetDias);
+        const yyyy = target.getFullYear();
+        const mm = String(target.getMonth() + 1).padStart(2, '0');
+        const dd = String(target.getDate()).padStart(2, '0');
+        
+        document.getElementById('search-date').value = `${yyyy}-${mm}-${dd}`;
+        document.querySelectorAll('.btn-quick-date').forEach(b => b.classList.remove('active'));
+        if (offsetDias === -1) document.getElementById('btn-ayer').classList.add('active');
+        if (offsetDias === 0) document.getElementById('btn-hoy').classList.add('active');
+
+        buscarDatosPorDia(false);
+    }
+
+    function buscarDatosPorDia(limpiarBotonesRapidos) {
+        if (limpiarBotonesRapidos) {
+            document.querySelectorAll('.btn-quick-date').forEach(b => b.classList.remove('active'));
+        }
+
+        const dateVal = document.getElementById('search-date').value;
+        if (!dateVal) return;
+
+        // Inicio y fin del día en hora local (00:00:00.000 a 23:59:59.999)
+        const selectedDate = new Date(dateVal + 'T00:00:00');
+        const startStamp = selectedDate.getTime();
+        const endStamp = startStamp + 86399999;
+
+        const fechaLegible = selectedDate.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const resultsDiv = document.getElementById('search-results');
+        resultsDiv.innerHTML = `<div style="text-align: center; color: var(--accent-blue); grid-column: 1 / -1; padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> Buscando registros del ${fechaLegible}...</div>`;
+
+        db.ref('/estacion' + currentStation + '/historial')
+          .orderByChild('fecha')
+          .startAt(startStamp)
+          .endAt(endStamp)
+          .once('value').then(snap => {
+              let sP1 = 0, sP2 = 0, sP3 = 0, sP4 = 0;
+              let temps = [], hums = [];
+              let maxT = -Infinity, minT = Infinity, maxH = -Infinity, minH = Infinity;
+              let maxTTime = '--:--', minTTime = '--:--', maxHTime = '--:--', minHTime = '--:--';
+              let totalRegistros = 0;
+
+              snap.forEach(child => {
+                  const v = child.val();
+                  totalRegistros++;
+                  if(v.pluv1_mm) sP1 += parseFloat(v.pluv1_mm);
+                  if(v.pluv2_mm) sP2 += parseFloat(v.pluv2_mm);
+                  if(v.pluv3_mm) sP3 += parseFloat(v.pluv3_mm);
+                  if(v.pluv4_mm) sP4 += parseFloat(v.pluv4_mm);
+
+                  if(v.temperatura !== undefined && v.fecha) {
+                      const t = parseFloat(v.temperatura);
+                      const h = parseFloat(v.humedad || 0);
+                      const timeStr = new Date(v.fecha).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+
+                      temps.push(t); hums.push(h);
+                      if(t > maxT) { maxT = t; maxTTime = timeStr; }
+                      if(t < minT) { minT = t; minTTime = timeStr; }
+                      if(h > maxH) { maxH = h; maxHTime = timeStr; }
+                      if(h < minH) { minH = h; minHTime = timeStr; }
+                  }
+              });
+
+              if(totalRegistros === 0 || temps.length === 0) {
+                  resultsDiv.innerHTML = `
+                      <div style="text-align: center; color: var(--accent-pink); grid-column: 1 / -1; padding: 25px; background: rgba(244, 114, 182, 0.05); border-radius: 14px; border: 1px solid rgba(244, 114, 182, 0.2);">
+                          <i class="fa-solid fa-calendar-xmark" style="font-size: 1.6rem; margin-bottom: 8px; display: block;"></i>
+                          No se encontraron lecturas guardadas para el <b>${fechaLegible}</b> en la Estación ${currentStation}.
+                      </div>`;
+                  return;
+              }
+
+              const avgT = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
+              const avgH = (hums.reduce((a, b) => a + b, 0) / hums.length).toFixed(0);
+              const promLluvia = ((sP1 + sP2 + sP3 + sP4) / 4).toFixed(1);
+
+              resultsDiv.innerHTML = `
+                  <!-- TARJETA TEMPERATURA -->
+                  <div class="search-card">
+                      <div class="search-card-title">
+                          <span><i class="fa-solid fa-temperature-half" style="color: var(--accent-pink);"></i> Temperatura</span>
+                          <span style="font-size: 0.7rem; color: var(--text-muted);">${totalRegistros} lecturas</span>
+                      </div>
+                      <div>
+                          <div class="search-stat-row">
+                              <span style="color: var(--accent-red);"><i class="fa-solid fa-arrow-up"></i> Máxima</span>
+                              <div style="text-align: right;">
+                                  <span style="font-weight: 700; color: white; font-size: 1.1rem;">${maxT.toFixed(1)}°C</span>
+                                  <small style="display: block; font-size: 0.7rem; color: var(--text-muted);">${maxTTime} hrs</small>
+                              </div>
+                          </div>
+                          <div class="search-stat-row">
+                              <span style="color: var(--accent-blue);"><i class="fa-solid fa-arrow-down"></i> Mínima</span>
+                              <div style="text-align: right;">
+                                  <span style="font-weight: 700; color: white; font-size: 1.1rem;">${minT.toFixed(1)}°C</span>
+                                  <small style="display: block; font-size: 0.7rem; color: var(--text-muted);">${minTTime} hrs</small>
+                              </div>
+                          </div>
+                          <div class="search-stat-row">
+                              <span style="color: var(--accent-green);"><i class="fa-solid fa-equals"></i> Promedio</span>
+                              <span style="font-weight: 700; color: white; font-size: 1.1rem;">${avgT}°C</span>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- TARJETA HUMEDAD -->
+                  <div class="search-card">
+                      <div class="search-card-title">
+                          <span><i class="fa-solid fa-droplet" style="color: var(--accent-blue);"></i> Humedad Relativa</span>
+                          <span style="font-size: 0.7rem; color: var(--text-muted);">SHT41</span>
+                      </div>
+                      <div>
+                          <div class="search-stat-row">
+                              <span style="color: var(--accent-blue-dark);"><i class="fa-solid fa-arrow-up"></i> Máxima</span>
+                              <div style="text-align: right;">
+                                  <span style="font-weight: 700; color: white; font-size: 1.1rem;">${maxH.toFixed(0)}%</span>
+                                  <small style="display: block; font-size: 0.7rem; color: var(--text-muted);">${maxHTime} hrs</small>
+                              </div>
+                          </div>
+                          <div class="search-stat-row">
+                              <span style="color: var(--accent-yellow);"><i class="fa-solid fa-arrow-down"></i> Mínima</span>
+                              <div style="text-align: right;">
+                                  <span style="font-weight: 700; color: white; font-size: 1.1rem;">${minH.toFixed(0)}%</span>
+                                  <small style="display: block; font-size: 0.7rem; color: var(--text-muted);">${minHTime} hrs</small>
+                              </div>
+                          </div>
+                          <div class="search-stat-row">
+                              <span style="color: var(--accent-green);"><i class="fa-solid fa-equals"></i> Promedio</span>
+                              <span style="font-weight: 700; color: white; font-size: 1.1rem;">${avgH}%</span>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- TARJETA PRECIPITACIÓN -->
+                  <div class="search-card">
+                      <div class="search-card-title">
+                          <span><i class="fa-solid fa-cloud-showers-heavy" style="color: var(--accent-blue);"></i> Lluvia Acumulada</span>
+                          <span style="font-size: 0.75rem; color: var(--accent-blue); font-weight: 600;">Prom: ${promLluvia} mm</span>
+                      </div>
+                      <div class="rain-pills">
+                          <div class="rain-pill">
+                              <div style="font-size: 0.7rem; color: var(--accent-blue); font-weight: 600;">PLUV 1</div>
+                              <div style="font-size: 1.2rem; font-weight: 700; color: white;">${sP1.toFixed(1)} <small style="font-size: 0.7rem; color: var(--text-muted);">mm</small></div>
+                          </div>
+                          <div class="rain-pill">
+                              <div style="font-size: 0.7rem; color: var(--accent-green); font-weight: 600;">PLUV 2</div>
+                              <div style="font-size: 1.2rem; font-weight: 700; color: white;">${sP2.toFixed(1)} <small style="font-size: 0.7rem; color: var(--text-muted);">mm</small></div>
+                          </div>
+                          <div class="rain-pill">
+                              <div style="font-size: 0.7rem; color: var(--accent-orange); font-weight: 600;">PLUV 3</div>
+                              <div style="font-size: 1.2rem; font-weight: 700; color: white;">${sP3.toFixed(1)} <small style="font-size: 0.7rem; color: var(--text-muted);">mm</small></div>
+                          </div>
+                          <div class="rain-pill">
+                              <div style="font-size: 0.7rem; color: var(--accent-purple); font-weight: 600;">PLUV 4</div>
+                              <div style="font-size: 1.2rem; font-weight: 700; color: white;">${sP4.toFixed(1)} <small style="font-size: 0.7rem; color: var(--text-muted);">mm</small></div>
+                          </div>
+                      </div>
+                  </div>
+              `;
+          }).catch(err => {
+              resultsDiv.innerHTML = `<div style="text-align: center; color: var(--accent-red); grid-column: 1 / -1; padding: 20px;">Error al consultar la base de datos.</div>`;
+          });
     }
 
     setInterval(() => {
